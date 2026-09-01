@@ -40,7 +40,7 @@ const EXPLORATION_CONFIG_T4_B={...EXPLORATION_CONFIG_T3_RESET,version:'t4-minibo
 const EXPLORATION_CONFIG_T6_SURGE={...EXPLORATION_CONFIG_T4_B,version:'t6-miniboss-aoe-surge',miniBossAoeSurge:true};
 const EXPLORATION_CONFIG_MINIBOSS_V03={...EXPLORATION_CONFIG_T6_SURGE,version:'miniboss-v0.3'};
 const EXPLORATION_CONFIG_T7_A={...EXPLORATION_CONFIG_MINIBOSS_V03,version:'t7-no-miniboss-reward',miniBossReward:null};
-const EXPLORATION_CONFIG_T7_B={...EXPLORATION_CONFIG_MINIBOSS_V03,version:'t7-draw-two-keep-best',miniBossReward:'DRAW_TWO_KEEP_BEST'};
+const EXPLORATION_CONFIG_T7_B={...EXPLORATION_CONFIG_MINIBOSS_V03,version:'t7-draw-two-keep-best',maxRoomsExplored:10,miniBossReward:'DRAW_TWO_KEEP_BEST'};
 const clone=x=>JSON.parse(JSON.stringify(x));
 function explorationEvent(x,type,data){const clean=type==='OVERLORD_HAND'&&x.config.threatSystem?.specialPlacementPolicy?{...data,tilesInHand:data.tilesInHand.filter(id=>id!==MINI_BOSS_TILE_T2.id)}:data;x.events.push({index:x.events.length,type,...clone(clean)})}
 function tokenPool(config,prefix){let i=0;return Object.entries(config).flatMap(([type,n])=>Array.from({length:n},()=>({id:`${prefix}-${++i}`,type})))}
