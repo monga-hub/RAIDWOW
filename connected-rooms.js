@@ -1,16 +1,16 @@
 'use strict';
 
 const CONNECTED_ROOM_TILES=[
-  {id:'E2-01',name:'Crossroads Sanctuary',connectors:[{id:'A',icons:{FIGHTER:0,TREASURE:1}},{id:'B',icons:{FIGHTER:0,TREASURE:1}},{id:'C',icons:{FIGHTER:1,TREASURE:0}},{id:'D',icons:{FIGHTER:0,TREASURE:0}}]},
-  {id:'E2-02',name:'Silent Funnel',connectors:[{id:'A',icons:{FIGHTER:0,TREASURE:0}},{id:'B',icons:{FIGHTER:2,TREASURE:0}}]},
-  {id:'E2-03',name:'Forked Cache',connectors:[{id:'A',icons:{FIGHTER:0,TREASURE:1}},{id:'B',icons:{FIGHTER:0,TREASURE:1}},{id:'C',icons:{FIGHTER:1,TREASURE:1}}]},
-  {id:'E2-04',name:'Ominous Hall',connectors:[{id:'A',icons:{FIGHTER:0,TREASURE:0}},{id:'B',icons:{FIGHTER:1,TREASURE:0}},{id:'C',icons:{FIGHTER:2,TREASURE:0}}]},
-  {id:'E2-05',name:'Skirmish Crossroad',connectors:[{id:'A',icons:{FIGHTER:1,TREASURE:0}},{id:'B',icons:{FIGHTER:0,TREASURE:0}},{id:'C',icons:{FIGHTER:1,TREASURE:1}},{id:'D',icons:{FIGHTER:1,TREASURE:0}}]},
-  {id:'E2-06',name:'Guarded Vault',connectors:[{id:'A',icons:{FIGHTER:1,TREASURE:1}},{id:'B',icons:{FIGHTER:0,TREASURE:1}}]},
-  {id:'E2-07',name:'Blood Fork',connectors:[{id:'A',icons:{FIGHTER:1,TREASURE:0}},{id:'B',icons:{FIGHTER:2,TREASURE:0}},{id:'C',icons:{FIGHTER:1,TREASURE:0}}]},
-  {id:'E2-08',name:'Ambush Junction',connectors:[{id:'A',icons:{FIGHTER:2,TREASURE:0}},{id:'B',icons:{FIGHTER:0,TREASURE:1}},{id:'C',icons:{FIGHTER:0,TREASURE:0}},{id:'D',icons:{FIGHTER:1,TREASURE:0}}]},
-  {id:'E2-09',name:'Siege Breach',connectors:[{id:'A',icons:{FIGHTER:2,TREASURE:1}},{id:'B',icons:{FIGHTER:0,TREASURE:0}}]},
-  {id:'E2-10',name:'Toll Chamber',connectors:[{id:'A',icons:{FIGHTER:1,TREASURE:1}},{id:'B',icons:{FIGHTER:0,TREASURE:1}},{id:'C',icons:{FIGHTER:2,TREASURE:0}}]}
+  {id:'E2-01',name:'Crocevia delle Lucciole Spettrali',connectors:[{id:'A',icons:{FIGHTER:0,TREASURE:1}},{id:'B',icons:{FIGHTER:0,TREASURE:1}},{id:'C',icons:{FIGHTER:1,TREASURE:0}},{id:'D',icons:{FIGHTER:0,TREASURE:0}}]},
+  {id:'E2-02',name:'Gola del Fango Silente',connectors:[{id:'A',icons:{FIGHTER:0,TREASURE:0}},{id:'B',icons:{FIGHTER:2,TREASURE:0}}]},
+  {id:'E2-03',name:'Bivio dei Teschi Sommersi',connectors:[{id:'A',icons:{FIGHTER:0,TREASURE:1}},{id:'B',icons:{FIGHTER:0,TREASURE:1}},{id:'C',icons:{FIGHTER:1,TREASURE:1}}]},
+  {id:'E2-04',name:'Corridoio dei Mille Occhi',connectors:[{id:'A',icons:{FIGHTER:0,TREASURE:0}},{id:'B',icons:{FIGHTER:1,TREASURE:0}},{id:'C',icons:{FIGHTER:2,TREASURE:0}}]},
+  {id:'E2-05',name:'Crocevia delle Radici Affamate',connectors:[{id:'A',icons:{FIGHTER:1,TREASURE:0}},{id:'B',icons:{FIGHTER:0,TREASURE:0}},{id:'C',icons:{FIGHTER:1,TREASURE:1}},{id:'D',icons:{FIGHTER:1,TREASURE:0}}]},
+  {id:'E2-06',name:'Cripta delle Spore Dorate',connectors:[{id:'A',icons:{FIGHTER:1,TREASURE:1}},{id:'B',icons:{FIGHTER:0,TREASURE:1}}]},
+  {id:'E2-07',name:'Bivio del Sangue Nero',connectors:[{id:'A',icons:{FIGHTER:1,TREASURE:0}},{id:'B',icons:{FIGHTER:2,TREASURE:0}},{id:'C',icons:{FIGHTER:1,TREASURE:0}}]},
+  {id:'E2-08',name:'Pozze delle Lingue in Agguato',connectors:[{id:'A',icons:{FIGHTER:2,TREASURE:0}},{id:'B',icons:{FIGHTER:0,TREASURE:1}},{id:'C',icons:{FIGHTER:0,TREASURE:0}},{id:'D',icons:{FIGHTER:1,TREASURE:0}}]},
+  {id:'E2-09',name:'Breccia del Miasma',connectors:[{id:'A',icons:{FIGHTER:2,TREASURE:1}},{id:'B',icons:{FIGHTER:0,TREASURE:0}}]},
+  {id:'E2-10',name:'Altare delle Monete Marce',connectors:[{id:'A',icons:{FIGHTER:1,TREASURE:1}},{id:'B',icons:{FIGHTER:0,TREASURE:1}},{id:'C',icons:{FIGHTER:2,TREASURE:0}}]}
 ];
 
 EXPLORATION_CONFIG_T7_B.connectionPlacement=true;
@@ -84,7 +84,7 @@ function beginConnectedPlacement(g,exitId){
   if(!g.playerBoardEnabled||!x?.config.connectionPlacement||g.state!=='exit_choice'||!exit)return false;
   x.playerChosenExitId=exitId;offerMiniBossTile(x);g.pendingExitChoice=false;g.pendingOverlordPlacement={roomId:room.id,exitId,forceMiniBoss:!!g.forceMiniBossPlacement};g.state='overlord_placement';
   boardAudit(g,'HERO_EXIT_SELECTED',{roomId:room.id,exitId,icons:exit.icons});
-  note(g,g.forceMiniBossPlacement?`🧭 Gli Eroi scelgono ${exitId}. Ora l’Overlord collega la stanza finale del Mini Boss.`:`🧭 Gli Eroi scelgono ${exitId}. Ora l’Overlord sceglie tile e lato.`);
+  note(g,g.forceMiniBossPlacement?`🧭 Gli Eroi scelgono ${exitId}. Ora l’Overlord collega il Trono Sommerso di Grumara.`:`🧭 Gli Eroi scelgono ${exitId}. Ora l’Overlord sceglie tile e lato.`);
   return true;
 }
 
@@ -97,12 +97,12 @@ function resolveConnectedPlacement(g,tileId,connectorId){
   boardAudit(g,'OVERLORD_CONNECTION_SELECTED',{tileId,connectorId,connectorIcons:connector.icons,nextRoomId:next.id});
   if(initial){g.sequence=[next.fighters.length];g.encounter=0;g.state='playing';startEncounter(g);note(g,`🧩 ${roomDisplayName(x,next)}: uscita Eroi + lato ${connectorId} dell’Overlord.`);return true}
   g.sequence.push(next.fighters.length);g.encounter++;
-  g.pendingRewards=g.party.filter(hero=>hero.hp>0).map(hero=>({hero,ability:hero.abilities[Math.floor(Math.random()*hero.abilities.length)]}));g.state='reward';
+  g.pendingRewards=advancementRewards(g);g.state='reward';
   note(g,`🧩 L’Overlord collega ${roomDisplayName(x,next)} dal lato ${connectorId}.`);note(g,'★ Scegli DECK, TALENTO o RISERVA.');return true;
 }
 
 function connectedPlacementPanel(g){
   const x=g.exploration,room=currentExplorationRoom(x),exit=room.exits.find(side=>side.id===g.pendingOverlordPlacement?.exitId);
   const forced=!!g.pendingOverlordPlacement?.forceMiniBoss,tiles=forced?x.overlordHand.filter(tile=>tile.id===MINI_BOSS_TILE_T2.id):x.overlordHand;
-  return`<section class="hero connection-placement"><h2>${forced?'Stanza 11 — collega il Mini Boss':'Turno Overlord — collega la Room Tile'}</h2><p>Uscita scelta dagli Eroi: <strong>${exit?.id||'—'}</strong> ${iconSummary(exit?.icons)}</p><div class="connection-tiles">${tiles.map(tile=>`<article class="connection-tile"><h3>${tile.name||tile.id}</h3><small>${tile.id} · scegli il lato da collegare</small>${roomTileConnectors(tile).map(side=>`<button data-connect-tile="${tile.id}" data-connect-side="${side.id}"><b>Lato ${side.id}</b>${iconSummary(side.icons)}<small>Restano ${roomTileConnectors(tile).length-1} uscite</small></button>`).join('')}</article>`).join('')}</div></section>`;
+  return`<section class="hero connection-placement"><h2>${forced?'Stanza 11 — collega il Trono di Grumara':'Turno Overlord — collega la Room Tile'}</h2><p>Uscita scelta dagli Eroi: <strong>${exit?.id||'—'}</strong> ${iconSummary(exit?.icons)}</p><div class="connection-tiles">${tiles.map(tile=>`<article class="connection-tile"><h3>${tile.name||tile.id}</h3><small>${tile.id} · scegli il lato da collegare</small>${roomTileConnectors(tile).map(side=>`<button data-connect-tile="${tile.id}" data-connect-side="${side.id}"><b>Lato ${side.id}</b>${iconSummary(side.icons)}<small>Restano ${roomTileConnectors(tile).length-1} uscite</small></button>`).join('')}</article>`).join('')}</div></section>`;
 }
