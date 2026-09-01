@@ -12,7 +12,7 @@ const EXPLORATION_TILES_V01=[
 ];
 const EXPLORATION_CONFIG_V01={
   version:'exploration-v0.1',maxRoomsExplored:5,roomHandSize:3,exitPolicy:'RANDOM',overlordRoomPolicy:'RANDOM',
-  fighterBagConfig:{GOBLIN:12},treasureBagConfig:{BRONZE:6,SILVER:3,GOLD:1},roomTiles:EXPLORATION_TILES_V01,
+  fighterBagConfig:{GOBLIN:8,ENGINEER:4},treasureBagConfig:{BRONZE:6,SILVER:3,GOLD:1},roomTiles:EXPLORATION_TILES_V01,
   startExits:[{id:'start-north',icons:{FIGHTER:1,TREASURE:0}},{id:'start-east',icons:{FIGHTER:0,TREASURE:1}}]
 };
 const EXPLORATION_TILES_E2=[

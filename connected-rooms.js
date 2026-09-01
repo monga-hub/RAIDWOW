@@ -96,7 +96,7 @@ function resolveConnectedPlacement(g,tileId,connectorId){
   const next=generateExplorationRoom(x,{tileId,connectorId});recordMiniBossMaterialization(x,next);g.pendingOverlordPlacement=null;g.forceMiniBossPlacement=false;
   boardAudit(g,'OVERLORD_CONNECTION_SELECTED',{tileId,connectorId,connectorIcons:connector.icons,nextRoomId:next.id});
   if(initial){g.sequence=[next.fighters.length];g.encounter=0;g.state='playing';startEncounter(g);note(g,`🧩 ${roomDisplayName(x,next)}: uscita Eroi + lato ${connectorId} dell’Overlord.`);return true}
-  g.sequence.push(next.fighters.length);g.encounter++;g.party.filter(hero=>hero.hp>0).forEach(hero=>hero.hp=Math.min(hero.maxHp,hero.hp+CONFIG.interEncounterHeal));
+  g.sequence.push(next.fighters.length);g.encounter++;
   g.pendingRewards=g.party.filter(hero=>hero.hp>0).map(hero=>({hero,ability:hero.abilities[Math.floor(Math.random()*hero.abilities.length)]}));g.state='reward';
   note(g,`🧩 L’Overlord collega ${roomDisplayName(x,next)} dal lato ${connectorId}.`);note(g,'★ Scegli DECK, TALENTO o RISERVA.');return true;
 }
