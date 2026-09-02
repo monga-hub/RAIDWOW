@@ -110,7 +110,7 @@ Talenti Assassination/Subtlety (pagina richiudibile):
 
 ## Ricompense, talenti e progressione
 
-- A fine combattimento e per ogni livello ottenuto si riceve una scelta relativa a una carta: aggiungerla al deck, spenderla in un talento compatibile oppure metterla in Riserva.
+- Le ricompense carta/talento/Riserva si ottengono solo salendo di livello; la fine della stanza non assegna più una ricompensa automatica.
 - Affinità Warrior: scudo = Defense, spada = Aggressive, entrambe = spendibile su entrambi.
 - Affinità Priest: Heal o Damage. Rogue: Assassination o Subtlety.
 - Due carte in Riserva dell'affinità opposta possono pagare 1 step di un talento dell'altro ramo.

@@ -97,8 +97,8 @@ function resolveConnectedPlacement(g,tileId,connectorId){
   boardAudit(g,'OVERLORD_CONNECTION_SELECTED',{tileId,connectorId,connectorIcons:connector.icons,nextRoomId:next.id});
   if(initial){g.sequence=[next.fighters.length];g.encounter=0;g.state='playing';startEncounter(g);note(g,`🧩 ${roomDisplayName(x,next)}: uscita Eroi + lato ${connectorId} dell’Overlord.`);return true}
   g.sequence.push(next.fighters.length);g.encounter++;
-  g.pendingRewards=advancementRewards(g);g.state='reward';
-  note(g,`🧩 L’Overlord collega ${roomDisplayName(x,next)} dal lato ${connectorId}.`);note(g,'★ Scegli DECK, TALENTO o RISERVA.');return true;
+  g.pendingRewards=advancementRewards(g);
+  note(g,`🧩 L’Overlord collega ${roomDisplayName(x,next)} dal lato ${connectorId}.`);if(g.pendingRewards.length){g.state='reward';note(g,'★ Scegli DECK, TALENTO o RISERVA per ogni ricompensa di livello.')}else continueAfterRewards(g);return true;
 }
 
 function connectedPlacementPanel(g){
