@@ -139,6 +139,7 @@ Talenti Frost/Fire:
 - Affinità Warrior: scudo = Defense, spada = Aggressive, entrambe = spendibile su entrambi.
 - Affinità Priest: Heal o Damage. Rogue: Assassination o Subtlety.
 - Due carte in Riserva dell'affinità opposta possono pagare 1 step di un talento dell'altro ramo.
+- Sfoltimento di specializzazione: ogni punto in un talento esclusivo Warrior Aggressive/Defense o Priest Damage/Heal permette opzionalmente di ritirare 1 carta del ramo opposto. Il mazzo non può scendere sotto 8 carte (Wound escluse dal conteggio); il Priest deve conservare almeno 2 carte Heal. Talenti condivisi come Improved Critical non attivano lo sfoltimento.
 - XP: ogni nemico abbattuto assegna 3 XP a ogni Eroe vivo.
 - Soglie per salire di livello: 9, 11, 13, 15, 17 XP; dopo il livello il contatore torna a 0.
 - Ogni livello aumenta HP massimi e correnti di 2 e genera una ricompensa a fine combattimento.
