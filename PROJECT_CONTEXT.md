@@ -28,7 +28,8 @@ Il simulatore deve rimanere una singola interfaccia giocabile, desktop e mobile.
 - Critical è un Modifier gratuito: +1 al valore principale (danno, cura o Block), senza aumentare Bleed, bersagli o quantità secondarie.
 - Le Technique note devono risolversi direttamente sull'Equipment corretto quando vengono cliccate; non richiedere un secondo clic su arma/scudo.
 - Il pulsante **Passa** deve rimanere disponibile anche in stati incompleti, risolvendo/annullando in modo sicuro eventuali scelte pendenti.
-- Ordine a colonne rotanti: Warrior → Priest → Rogue → Overlord; il giocatore attivo è sempre la prima colonna.
+- Prima della campagna compare una schermata di composizione party: 1–4 giocatori, classi uniche, Warrior/Priest/Rogue/Mage.
+- Ordine a colonne rotanti: segue l'ordine scelto nel setup, poi Overlord; il giocatore attivo è sempre la prima colonna.
 
 ## Warrior — Guardian
 
@@ -107,6 +108,30 @@ Talenti Assassination/Subtlety (pagina richiudibile):
 - Assassination: Mutilate 1 (aggiunge 2 carte, FRONT, danno Main + Offhand +1) → Vile Poison 1 (aggiunge 2 carte, DoT cumulativo da 1, rimosso da cura o morte) → Improved Mutilate 2 step, totale +2.
 - Subtlety: Improved Backstab 2 step, totale +2 → Evasion Tricky 1 (dopo Evasion, flip gratuito) → Garrote 1 (aggiunge 4 carte, DoT cumulativo da 2).
 - Improved Critical 1, comune: aggiunge 1 Critical al deck.
+
+## Mage — Elementalist
+
+HP iniziali 8. Position permanente `FAR / NEAR`, parte FAR.
+
+Equipment iniziale:
+
+- Staff: +1 spell damage.
+- Wand: FAR, 1 danno base.
+
+Deck iniziale (10): Frostbolt ×4, Blizzard ×1, Counterspell ×1, Fireball ×3, Blink ×1.
+
+Carte:
+
+- Frostbolt: NEAR, +1 danno; con Staff infligge 2.
+- Blizzard: FAR, 2 danni AOE; con Staff infligge 3 a tutti.
+- Counterspell: NEAR/FAR, +2 danni e interrompe un Cast Lungo; infligge comunque danno senza cast da interrompere.
+- Fireball: FAR, Cast Lungo da 2 carte, +3 danni; con Staff infligge 4.
+- Blink: cambia NEAR/FAR gratuitamente e non consuma azioni.
+
+Talenti Frost/Fire:
+
+- Frost: Improved Frost Damage 2 step, totale +2 → Frost Armor 1 (aggiunge 2 carte, −2 al primo danno) → Cone of Cold 1 (aggiunge 2 carte, 1 AOE NEAR e vulnerabilità Frost +1 permanente/non cumulativa).
+- Fire: Living Bomb 1 (aggiunge 2 carte, DoT 1; alla morte/dispell esplode per 3 AOE) → Fire Piercing 1 (aggiunge 2 carte, vulnerabilità Fire +2 permanente/non cumulativa) → Improved Fire Damage 2 step, totale +2.
 
 ## Ricompense, talenti e progressione
 
