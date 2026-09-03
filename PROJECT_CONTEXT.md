@@ -190,6 +190,7 @@ Bag:
 - Ogni oggetto nella bag ha un'icona cestino.
 - L'Equipment sostituito torna nella bag, non viene eliminato.
 - Tra le stanze c'è un Turno di Recupero: 3 azioni per Eroe per curarsi, usare oggetti, cambiare Stance/Position ed equipaggiarsi. Nessun recupero automatico precedente deve sommarsi a questa fase.
+- La demo dispone di 3 slot di salvataggio manuale nel browser, accessibili sia dalla schermata iniziale sia durante la partita.
 
 Gold Equipment garantito da Grumara:
 
