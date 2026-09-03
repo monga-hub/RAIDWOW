@@ -30,6 +30,7 @@ Il simulatore deve rimanere una singola interfaccia giocabile, desktop e mobile.
 - Il pulsante **Passa** deve rimanere disponibile anche in stati incompleti, risolvendo/annullando in modo sicuro eventuali scelte pendenti.
 - Prima della campagna compare una schermata di composizione party: 1–4 giocatori, classi uniche, Warrior/Priest/Rogue/Mage.
 - Ordine a colonne rotanti: segue l'ordine scelto nel setup, poi Overlord; il giocatore attivo è sempre la prima colonna.
+- Durante i turni Eroe sono visibili al massimo 4 colonne. Nel turno Overlord le colonne Eroe spariscono e la plancia Overlord occupa l'intera riga.
 
 ## Warrior — Guardian
 
