@@ -125,7 +125,7 @@ Carte:
 
 - Frostbolt: NEAR, +1 danno; con Staff infligge 2.
 - Blizzard: FAR, 2 danni AOE; con Staff infligge 3 a tutti.
-- Counterspell: NEAR/FAR, +2 danni e interrompe un Cast Lungo; infligge comunque danno senza cast da interrompere.
+- Counterspell: NEAR/FAR, 1 danno fisso (nessun bonus/staffa/talento) e interrompe un Cast Lungo; infligge comunque il danno senza cast da interrompere.
 - Fireball: FAR, Cast Lungo da 2 carte, +3 danni; con Staff infligge 4.
 - Blink: cambia NEAR/FAR gratuitamente e non consuma azioni.
 
