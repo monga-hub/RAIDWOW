@@ -173,7 +173,7 @@ Artwork:
 - Una tile non ha entrata/uscita fissa: il lato collegato diventa l'ingresso e gli altri lati rimangono uscite.
 - Mappa e Marble Bag devono essere compatte; su mobile i target dei nemici devono restare vicini al giocatore attivo/sticky durante lo scorrimento.
 - Marble Bag UI e pagine Talenti sono richiudibili.
-- Nella scelta di collegamento dell’Overlord, ogni combinazione Room Tile/lato è mostrata come carta-porta illustrata (`assets/porta-stanza.jpeg`); nome stanza e dettagli del collegamento sono nella targa sopra la porta.
+- Le uscite tra cui scelgono gli Eroi sono mostrate come carte-porta illustrate (`assets/porta-stanza.jpeg`), con identificativo e icone nella targa. La scelta Room Tile/lato dell’Overlord resta una griglia compatta senza immagini.
 
 Bag:
 
