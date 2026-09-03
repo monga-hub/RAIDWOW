@@ -164,6 +164,7 @@ Artwork:
 - `assets/rana-warchief.jpeg`
 - `assets/rana-ingegnere.jpeg`
 - `assets/grumara-miniboss.jpeg`
+- `assets/girino-putrescente.jpeg` (miniMob evocato da Grumara)
 - `assets/ingresso.jpeg` (tile illustrata della stanza di ingresso)
 - `assets/stanza-e2-01.jpeg` … `assets/stanza-e2-10.jpeg` (artwork delle Room Tile, E2-06 "Cripta delle Spore Dorate" inclusa) e `assets/trono-grumara.jpeg` (tile `SPECIAL-MINI-BOSS`, il Trono Sommerso di Grumara). Mappati in `ROOM_ART`.
 
