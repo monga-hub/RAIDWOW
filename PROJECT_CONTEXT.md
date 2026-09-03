@@ -151,8 +151,8 @@ Command Deck comune: Attack ×3, Tactic ×2, Special ×1.
 
 - Razziatore Ranide: 16 HP; Attack 3; Tactic 2 + Wound; Special Colpo Spazzante, 2 danni a massimo 2 Eroi NEAR.
 - Artificiere Ranide: 18 HP; Attack 2; Tactic cura 2 a un nemico ferito; Special Mega Bomba, Cast Lungo da 2 Special, 5 AOE WIDE, interrompibile.
-- Rana Warchief: 20 HP; Attack 4; Tactic ordina a un altro Ranide di attaccare; Special è un attacco critico da 5.
-- Grumara, Strega del Miasma: 40 HP; Attack 6; Tactic 3 + Wound; Mega Bomba 5 WIDE, Cast Lungo interrompibile. A 25 e 10 HP evoca 3 Girini Putrescenti.
+- Rana Warchief: 20 HP; Attack 4; Tactic Colpo Critico da 5; Special Cascata di Acido, 3 danni AOE NEAR a tutti gli Eroi NEAR.
+- Grumara, Strega del Miasma: 40 HP; Attack 6; Tactic 3 + 2 Wound; Mega Bomba 5 WIDE, Cast Lungo interrompibile. A 25 e 10 HP evoca 3 Girini Putrescenti.
 - Girino Putrescente: 4 HP; attacco fisso 1; non pesca Command e agisce dal turno Overlord successivo all'evocazione.
 - La partita termina solo quando Grumara e tutti gli altri nemici della stanza sono eliminati.
 
