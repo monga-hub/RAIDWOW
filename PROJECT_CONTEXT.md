@@ -163,6 +163,7 @@ Artwork:
 - `assets/rana-warchief.jpeg`
 - `assets/rana-ingegnere.jpeg`
 - `assets/grumara-miniboss.jpeg`
+- `assets/ingresso.jpeg` (tile illustrata della stanza di ingresso)
 
 ## Dungeon ed esplorazione
 
