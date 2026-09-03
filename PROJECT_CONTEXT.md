@@ -124,7 +124,7 @@ Deck iniziale (10): Frostbolt ×4, Blizzard ×1, Counterspell ×1, Fireball ×3,
 Carte:
 
 - Frostbolt: NEAR, +1 danno; con Staff infligge 2.
-- Blizzard: FAR, 2 danni AOE; con Staff infligge 3 a tutti.
+- Blizzard: FAR, AOE a tutti i nemici; danno = potenza Frost (staffa +1 base, + talento Improved Frost), quindi basso all'inizio (1) e scala; +1 su nemici con vulnerabilità Frost.
 - Counterspell: NEAR/FAR, 1 danno fisso (nessun bonus/staffa/talento) e interrompe un Cast Lungo; infligge comunque il danno senza cast da interrompere.
 - Fireball: FAR, Cast Lungo da 2 carte, +3 danni; con Staff infligge 4.
 - Blink: cambia NEAR/FAR gratuitamente e non consuma azioni.
