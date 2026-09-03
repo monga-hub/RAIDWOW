@@ -490,3 +490,56 @@ document.getElementById('end').onclick=()=>{if(game.playerBoardEnabled)passHeroT
 document.getElementById('boardSmoke').onclick=()=>{const previous=window.PLAYER_BOARD_SETUP;window.PLAYER_BOARD_SETUP={enabled:false,sides:{}};const legacy=legacyNewGame(true),board=attachBoard(legacyNewGame(true),{warrior:'front',healer:'front'}),w=board.party[0],deckBefore=w.deck.length;boardInvest(board,w,'parry');boardInvest(board,w,'parry');const trackPass=w.mastery.parry===2&&w.levels.parry===2&&w.deck.length===deckBefore;addDeckCard(w,'parry');const deckPass=w.deck.length===deckBefore+1&&w.mastery.parry===2;w.hp=w.maxHp+1;const hpViolation=validateBoard(board).length===1;w.hp=w.maxHp;const events=board.playerBoardAudit.events.map(e=>e.type);const result={test:'Player Board feature-flag smoke',passed:!legacy.playerBoardEnabled&&trackPass&&deckPass&&hpViolation&&events.includes('ENGINE_INVESTED')&&events.includes('ABILITY_LEVEL_UP')&&events.includes('PLAYER_BOARD_SIDE_SELECTED'),baselineUnchanged:!legacy.playerBoardEnabled,trackPass,deckPass,hpViolation,audit:board.playerBoardAudit};document.getElementById('results').textContent=JSON.stringify(result,null,2);window.PLAYER_BOARD_SETUP=previous};
 if(new URLSearchParams(location.search).get('legacy')==='1')render();else createCampaignSetup();
 createSaveManager();
+
+/* ponytail: card-first friendly-target picker for support abilities.
+   Click a heal/support card -> pending state, the #enemies target list flips to
+   allies (HP bar + accumulated Wounds), click an ally to resolve. Slow Heal shows
+   the picker only on the completing (2nd) card, since only completion heals.
+   Purely reorders the existing play() call: same action cost / card consumption. */
+(function(){
+  function friendlyPickNow(g,h,card){
+    if(!g||!g.playerBoardEnabled||g.state!=='playing'||h.role!=='healer')return false;
+    if(card==='quick_heal'||card==='holy_shield'||card==='bandage')return true; // L3 (tutti/split): il pick soddisfa il target richiesto dall'engine
+    if(card==='slow_heal')return !!h.casting;                                   // solo la 2a carta (completamento)
+    return false;
+  }
+  function renderFriendlyTargets(g){
+    const p=g.pendingFriendly,label=NAMES[p.card]||p.card;
+    const list=aliveHeroes(g).map(h=>{
+      const cfg=h.board&&h.board.config,name=(cfg&&cfg.className)||NAMES[h.role]||h.role;
+      const wounds=h.deck.filter(c=>c==='wound').length;
+      const pips=Array.from({length:h.maxHp},(_,k)=>`<i class="${k<h.hp?'full':''}"></i>`).join('');
+      const extra=(h.shield>0?` · 🛡 ${h.shield}`:'')+(h.casting?' · ✨ Cast':'');
+      return `<button class="room-target friendly-pick" data-ally-pick="${h.role}"><strong>${name}</strong><div class="hp-track"><strong>HP ${Math.max(0,h.hp)}/${h.maxHp}</strong>${pips}</div><small>${wounds?`🩹 ${wounds} Ferit${wounds===1?'a':'e'}`:'Nessuna ferita'}${extra}</small></button>`;
+    }).join('');
+    document.getElementById('enemies').innerHTML=`<h2>${label} — scegli un alleato</h2><p class="target-help">Tocca l'alleato da curare o supportare.</p><div class="room-targets">${list}</div>`;
+    const hidden=document.getElementById('target');if(hidden)hidden.value=g.selectedTarget||'';
+  }
+  const _renderRoomTargets=renderRoomTargets;
+  renderRoomTargets=function(g){if(g&&g.pendingFriendly){renderFriendlyTargets(g);return}return _renderRoomTargets(g)};
+  const _sync=syncMobileTargetBar;
+  syncMobileTargetBar=function(){_sync();if(game&&game.pendingFriendly){const s=document.querySelector('.mobile-target-bar>strong');if(s)s.textContent='Scegli un alleato'}};
+  const _pass=passHeroTurn;
+  passHeroTurn=function(g){if(g)g.pendingFriendly=null;return _pass(g)};
+
+  document.addEventListener('click',function(ev){
+    const g=game;if(!g||!g.playerBoardEnabled)return;
+    const pick=ev.target.closest('.friendly-pick[data-ally-pick]');
+    if(pick&&g.pendingFriendly){
+      ev.stopImmediatePropagation();ev.preventDefault();
+      const p=g.pendingFriendly,h=g.party.find(x=>x.role===p.role);
+      g.selectedTarget=`ally:${pick.dataset.allyPick}:0`;
+      const played=h&&play(g,h,p.card,g.selectedTarget);
+      g.pendingFriendly=null;automaticEnemyTarget(g);
+      if(!played)note(g,'Giocata non valida per il bersaglio o il timing scelto.');else advanceHeroTurn(g);
+      render();return;
+    }
+    const cardBtn=ev.target.closest('[data-h][data-i]');
+    if(cardBtn){
+      const h=g.party[+cardBtn.dataset.h],card=h&&h.hand[+cardBtn.dataset.i];
+      if(h&&card&&friendlyPickNow(g,h,card)){ev.stopImmediatePropagation();ev.preventDefault();g.pendingFriendly={role:h.role,card};render();return}
+    }
+    // clic su un'altra abilita/equip (bersaglio nemico) mentre il picker e attivo: annulla, torna ai nemici e lascia proseguire la carta
+    if(g.pendingFriendly&&ev.target.closest('[data-h],[data-war-tech],[data-rogue-tech],[data-critical],[data-sword],[data-shield],[data-dagger],[data-wand],[data-flip]')){g.pendingFriendly=null;automaticEnemyTarget(g)}
+  },true);
+})();
