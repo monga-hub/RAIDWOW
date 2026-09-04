@@ -111,58 +111,92 @@
     return 0;
   }
 
-  // decisione greedy; ritorna {acts, card|null, crit}
-  function stepR(g,h,role,d){
-    const pos=()=>h.board.position.card;
-    const flipCost=(role==='rogue'&&isOn('rogue','evasion_tricky'))?0:1; // Evasion Tricky = flip gratis
-    const flip=to=>{h.board.position.card=to; if(flipCost)h.actions--; return {acts:flipCost,card:null};};
-    const hit=(card,crit)=>({acts:1,card,crit:!!crit});
+  // metadati carte per il greedy value-based
+  const CARD_STANCE={
+    warrior:{sword:'AGGRESSIVE',cleave:'AGGRESSIVE',rend:null,bare:null},
+    rogue:{backstab:'BEHIND',eviscerate:'FRONT',mutilate:'FRONT',vile_poison:null,garrote:null,kick:null,bare:null},
+    healer:{holy_pulse:null,divine_strike:'NEAR',holy_strike:'NEAR',holy_fire:'FAR',wand:'FAR'},
+    mage:{frostbolt:'NEAR',fireball:'FAR',blizzard:'FAR',cone_of_cold:'NEAR',living_bomb:'NEAR',counterspell:null,wand:'FAR'}
+  };
+  const DMG_CARDS={
+    warrior:['cleave','sword','rend','bare'],
+    rogue:['backstab','eviscerate','mutilate','vile_poison','garrote','kick','bare'],
+    healer:['holy_pulse','divine_strike','holy_strike','holy_fire','wand'],
+    mage:['frostbolt','fireball','blizzard','cone_of_cold','living_bomb','counterspell','wand']
+  };
+  const DEAD_CARDS={warrior:['taunt','parry'],rogue:['evasion','preparation'],healer:['quick_heal','slow_heal'],mage:['blink']};
+  const WEAPON=new Set(['bare','wand']);                 // colpo d'arma: non consuma carta dal mazzo
+  const CAST=new Set(['divine_strike','holy_strike','fireball']); // cast lungo: 2 azioni
+  const critBoostable=(role,card)=>role==='warrior'?['sword','rend','cleave','bare'].includes(card)
+    :role==='rogue'?['backstab','eviscerate','mutilate','bare'].includes(card)
+    :role==='healer'?card==='holy_pulse':false;
+  const isCasting=(h,card)=>(card==='fireball'&&h.fireballCasting)||(card==='divine_strike'&&h.divineStrikeCasting)||(card==='holy_strike'&&h.holyStrikeCasting);
+  function dumpCard(h,c){const i=h.hand.indexOf(c);if(i>=0){h.hand.splice(i,1);h.discard.push(c);}}
+  function doPlay(g,h,role,card){ // esegue l'azione reale; ritorna true se ha inflitto danno ORA
     if(role==='warrior'){
-      const crit=has(h,'critical')&&!h.criticalArmed?(toggleCritical(g,h),true):h.criticalArmed;
-      if(has(h,'cleave')){toggleWarriorTechnique(g,h,'cleave',h.hand.indexOf('cleave'));useSword(g,h,T);return hit('cleave',crit);}
-      if(has(h,'sword')){toggleWarriorTechnique(g,h,'sword',h.hand.indexOf('sword'));useSword(g,h,T);return hit('sword',crit);}
-      if(has(h,'rend')){toggleWarriorTechnique(g,h,'rend',h.hand.indexOf('rend'));useSword(g,h,T);return hit('rend',crit);}
-      if(has(h,'taunt')){play(g,h,'taunt',T);return {acts:1,card:null};}
-      if(has(h,'parry')){const i=h.hand.indexOf('parry');h.hand.splice(i,1);h.discard.push('parry');h.actions--;return {acts:1,card:null};}
-      useSword(g,h,T);return hit('bare',crit);
+      if(card==='sword'||card==='rend'||card==='cleave'){toggleWarriorTechnique(g,h,card,h.hand.indexOf(card));useSword(g,h,T);return true;}
+      useSword(g,h,T);return true;
     }
     if(role==='rogue'){
-      const crit=has(h,'critical')&&!h.criticalArmed?(toggleCritical(g,h),true):h.criticalArmed;
-      if(has(h,'backstab')){if(pos()!=='BEHIND')return flip('BEHIND');h.rogueTechniqueArmed='backstab';h.rogueTechniqueIndex=h.hand.indexOf('backstab');useDagger(g,h,T,'left');return hit('backstab',crit);}
-      if(has(h,'mutilate')){if(pos()!=='FRONT')return flip('FRONT');play(g,h,'mutilate',T);return hit('mutilate',crit);}
-      if(has(h,'eviscerate')){if(pos()!=='FRONT')return flip('FRONT');h.rogueTechniqueArmed='eviscerate';h.rogueTechniqueIndex=h.hand.indexOf('eviscerate');useDagger(g,h,T,'left');return hit('eviscerate',crit);}
-      if(has(h,'vile_poison')){if(pos()!=='FRONT'&&pos()!=='BEHIND'){};play(g,h,'vile_poison',T);return hit('vile_poison',false);}
-      if(has(h,'garrote')){play(g,h,'garrote',T);return hit('garrote',false);}
-      if(has(h,'kick')){play(g,h,'kick',T);return hit('kick',false);}
-      if(has(h,'preparation')){play(g,h,'preparation',T);h.preparationPending=0;return {acts:1,card:null};}
-      if(has(h,'evasion')){const i=h.hand.indexOf('evasion');h.hand.splice(i,1);h.discard.push('evasion');h.actions--;return {acts:1,card:null};}
-      useDagger(g,h,T,'left');return hit('bare',crit);
+      if(card==='backstab'||card==='eviscerate'){h.rogueTechniqueArmed=card;h.rogueTechniqueIndex=h.hand.indexOf(card);useDagger(g,h,T,'left');return true;}
+      if(card==='mutilate'||card==='vile_poison'||card==='garrote'||card==='kick'){play(g,h,card,T);return true;}
+      useDagger(g,h,T,'left');return true;
     }
     if(role==='healer'){
-      if(h.divineStrikeCasting&&has(h,'divine_strike')){if(pos()!=='NEAR')return flip('NEAR');play(g,h,'divine_strike',T);return hit('divine_strike',false);}
-      if(h.holyStrikeCasting&&has(h,'holy_strike')){if(pos()!=='NEAR')return flip('NEAR');play(g,h,'holy_strike',T);return hit('holy_strike',false);}
-      const crit=has(h,'critical')&&!h.criticalArmed?(toggleCritical(g,h),true):h.criticalArmed;
-      if(has(h,'holy_pulse')){play(g,h,'holy_pulse',T);return hit('holy_pulse',crit);}
-      if(has(h,'holy_fire')){if(pos()!=='FAR')return flip('FAR');play(g,h,'holy_fire',T);return hit('holy_fire',false);}
-      if(has(h,'holy_strike')&&!h.holyStrikeCasting){if(pos()!=='NEAR')return flip('NEAR');play(g,h,'holy_strike',T);return {acts:1,card:null};} // carica
-      if(has(h,'divine_strike')&&!h.divineStrikeCasting){if(pos()!=='NEAR')return flip('NEAR');play(g,h,'divine_strike',T);return {acts:1,card:null};} // carica
-      if(pos()==='FAR'){useWand(g,h,T);return hit('wand',false);}
-      if(has(h,'quick_heal')){const i=h.hand.indexOf('quick_heal');h.hand.splice(i,1);h.discard.push('quick_heal');h.actions--;return {acts:1,card:null};}
-      if(has(h,'slow_heal')){const i=h.hand.indexOf('slow_heal');h.hand.splice(i,1);h.discard.push('slow_heal');h.actions--;return {acts:1,card:null};}
-      return flip('FAR');
+      if(card==='divine_strike'){const w=h.divineStrikeCasting;play(g,h,'divine_strike',T);return w;}
+      if(card==='holy_strike'){const w=h.holyStrikeCasting;play(g,h,'holy_strike',T);return w;}
+      if(card==='holy_pulse'||card==='holy_fire'){play(g,h,card,T);return true;}
+      useWand(g,h,T);return true;
     }
     if(role==='mage'){
-      if(h.fireballCasting&&has(h,'fireball')){if(pos()!=='FAR')return flip('FAR');playMageCard(g,h,'fireball',T);return hit('fireball',false);}
-      if(has(h,'frostbolt')){if(pos()!=='NEAR')return flip('NEAR');playMageCard(g,h,'frostbolt',T);return hit('frostbolt',false);}
-      if(has(h,'cone_of_cold')){if(pos()!=='NEAR')return flip('NEAR');playMageCard(g,h,'cone_of_cold',T);return hit('cone_of_cold',false);}
-      if(has(h,'living_bomb')){if(pos()!=='NEAR')return flip('NEAR');playMageCard(g,h,'living_bomb',T);return hit('living_bomb',false);}
-      if(has(h,'fireball')&&!h.fireballCasting){if(pos()!=='FAR')return flip('FAR');playMageCard(g,h,'fireball',T);return {acts:1,card:null};} // carica
-      if(has(h,'blizzard')){if(pos()!=='FAR')return flip('FAR');playMageCard(g,h,'blizzard',T);return hit('blizzard',false);}
-      if(has(h,'counterspell')){playMageCard(g,h,'counterspell',T);return hit('counterspell',false);}
-      if(has(h,'blink')){const i=h.hand.indexOf('blink');h.hand.splice(i,1);h.discard.push('blink');return {acts:0,card:null};}
-      if(pos()!=='FAR')return flip('FAR');useMageWand(g,h,T);return hit('wand',false);
+      if(card==='fireball'){const w=h.fireballCasting;playMageCard(g,h,'fireball',T);return w;}
+      if(card==='wand'){useMageWand(g,h,T);return true;}
+      playMageCard(g,h,card,T);return true;
     }
-    return {acts:1,card:null};
+    return false;
+  }
+  function execCast(g,h,role,card){ // completa un cast in corso
+    const st=CARD_STANCE[role][card];
+    if(st&&h.board.position.card!==st){h.board.position.card=st;h.actions--;return {acts:1,card:null};}
+    const before=h.actions, hit=doPlay(g,h,role,card);
+    if(h.actions===before)h.actions--;
+    return {acts:1,card:hit?card:null,crit:false};
+  }
+  // greedy value-based: ogni azione sceglie il colpo col miglior danno/azione (AOE incluso)
+  function stepR(g,h,role,d){
+    const cur=h.board.position.card;
+    const flipFree=(role==='rogue'&&isOn('rogue','evasion_tricky'));
+    // 1) completa un cast lungo in corso
+    if(role==='healer'&&h.divineStrikeCasting&&has(h,'divine_strike'))return execCast(g,h,role,'divine_strike');
+    if(role==='healer'&&h.holyStrikeCasting&&has(h,'holy_strike'))return execCast(g,h,role,'holy_strike');
+    if(role==='mage'&&h.fireballCasting&&has(h,'fireball'))return execCast(g,h,role,'fireball');
+    // 2) valuta ogni carta-danno disponibile in mano
+    const critAvail=has(h,'critical'), stances=CARD_STANCE[role];
+    let best=null;
+    for(const card of DMG_CARDS[role]){
+      if(!WEAPON.has(card)&&!has(h,card))continue;
+      const st=stances[card], needFlip=st&&st!==cur, flipCost=needFlip?(flipFree?0:1):0;
+      const cast=CAST.has(card)&&!isCasting(h,card);
+      const crit=critAvail&&critBoostable(role,card);
+      const dmg=hitDamage(role,card,crit,h);
+      const val=dmg/((cast?2:1)+flipCost);
+      if(!best||val>best.val)best={card,val,st,needFlip,flipCost,crit};
+    }
+    if(!best)return {acts:1,card:null};
+    // 3) se il meglio è un colpo d'arma (non cicla carte) e restano carte morte, scartane una
+    if(WEAPON.has(best.card)){
+      const dead=DEAD_CARDS[role].find(c=>has(h,c));
+      if(dead){dumpCard(h,dead);h.actions--;return {acts:1,card:null};}
+    }
+    // 4) esegui: flip se serve, poi gioca
+    if(best.needFlip){
+      h.board.position.card=best.st;
+      if(best.flipCost){h.actions--;return {acts:1,card:null};} // flip a pagamento: gioca il prossimo giro
+    }
+    if(best.crit&&!h.criticalArmed)toggleCritical(g,h);
+    const before=h.actions, hit=doPlay(g,h,role,best.card);
+    if(h.actions===before)h.actions--;
+    return {acts:1,card:hit?best.card:null,crit:best.crit};
   }
 
   function applyTalents(g,h,role){
