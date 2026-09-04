@@ -25,7 +25,7 @@
   // carta in `card`) | 'flag' (booleano, nessun valore).
   const TALENT_DEFS={
     warrior:[
-      {id:'heroic_mastery',label:'Heroic Mastery',kind:'bonus',val:1,hint:'+ Spada'},
+      {id:'heroic_mastery',label:'Heroic Mastery',kind:'bonus',val:2,hint:'+ Spada'},
       {id:'improved_rend',label:'Improved Rend',kind:'bonus',val:1,hint:'+ Rend'},
       {id:'cleave',label:'Cleave',kind:'count',val:2,card:'cleave',hint:'carte'},
       {id:'improved_critical',label:'Improved Critical',kind:'count',val:1,card:'critical',hint:'carte'}
