@@ -25,32 +25,32 @@
   // carta in `card`) | 'flag' (booleano, nessun valore).
   const TALENT_DEFS={
     warrior:[
-      {id:'heroic_mastery',label:'Heroic Mastery',kind:'bonus',val:2,hint:'+ Spada'},
-      {id:'improved_rend',label:'Improved Rend',kind:'bonus',val:1,hint:'+ Rend'},
-      {id:'cleave',label:'Cleave',kind:'count',val:2,card:'cleave',hint:'carte'},
-      {id:'improved_critical',label:'Improved Critical',kind:'count',val:1,card:'critical',hint:'carte'}
+      {id:'heroic_mastery',label:'Heroic Mastery · 2 step',kind:'bonus',val:2,hint:'+ Spada'},
+      {id:'improved_rend',label:'Improved Rend · 1 step',kind:'bonus',val:1,hint:'+ Rend'},
+      {id:'cleave',label:'Cleave · 1 step',kind:'count',val:2,card:'cleave',hint:'carte'},
+      {id:'improved_critical',label:'Improved Critical · 1 step',kind:'count',val:1,card:'critical',hint:'carte'}
     ],
     rogue:[
-      {id:'improved_backstab',label:'Improved Backstab',kind:'bonus',val:2,hint:'+ Backstab'},
-      {id:'evasion_tricky',label:'Evasion Tricky (flip gratis)',kind:'flag'},
-      {id:'mutilate',label:'Mutilate',kind:'count',val:2,card:'mutilate',hint:'carte'},
-      {id:'vile_poison',label:'Vile Poison',kind:'count',val:2,card:'vile_poison',hint:'carte'},
-      {id:'garrote',label:'Garrote',kind:'count',val:4,card:'garrote',hint:'carte'},
-      {id:'fan_of_knives',label:'Fan of Knives (AOE)',kind:'count',val:2,card:'fan_of_knives',hint:'carte'},
-      {id:'improved_critical',label:'Improved Critical',kind:'count',val:1,card:'critical',hint:'carte'}
+      {id:'improved_backstab',label:'Improved Backstab · 2 step',kind:'bonus',val:2,hint:'+ Backstab'},
+      {id:'evasion_tricky',label:'Evasion Tricky (flip gratis) · 1 step',kind:'flag'},
+      {id:'mutilate',label:'Mutilate · 1 step',kind:'count',val:2,card:'mutilate',hint:'carte'},
+      {id:'vile_poison',label:'Vile Poison · 1 step',kind:'count',val:2,card:'vile_poison',hint:'carte'},
+      {id:'garrote',label:'Garrote · 1 step',kind:'count',val:4,card:'garrote',hint:'carte'},
+      {id:'fan_of_knives',label:'Fan of Knives (AOE) · 1 step',kind:'count',val:2,card:'fan_of_knives',hint:'carte'},
+      {id:'improved_critical',label:'Improved Critical · 1 step',kind:'count',val:1,card:'critical',hint:'carte'}
     ],
     healer:[
-      {id:'improved_spell_damage',label:'Improved Spell Damage',kind:'bonus',val:2,hint:'+ spell'},
-      {id:'holy_fire',label:'Holy Fire',kind:'count',val:3,card:'holy_fire',hint:'carte'},
-      {id:'holy_strike',label:'Holy Strike',kind:'count',val:3,card:'holy_strike',hint:'carte'},
-      {id:'improved_critical',label:'Improved Critical',kind:'count',val:1,card:'critical',hint:'carte'}
+      {id:'improved_spell_damage',label:'Improved Spell Damage · 2 step',kind:'bonus',val:2,hint:'+ spell'},
+      {id:'holy_fire',label:'Holy Fire · 1 step',kind:'count',val:3,card:'holy_fire',hint:'carte'},
+      {id:'holy_strike',label:'Holy Strike · 1 step',kind:'count',val:3,card:'holy_strike',hint:'carte'},
+      {id:'improved_critical',label:'Improved Critical · 1 step',kind:'count',val:1,card:'critical',hint:'carte'}
     ],
     mage:[
-      {id:'improved_frost',label:'Improved Frost',kind:'bonus',val:1,hint:'+ Frost'},
-      {id:'improved_fire',label:'Improved Fire',kind:'bonus',val:1,hint:'+ Fire'},
-      {id:'cone_of_cold',label:'Cone of Cold',kind:'count',val:2,card:'cone_of_cold',hint:'carte'},
-      {id:'living_bomb',label:'Living Bomb',kind:'count',val:2,card:'living_bomb',hint:'carte'},
-      {id:'improved_critical',label:'Improved Critical',kind:'count',val:1,card:'critical',hint:'carte'}
+      {id:'improved_frost',label:'Improved Frost · 1 step',kind:'bonus',val:1,hint:'+ Frost'},
+      {id:'improved_fire',label:'Improved Fire · 1 step',kind:'bonus',val:1,hint:'+ Fire'},
+      {id:'cone_of_cold',label:'Cone of Cold · 1 step',kind:'count',val:2,card:'cone_of_cold',hint:'carte'},
+      {id:'living_bomb',label:'Living Bomb · 1 step',kind:'count',val:2,card:'living_bomb',hint:'carte'},
+      {id:'improved_critical',label:'Improved Critical · 1 step',kind:'count',val:1,card:'critical',hint:'carte'}
     ]
   };
   const ACTIVE={warrior:new Set(),rogue:new Set(),healer:new Set(),mage:new Set()};
