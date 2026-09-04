@@ -60,8 +60,6 @@
   const bonus=(role,id)=>isOn(role,id)?V(role,id):0;    // bonus se il talento è attivo
   let TARGETS=1;                                        // n. manichini (1-4)
 
-  function mkDummy(id){return {id,type:'dummy',hp:1e9,maxHp:1e9,damage:0,draw:[],discard:[],bleeds:[],bleedCount:0,taunted:false,casting:null,holyFireDots:0,livingBomb:0,vilePoison:0,garrote:0,frostVulnerable:false,firePierced:false};}
-  const has=(h,c)=>h.hand.includes(c);
 
   // carte ad area: il danno scala col numero di bersagli
   const AOE=new Set(['cleave','holy_pulse','blizzard','cone_of_cold']);
@@ -130,107 +128,86 @@
   const critBoostable=(role,card)=>role==='warrior'?['sword','rend','cleave','bare'].includes(card)
     :role==='rogue'?['backstab','eviscerate','mutilate','bare'].includes(card)
     :role==='healer'?card==='holy_pulse':false;
-  const isCasting=(h,card)=>(card==='fireball'&&h.fireballCasting)||(card==='divine_strike'&&h.divineStrikeCasting)||(card==='holy_strike'&&h.holyStrikeCasting);
-  function dumpCard(h,c){const i=h.hand.indexOf(c);if(i>=0){h.hand.splice(i,1);h.discard.push(c);}}
-  function doPlay(g,h,role,card){ // esegue l'azione reale; ritorna true se ha inflitto danno ORA
-    if(role==='warrior'){
-      if(card==='sword'||card==='rend'||card==='cleave'){toggleWarriorTechnique(g,h,card,h.hand.indexOf(card));useSword(g,h,T);return true;}
-      useSword(g,h,T);return true;
-    }
-    if(role==='rogue'){
-      if(card==='backstab'||card==='eviscerate'){h.rogueTechniqueArmed=card;h.rogueTechniqueIndex=h.hand.indexOf(card);useDagger(g,h,T,'left');return true;}
-      if(card==='mutilate'||card==='vile_poison'||card==='garrote'||card==='kick'){play(g,h,card,T);return true;}
-      useDagger(g,h,T,'left');return true;
-    }
-    if(role==='healer'){
-      if(card==='divine_strike'){const w=h.divineStrikeCasting;play(g,h,'divine_strike',T);return w;}
-      if(card==='holy_strike'){const w=h.holyStrikeCasting;play(g,h,'holy_strike',T);return w;}
-      if(card==='holy_pulse'||card==='holy_fire'){play(g,h,card,T);return true;}
-      useWand(g,h,T);return true;
-    }
-    if(role==='mage'){
-      if(card==='fireball'){const w=h.fireballCasting;playMageCard(g,h,'fireball',T);return w;}
-      if(card==='wand'){useMageWand(g,h,T);return true;}
-      playMageCard(g,h,card,T);return true;
-    }
-    return false;
-  }
-  function execCast(g,h,role,card){ // completa un cast in corso
-    const st=CARD_STANCE[role][card];
-    if(st&&h.board.position.card!==st){h.board.position.card=st;h.actions--;return {acts:1,card:null};}
-    const before=h.actions, hit=doPlay(g,h,role,card);
-    if(h.actions===before)h.actions--;
-    return {acts:1,card:hit?card:null,crit:false};
-  }
-  // greedy value-based: ogni azione sceglie il colpo col miglior danno/azione (AOE incluso)
-  function stepR(g,h,role,d){
-    const cur=h.board.position.card;
+  // ---- Simulatore astratto (niente motore): mazzo/pesca/stance/cast/carte morte, danno dai PARAMS ----
+  const BASE_DECK={
+    warrior:['sword','sword','rend','rend','parry','parry','parry','taunt','taunt','critical'],
+    rogue:['backstab','backstab','backstab','eviscerate','eviscerate','eviscerate','evasion','kick','preparation','critical'],
+    healer:['quick_heal','quick_heal','slow_heal','slow_heal','slow_heal','divine_strike','divine_strike','holy_pulse','holy_pulse','critical'],
+    mage:['frostbolt','frostbolt','frostbolt','frostbolt','blizzard','counterspell','fireball','fireball','fireball','blink']
+  };
+  const START_STANCE={warrior:'AGGRESSIVE',rogue:'FRONT',healer:'FAR',mage:'FAR'};
+  const HAND_LIMIT=5;
+  let AI_MODE='greedy', ROLL_DEPTH=6, ROLL_COUNT=4;      // rollout Monte-Carlo
+  function shuf(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+  function dump(s,c){const i=s.hand.indexOf(c);if(i>=0){s.hand.splice(i,1);s.discard.push(c);}}
+  function refillS(s){while(s.hand.length<HAND_LIMIT){if(!s.draw.length){if(!s.discard.length)break;s.draw=shuf(s.discard);s.discard=[];}s.hand.push(s.draw.pop());}}
+  function clone(s){return {role:s.role,deck:s.deck,draw:[...s.draw],discard:[...s.discard],hand:[...s.hand],stance:s.stance,casting:s.casting};}
+  function candidates(s){
+    const role=s.role, crit=s.hand.includes('critical'), out=[];
     const flipFree=(role==='rogue'&&isOn('rogue','evasion_tricky'));
-    // 1) completa un cast lungo in corso
-    if(role==='healer'&&h.divineStrikeCasting&&has(h,'divine_strike'))return execCast(g,h,role,'divine_strike');
-    if(role==='healer'&&h.holyStrikeCasting&&has(h,'holy_strike'))return execCast(g,h,role,'holy_strike');
-    if(role==='mage'&&h.fireballCasting&&has(h,'fireball'))return execCast(g,h,role,'fireball');
-    // 2) valuta ogni carta-danno disponibile in mano
-    const critAvail=has(h,'critical'), stances=CARD_STANCE[role];
-    let best=null;
     for(const card of DMG_CARDS[role]){
-      if(!WEAPON.has(card)&&!has(h,card))continue;
-      const st=stances[card], needFlip=st&&st!==cur, flipCost=needFlip?(flipFree?0:1):0;
-      const cast=CAST.has(card)&&!isCasting(h,card);
-      const crit=critAvail&&critBoostable(role,card);
-      const dmg=hitDamage(role,card,crit,h);
-      const val=dmg/((cast?2:1)+flipCost);
-      if(!best||val>best.val)best={card,val,st,needFlip,flipCost,crit};
+      if(!WEAPON.has(card)&&!s.hand.includes(card))continue;
+      const st=CARD_STANCE[role][card], needFlip=st&&st!==s.stance, flipCost=needFlip?(flipFree?0:1):0;
+      const cast=CAST.has(card)&&s.casting!==card;
+      const boost=crit&&critBoostable(role,card);
+      const dmg=hitDamage(role,card,boost,null);
+      out.push({card,st,needFlip,flipCost,cast,crit:boost,dmg,val:dmg/((cast?2:1)+flipCost)});
     }
-    if(!best)return {acts:1,card:null};
-    // 3) se il meglio è un colpo d'arma (non cicla carte) e restano carte morte, scartane una
-    if(WEAPON.has(best.card)){
-      const dead=DEAD_CARDS[role].find(c=>has(h,c));
-      if(dead){dumpCard(h,dead);h.actions--;return {acts:1,card:null};}
-    }
-    // 4) esegui: flip se serve, poi gioca
-    if(best.needFlip){
-      h.board.position.card=best.st;
-      if(best.flipCost){h.actions--;return {acts:1,card:null};} // flip a pagamento: gioca il prossimo giro
-    }
-    if(best.crit&&!h.criticalArmed)toggleCritical(g,h);
-    const before=h.actions, hit=doPlay(g,h,role,best.card);
-    if(h.actions===before)h.actions--;
-    return {acts:1,card:hit?best.card:null,crit:best.crit};
+    return out;
   }
-
-  function applyTalents(g,h,role){
-    for(const tal of TALENT_DEFS[role]){
-      if(!isOn(role,tal.id))continue;
-      if(tal.kind==='count')for(let i=0;i<V(role,tal.id);i++)h.deck.push(tal.card);
+  // applica UNA azione (flip / gioca / completa cast / cicla carta morta); ritorna il danno
+  function actOne(s, choose){
+    const role=s.role;
+    if(s.casting&&s.hand.includes(s.casting)){          // completa cast lungo
+      const card=s.casting, st=CARD_STANCE[role][card];
+      if(st&&st!==s.stance){s.stance=st;return 0;}
+      dump(s,card); s.casting=null; return hitDamage(role,card,false,null);
     }
-    h.draw=shuffle(h.deck); h.discard=[]; h.hand=[]; refill(h,g);
+    const cands=candidates(s);
+    if(!cands.length)return 0;
+    const pick=choose(cands,s);
+    return applyPick(s,pick);
   }
-  function buildSim(role){
-    const savedGame=game, savedRender=render;
-    render=function(){};
-    try{ startBoardCampaign([role],'heroic'); }catch(e){}
-    const g=game;
-    game=savedGame; render=savedRender;
-    g.enemies=Array.from({length:TARGETS},(_,i)=>mkDummy(99-i)); g.state='playing'; g.activeRole=role; g.round=1;
-    g.currentEncounter={firstKillRound:null,won:false,size:1};
-    const h=g.party[0];
-    applyTalents(g,h,role);
-    return {role, g, h, dummy:g.enemies[0], damage:0, actions:0, wasted:0, rounds:0};
+  function applyPick(s,pick){
+    const role=s.role;
+    if(WEAPON.has(pick.card)){                            // colpo d'arma: se ci sono carte morte, ciclane una
+      const dead=DEAD_CARDS[role].find(c=>s.hand.includes(c));
+      if(dead){dump(s,dead);return 0;}
+    }
+    if(pick.needFlip){s.stance=pick.st; if(pick.flipCost)return 0;} // flip a pagamento = questa azione
+    if(pick.crit)dump(s,'critical');
+    if(pick.cast){dump(s,pick.card);s.casting=pick.card;return 0;}  // carica
+    if(!WEAPON.has(pick.card))dump(s,pick.card);
+    return pick.dmg;
   }
-  function advance(sim, roundsToRun){
-    const {g,h,role,dummy}=sim;
-    for(let r=0;r<roundsToRun;r++){
-      sim.rounds++; h.actions=CONFIG.actionsPerRound; refill(h,g);
-      let guard=0;
-      while(h.actions>0 && guard++<30){
-        const aBefore=h.actions, res=stepR(g,h,role,dummy);
-        if(!res){h.actions--;sim.actions++;sim.wasted++;continue;}
-        if(res.acts===0)continue;
-        if(h.actions===aBefore)h.actions--;
-        sim.actions+=res.acts;
-        const dmg=res.card?hitDamage(role,res.card,res.crit,h):0;
-        sim.damage+=dmg; if(dmg<=0)sim.wasted+=res.acts;
+  const greedy=(cands)=>cands.reduce((a,b)=>b.val>a.val?b:a);
+  const rnd=(cands)=>cands[Math.floor(Math.random()*cands.length)];
+  function rolloutChoose(cands,s){                        // Monte-Carlo: media di ROLL_COUNT playout casuali a profondità ROLL_DEPTH
+    let best=null;
+    for(const c of cands){
+      let tot=0;
+      for(let i=0;i<ROLL_COUNT;i++){
+        const cl=clone(s);
+        tot+=applyPick(cl,c);
+        for(let k=1;k<ROLL_DEPTH;k++){ if(cl.hand.length<2)refillS(cl); tot+=actOne(cl,rnd); }
+      }
+      const avg=tot/ROLL_COUNT;
+      if(!best||avg>best.avg)best={c,avg};
+    }
+    return best.c;
+  }
+  function newSim(role){
+    const deck=[...BASE_DECK[role]];
+    for(const tal of TALENT_DEFS[role]) if(tal.kind==='count'&&isOn(role,tal.id)) for(let i=0;i<V(role,tal.id);i++) deck.push(tal.card);
+    return {role, deck, draw:shuf(deck), discard:[], hand:[], stance:START_STANCE[role], casting:null, damage:0, actions:0, wasted:0, rounds:0};
+  }
+  function advance(sim, rounds){
+    const choose=AI_MODE==='rollout'?rolloutChoose:greedy;
+    for(let r=0;r<rounds;r++){
+      sim.rounds++; refillS(sim);
+      for(let a=0;a<3;a++){
+        const dmg=actOne(sim,choose);
+        sim.actions++; sim.damage+=(dmg>0?dmg:0); if(dmg<=0)sim.wasted++;
       }
     }
   }
@@ -252,8 +229,8 @@
       bar.style.width=(100*dpa/maxDpa).toFixed(1)+'%'; bar.textContent=fmt(dpa);
     }
   }
-  function resetSims(){sims=ROLES.map(buildSim);refreshCards();}
-  function tick(){for(const s of sims)advance(s,12);refreshCards();}
+  function resetSims(){sims=ROLES.map(newSim);refreshCards();}
+  function tick(){const n=AI_MODE==='rollout'?3:12;for(const s of sims)advance(s,n);refreshCards();}
   function run(){if(timer)return;if(!sims.length)resetSims();timer=setInterval(tick,60);setBtns(true);}
   function stop(){clearInterval(timer);timer=null;setBtns(false);}
   function reset(){const wasRunning=!!timer;stop();resetSims();if(wasRunning)run();}
@@ -265,7 +242,8 @@
     style.textContent=`
       #benchPage .dps-controls{display:flex;gap:8px;align-items:center;margin-bottom:14px}
       #benchPage .dps-tgt{min-width:34px;padding:6px 9px}
-      #benchPage .dps-tgt.active{background:var(--gold);color:#19150b;border-color:#e7ca76}
+      #benchPage .dps-tgt.active,#benchPage .dps-ai.active{background:var(--gold);color:#19150b;border-color:#e7ca76}
+      #benchPage .dps-ai{padding:6px 9px}
       #benchPage .dps-cards,#benchPage .dps-params{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
       #benchPage .dps-params{margin-top:14px;align-items:start}
       @media(max-width:900px){#benchPage .dps-cards,#benchPage .dps-params{grid-template-columns:1fr 1fr}}
@@ -299,6 +277,15 @@
           <button id="dps-run">▶ Run</button>
           <button id="dps-stop" class="secondary" disabled>■ Stop</button>
           <button id="dps-reset" class="secondary">↺ Reset</button>
+          <span style="display:flex;align-items:center;gap:6px">
+            <span style="color:var(--muted);font-size:12px">AI:</span>
+            <button class="secondary dps-ai active" data-ai="greedy">Greedy</button>
+            <button class="secondary dps-ai" data-ai="rollout">Rollout MC</button>
+          </span>
+          <span class="dps-roll" hidden style="display:flex;align-items:center;gap:6px">
+            <label style="color:var(--muted);font-size:12px">profondità (d6)<input id="dps-depth" type="number" min="1" max="12" value="6" style="width:48px;margin-left:5px;padding:5px 6px;text-align:center;font:inherit;font-weight:700;color:var(--ink);background:#0f1712;border:1px solid #3a4a3d;border-radius:6px"></label>
+            <label style="color:var(--muted);font-size:12px">rollout<input id="dps-count" type="number" min="1" max="30" value="4" style="width:48px;margin-left:5px;padding:5px 6px;text-align:center;font:inherit;font-weight:700;color:var(--ink);background:#0f1712;border:1px solid #3a4a3d;border-radius:6px"></label>
+          </span>
           <span class="dps-targets" style="margin-left:auto;display:flex;align-items:center;gap:6px">
             <span style="color:var(--muted);font-size:12px">Manichini:</span>
             ${[1,2,3,4].map(n=>`<button class="secondary dps-tgt${n===1?' active':''}" data-targets="${n}">${n}</button>`).join('')}
@@ -333,7 +320,7 @@
                 <div class="trow"><input type="checkbox" id="t-${r}-${t.id}" data-trole="${r}" data-tid="${t.id}"><label for="t-${r}-${t.id}">${t.label}</label>${t.kind==='flag'?'':`<input class="tval" type="number" min="0" max="12" step="1" value="${t.val}" data-tvrole="${r}" data-tvid="${t.id}" title="${t.hint||''}"><span class="thint">${t.hint||''}</span>`}</div>`).join('')}
             </div>`).join('')}
         </div>
-        <p class="dps-note">Il motore gestisce mazzo, pesca, stance e cast lungo; il danno per colpo viene dai valori qui sopra. I talenti aggiungono le loro carte al mazzo e applicano i bonus. Assunzioni: cambio stance = 1 azione (gratis per il Rogue con Evasion Tricky); carte non-danno = 0 danni; cast lungo (Colpo Divino, Fireball, Holy Strike) = 2 carte + 2 azioni; i DoT (Vile Poison, Garrote, Holy Fire, Living Bomb) sono modellati come danno-per-carta approssimato, non come tick nel turno Overlord — tara quei valori a piacere. Cambiare qualcosa azzera e ricalcola.</p>
+        <p class="dps-note">Il simulatore gestisce mazzo, pesca, stance e cast lungo; il danno per colpo viene dai valori qui sopra. AI: <b>Greedy</b> = ogni azione sceglie il miglior danno/azione; <b>Rollout MC</b> = per ogni azione simula più giocate future casuali (profondità = d6) e sceglie la mossa col miglior esito medio (lookahead). I talenti aggiungono le loro carte al mazzo e applicano i bonus. Assunzioni: cambio stance = 1 azione (gratis per il Rogue con Evasion Tricky); carte non-danno = 0 danni; cast lungo (Colpo Divino, Fireball, Holy Strike) = 2 carte + 2 azioni; i DoT (Vile Poison, Garrote, Holy Fire, Living Bomb) sono modellati come danno-per-carta approssimato, non come tick nel turno Overlord — tara quei valori a piacere. Cambiare qualcosa azzera e ricalcola.</p>
       </div>`;
     document.querySelector('main').append(page);
 
@@ -376,6 +363,11 @@
     page.querySelectorAll('.dps-tgt').forEach(btn=>{
       btn.onclick=()=>{TARGETS=+btn.dataset.targets;page.querySelectorAll('.dps-tgt').forEach(b=>b.classList.toggle('active',b===btn));reset();};
     });
+    page.querySelectorAll('.dps-ai').forEach(btn=>{
+      btn.onclick=()=>{AI_MODE=btn.dataset.ai;page.querySelectorAll('.dps-ai').forEach(b=>b.classList.toggle('active',b===btn));page.querySelector('.dps-roll').hidden=(AI_MODE!=='rollout');reset();};
+    });
+    document.getElementById('dps-depth').oninput=e=>{ROLL_DEPTH=Math.max(1,Math.min(12,+e.target.value||6));reset();};
+    document.getElementById('dps-count').oninput=e=>{ROLL_COUNT=Math.max(1,Math.min(30,+e.target.value||4));reset();};
 
     document.getElementById('dps-run').onclick=run;
     document.getElementById('dps-stop').onclick=stop;
