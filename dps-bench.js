@@ -13,7 +13,7 @@
 
   // parametri danno editabili: [key,label,default]. Le carte da talento sono in coda.
   const PARAM_DEFS={
-    warrior:[['sword_base','Spada (arma base)',1],['heroic_strike','Heroic Strike (+ arma)',1],['rend_bleed','Rend — sanguinamento extra',0],['crit','Critico (+)',1],['cleave','Cleave (AOE) — talento',2]],
+    warrior:[['sword_base','Spada (arma base)',1],['heroic_strike','Heroic Strike (+ arma)',2],['rend_bleed','Rend — sanguinamento extra',0],['crit','Critico (+)',1],['cleave','Cleave (AOE) — talento',3]],
     rogue:[['dagger_base','Pugnale (base)',1],['backstab','Backstab (+)',2],['eviscerate','Eviscerate (+)',1],['kick','Kick',1],['crit','Critico (+)',1],['mutilate','Mutilate — talento',3],['vile_poison','Vile Poison /carta — talento',1],['garrote','Garrote /carta — talento',2],['fan_of_knives','Fan of Knives (AOE) — talento',2]],
     healer:[['holy_pulse','Impulso Sacro',1],['divine_strike','Colpo Divino (cast corto)',2],['wand','Bacchetta (FAR)',1],['crit','Critico (+)',1],['holy_fire','Holy Fire /carta — talento',2],['holy_strike','Holy Strike (completo) — talento',4]],
     mage:[['frostbolt','Frostbolt',2],['fireball','Fireball (completo)',4],['blizzard','Blizzard',1],['counterspell','Counterspell',1],['wand','Bacchetta (FAR)',1],['crit','Critico (+)',1],['cone_of_cold','Cone of Cold (AOE) — talento',2],['living_bomb','Living Bomb (AOE/carta) — talento',2]]
