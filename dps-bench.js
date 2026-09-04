@@ -14,7 +14,7 @@
   // parametri danno editabili: [key,label,default]. Le carte da talento sono in coda.
   const PARAM_DEFS={
     warrior:[['sword_base','Spada (arma base)',1],['heroic_strike','Heroic Strike (+ arma)',1],['rend_bleed','Rend — sanguinamento extra',0],['crit','Critico (+)',1],['cleave','Cleave (AOE) — talento',2]],
-    rogue:[['dagger_base','Pugnale (base)',1],['backstab','Backstab (+)',2],['eviscerate','Eviscerate (+)',1],['kick','Kick',1],['crit','Critico (+)',1],['mutilate','Mutilate — talento',3],['vile_poison','Vile Poison /carta — talento',1],['garrote','Garrote /carta — talento',2]],
+    rogue:[['dagger_base','Pugnale (base)',1],['backstab','Backstab (+)',2],['eviscerate','Eviscerate (+)',1],['kick','Kick',1],['crit','Critico (+)',1],['mutilate','Mutilate — talento',3],['vile_poison','Vile Poison /carta — talento',1],['garrote','Garrote /carta — talento',2],['fan_of_knives','Fan of Knives (AOE) — talento',2]],
     healer:[['holy_pulse','Impulso Sacro',1],['divine_strike','Colpo Divino (cast corto)',2],['wand','Bacchetta (FAR)',1],['crit','Critico (+)',1],['holy_fire','Holy Fire /carta — talento',2],['holy_strike','Holy Strike (completo) — talento',4]],
     mage:[['frostbolt','Frostbolt',2],['fireball','Fireball (completo)',4],['blizzard','Blizzard',1],['counterspell','Counterspell',1],['wand','Bacchetta (FAR)',1],['crit','Critico (+)',1],['cone_of_cold','Cone of Cold (AOE) — talento',2],['living_bomb','Living Bomb /carta — talento',2]]
   };
@@ -36,6 +36,7 @@
       {id:'mutilate',label:'Mutilate',kind:'count',val:2,card:'mutilate',hint:'carte'},
       {id:'vile_poison',label:'Vile Poison',kind:'count',val:2,card:'vile_poison',hint:'carte'},
       {id:'garrote',label:'Garrote',kind:'count',val:4,card:'garrote',hint:'carte'},
+      {id:'fan_of_knives',label:'Fan of Knives (AOE)',kind:'count',val:2,card:'fan_of_knives',hint:'carte'},
       {id:'improved_critical',label:'Improved Critical',kind:'count',val:1,card:'critical',hint:'carte'}
     ],
     healer:[
@@ -62,7 +63,7 @@
 
 
   // carte ad area: il danno scala col numero di bersagli
-  const AOE=new Set(['cleave','holy_pulse','blizzard','cone_of_cold']);
+  const AOE=new Set(['cleave','holy_pulse','blizzard','cone_of_cold','fan_of_knives']);
   // schools per moltiplicatori mago
   const FROST=new Set(['frostbolt','blizzard','cone_of_cold']);
   const FIRE=new Set(['fireball','living_bomb']);
@@ -87,6 +88,7 @@
       else if(card==='mutilate')return P.mutilate+(crit?P.crit:0);
       else if(card==='vile_poison')return P.vile_poison;
       else if(card==='garrote')return P.garrote;
+      else if(card==='fan_of_knives')return P.fan_of_knives;
       else if(card==='kick')d=P.kick;
       else d=P.dagger_base;
       return d+(crit?P.crit:0);
@@ -112,13 +114,13 @@
   // metadati carte per il greedy value-based
   const CARD_STANCE={
     warrior:{sword:'AGGRESSIVE',cleave:'AGGRESSIVE',rend:null,bare:null},
-    rogue:{backstab:'BEHIND',eviscerate:'FRONT',mutilate:'FRONT',vile_poison:null,garrote:null,kick:null,bare:null},
+    rogue:{backstab:'BEHIND',eviscerate:'FRONT',mutilate:'FRONT',vile_poison:null,garrote:null,kick:null,fan_of_knives:null,bare:null},
     healer:{holy_pulse:null,divine_strike:'NEAR',holy_strike:'NEAR',holy_fire:'FAR',wand:'FAR'},
     mage:{frostbolt:'NEAR',fireball:'FAR',blizzard:'FAR',cone_of_cold:'NEAR',living_bomb:'NEAR',counterspell:null,wand:'FAR'}
   };
   const DMG_CARDS={
     warrior:['cleave','sword','rend','bare'],
-    rogue:['backstab','eviscerate','mutilate','vile_poison','garrote','kick','bare'],
+    rogue:['backstab','eviscerate','mutilate','vile_poison','garrote','fan_of_knives','kick','bare'],
     healer:['holy_pulse','divine_strike','holy_strike','holy_fire','wand'],
     mage:['frostbolt','fireball','blizzard','cone_of_cold','living_bomb','counterspell','wand']
   };
