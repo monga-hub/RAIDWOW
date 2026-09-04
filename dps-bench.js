@@ -16,7 +16,7 @@
   const PARAM_DEFS={
     warrior:[['sword_base','Spada (arma base)',1],['heroic_strike','Heroic Strike (+ arma)',1],['rend_bleed','Rend — sanguinamento extra',0],['crit','Critico (+)',1],['cleave','Cleave (AOE) — talento',2]],
     rogue:[['dagger_base','Pugnale (base)',1],['backstab','Backstab (+)',2],['eviscerate','Eviscerate (+)',1],['kick','Kick',1],['crit','Critico (+)',1],['mutilate','Mutilate — talento',3],['vile_poison','Vile Poison /carta — talento',1],['garrote','Garrote /carta — talento',2]],
-    healer:[['holy_pulse','Impulso Sacro',1],['divine_strike','Colpo Divino (completo)',2],['wand','Bacchetta (FAR)',1],['crit','Critico (+)',1],['holy_fire','Holy Fire /carta — talento',2],['holy_strike','Holy Strike (completo) — talento',4]],
+    healer:[['holy_pulse','Impulso Sacro',1],['divine_strike','Colpo Divino (cast corto)',2],['wand','Bacchetta (FAR)',1],['crit','Critico (+)',1],['holy_fire','Holy Fire /carta — talento',2],['holy_strike','Holy Strike (completo) — talento',4]],
     mage:[['frostbolt','Frostbolt',2],['fireball','Fireball (completo)',4],['blizzard','Blizzard',1],['counterspell','Counterspell',1],['wand','Bacchetta (FAR)',1],['cone_of_cold','Cone of Cold (AOE) — talento',2],['living_bomb','Living Bomb /carta — talento',2]]
   };
   const PARAMS={};
@@ -124,7 +124,7 @@
   };
   const DEAD_CARDS={warrior:['taunt','parry'],rogue:['evasion','preparation'],healer:['quick_heal','slow_heal'],mage:['blink']};
   const WEAPON=new Set(['bare','wand']);                 // colpo d'arma: non consuma carta dal mazzo
-  const CAST=new Set(['divine_strike','holy_strike','fireball']); // cast lungo: 2 azioni
+  const CAST=new Set(['holy_strike','fireball']); // cast lungo: 2 azioni (Colpo Divino ora è cast corto)
   const critBoostable=(role,card)=>role==='warrior'?['sword','rend','cleave','bare'].includes(card)
     :role==='rogue'?['backstab','eviscerate','mutilate','bare'].includes(card)
     :role==='healer'?card==='holy_pulse':false;
@@ -320,7 +320,7 @@
                 <div class="trow"><input type="checkbox" id="t-${r}-${t.id}" data-trole="${r}" data-tid="${t.id}"><label for="t-${r}-${t.id}">${t.label}</label>${t.kind==='flag'?'':`<input class="tval" type="number" min="0" max="12" step="1" value="${t.val}" data-tvrole="${r}" data-tvid="${t.id}" title="${t.hint||''}"><span class="thint">${t.hint||''}</span>`}</div>`).join('')}
             </div>`).join('')}
         </div>
-        <p class="dps-note">Il simulatore gestisce mazzo, pesca, stance e cast lungo; il danno per colpo viene dai valori qui sopra. AI: <b>Greedy</b> = ogni azione sceglie il miglior danno/azione; <b>Rollout MC</b> = per ogni azione simula più giocate future casuali (profondità = d6) e sceglie la mossa col miglior esito medio (lookahead). I talenti aggiungono le loro carte al mazzo e applicano i bonus. Assunzioni: cambio stance = 1 azione (gratis per il Rogue con Evasion Tricky); carte non-danno = 0 danni; cast lungo (Colpo Divino, Fireball, Holy Strike) = 2 carte + 2 azioni; i DoT (Vile Poison, Garrote, Holy Fire, Living Bomb) sono modellati come danno-per-carta approssimato, non come tick nel turno Overlord — tara quei valori a piacere. Cambiare qualcosa azzera e ricalcola.</p>
+        <p class="dps-note">Il simulatore gestisce mazzo, pesca, stance e cast lungo; il danno per colpo viene dai valori qui sopra. AI: <b>Greedy</b> = ogni azione sceglie il miglior danno/azione; <b>Rollout MC</b> = per ogni azione simula più giocate future casuali (profondità = d6) e sceglie la mossa col miglior esito medio (lookahead). I talenti aggiungono le loro carte al mazzo e applicano i bonus. Assunzioni: cambio stance = 1 azione (gratis per il Rogue con Evasion Tricky); carte non-danno = 0 danni; cast lungo (Fireball, Holy Strike) = 2 carte + 2 azioni (Colpo Divino è cast corto: 1 carta, 1 azione); i DoT (Vile Poison, Garrote, Holy Fire, Living Bomb) sono modellati come danno-per-carta approssimato, non come tick nel turno Overlord — tara quei valori a piacere. Cambiare qualcosa azzera e ricalcola.</p>
       </div>`;
     document.querySelector('main').append(page);
 
