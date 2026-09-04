@@ -84,7 +84,7 @@ function beginConnectedPlacement(g,exitId){
   if(!g.playerBoardEnabled||!x?.config.connectionPlacement||g.state!=='exit_choice'||!exit)return false;
   x.playerChosenExitId=exitId;offerMiniBossTile(x);g.pendingExitChoice=false;g.pendingOverlordPlacement={roomId:room.id,exitId,forceMiniBoss:!!g.forceMiniBossPlacement};g.state='overlord_placement';
   boardAudit(g,'HERO_EXIT_SELECTED',{roomId:room.id,exitId,icons:exit.icons});
-  note(g,g.forceMiniBossPlacement?`🧭 Gli Eroi scelgono ${exitId}. Ora l’Overlord collega il Trono Sommerso di Grumara.`:`🧭 Gli Eroi scelgono ${exitId}. Ora l’Overlord sceglie tile e lato.`);
+  note(g,g.forceMiniBossPlacement?`🧭 Gli Eroi scelgono ${exitId}. Ora l’Overlord collega il Trono Sommerso di Grum’Arat.`:`🧭 Gli Eroi scelgono ${exitId}. Ora l’Overlord sceglie tile e lato.`);
   return true;
 }
 
@@ -104,5 +104,5 @@ function resolveConnectedPlacement(g,tileId,connectorId){
 function connectedPlacementPanel(g){
   const x=g.exploration,room=currentExplorationRoom(x),exit=room.exits.find(side=>side.id===g.pendingOverlordPlacement?.exitId);
   const forced=!!g.pendingOverlordPlacement?.forceMiniBoss,tiles=forced?x.overlordHand.filter(tile=>tile.id===MINI_BOSS_TILE_T2.id):x.overlordHand;
-  return`<section class="hero connection-placement"><h2>${forced?'Stanza 11 — collega il Trono di Grumara':'Turno Overlord — collega la Room Tile'}</h2><p>Uscita scelta dagli Eroi: <strong>${exit?.id||'—'}</strong> ${iconSummary(exit?.icons)}</p><div class="connection-tiles">${tiles.map(tile=>`<article class="connection-tile"><h3>${tile.name||tile.id}</h3><small>${tile.id} · scegli il lato da collegare</small>${roomTileConnectors(tile).map(side=>`<button data-connect-tile="${tile.id}" data-connect-side="${side.id}"><b>Lato ${side.id}</b>${iconSummary(side.icons)}<small>Restano ${roomTileConnectors(tile).length-1} uscite</small></button>`).join('')}</article>`).join('')}</div></section>`;
+  return`<section class="hero connection-placement"><h2>${forced?'Stanza 11 — collega il Trono di Grum’Arat':'Turno Overlord — collega la Room Tile'}</h2><p>Uscita scelta dagli Eroi: <strong>${exit?.id||'—'}</strong> ${iconSummary(exit?.icons)}</p><div class="connection-tiles">${tiles.map(tile=>`<article class="connection-tile"><h3>${tile.name||tile.id}</h3><small>${tile.id} · scegli il lato da collegare</small>${roomTileConnectors(tile).map(side=>`<button data-connect-tile="${tile.id}" data-connect-side="${side.id}"><b>Lato ${side.id}</b>${iconSummary(side.icons)}<small>Restano ${roomTileConnectors(tile).length-1} uscite</small></button>`).join('')}</article>`).join('')}</div></section>`;
 }

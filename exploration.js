@@ -31,7 +31,7 @@ const EXPLORATION_CONFIG_E2={...EXPLORATION_CONFIG_V01,version:'exploration-e2-t
 const EXPLORATION_TILES_E21=EXPLORATION_TILES_E2.map(t=>t.id==='E2-09'?{...t,name:'Breccia del Miasma',designRole:'high-now/neutral-future',exits:[{id:'north',icons:{FIGHTER:0,TREASURE:0}}]}:t);
 const EXPLORATION_CONFIG_E21={...EXPLORATION_CONFIG_E2,version:'exploration-e2.1-siege-breach',roomTiles:EXPLORATION_TILES_E21};
 const EXPLORATION_CONFIG_THREAT_V01={...EXPLORATION_CONFIG_E21,version:'threat-enrage-v0.1',threatSystem:{bagConfig:{SAFE:2,AMBUSH:2,ENRAGE:2},chestPolicy:'OPEN_ALL',miniBossThreshold:null,bossThreshold:null}};
-const MINI_BOSS_TILE_T2={id:'SPECIAL-MINI-BOSS',name:'Il Trono Sommerso di Grumara',special:true,containsMiniBoss:true,contentIcons:{FIGHTER:0,TREASURE:0},exits:[{id:'mini-boss-forward',icons:{FIGHTER:0,TREASURE:0}}]};
+const MINI_BOSS_TILE_T2={id:'SPECIAL-MINI-BOSS',name:'Il Trono Sommerso di Grum’Arat',special:true,containsMiniBoss:true,contentIcons:{FIGHTER:0,TREASURE:0},exits:[{id:'mini-boss-forward',icons:{FIGHTER:0,TREASURE:0}}]};
 const EXPLORATION_CONFIG_T2={...EXPLORATION_CONFIG_THREAT_V01,version:'t2-miniboss-materialization',overlordRoomPolicy:'PLACE_MINIBOSS_ASAP',threatSystem:{...EXPLORATION_CONFIG_THREAT_V01.threatSystem,miniBossThreshold:2,specialPlacementPolicy:'PLACE_MINIBOSS_AS_SOON_AS_AVAILABLE'}};
 const EXPLORATION_CONFIG_T3_CONTROL={...EXPLORATION_CONFIG_T2,version:'t3-miniboss-control',miniBossAggroReset:false};
 const EXPLORATION_CONFIG_T3_RESET={...EXPLORATION_CONFIG_T2,version:'t3-miniboss-aggro-reset',miniBossAggroReset:true};

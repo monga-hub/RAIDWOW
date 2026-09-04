@@ -14,7 +14,7 @@ Leggere questo file prima di modificare il simulatore. È una memoria sintetica 
 
 ## Direzione del gioco
 
-Titolo/ambientazione: **Paludi della Luna Avvelenata**. Dark fantasy paludoso popolato da Ranidi; miniboss: **Grumara, Strega del Miasma**.
+Titolo/ambientazione: **Paludi della Luna Avvelenata**. Dark fantasy paludoso popolato da Ranidi; miniboss: **Grum’Arat, Strega del Miasma**.
 
 Il simulatore deve rimanere una singola interfaccia giocabile, desktop e mobile. Non creare una seconda UI per nuove regole: integrare sempre le modifiche nell'interfaccia esistente.
 
@@ -153,9 +153,9 @@ Command Deck comune: Attack ×3, Tactic ×2, Special ×1.
 - Razziatore Ranide: 16 HP; Attack 3; Tactic 2 + Wound; Special Colpo Spazzante, 2 danni a massimo 2 Eroi NEAR.
 - Artificiere Ranide: 18 HP; Attack 2; Tactic cura 2 a un nemico ferito; Special Mega Bomba, Cast Lungo da 2 Special, 5 AOE WIDE, interrompibile.
 - Rana Warchief: 20 HP; Attack 4; Tactic Colpo Critico da 5; Special Cascata di Acido, 3 danni AOE NEAR a tutti gli Eroi NEAR.
-- Grumara, Strega del Miasma: 40 HP; Attack 6; Tactic 3 + 2 Wound; Mega Bomba 5 WIDE, Cast Lungo interrompibile. A 25 e 10 HP evoca 3 Girini Putrescenti.
+- Grum’Arat, Strega del Miasma: 40 HP; Attack 6; Tactic 3 + 2 Wound; Mega Bomba 5 WIDE, Cast Lungo interrompibile. A 25 e 10 HP evoca 3 Girini Putrescenti.
 - Girino Putrescente: 4 HP; attacco fisso 1; non pesca Command e agisce dal turno Overlord successivo all'evocazione.
-- La partita termina solo quando Grumara e tutti gli altri nemici della stanza sono eliminati.
+- La partita termina solo quando Grum’Arat e tutti gli altri nemici della stanza sono eliminati.
 
 Fighter Bag (12): Razziatore ×4, Artificiere ×4, Warchief ×4.
 
@@ -165,15 +165,15 @@ Artwork:
 - `assets/rana-warchief.jpeg`
 - `assets/rana-ingegnere.jpeg`
 - `assets/grumara-miniboss.jpeg`
-- `assets/girino-putrescente.jpeg` (miniMob evocato da Grumara)
+- `assets/girino-putrescente.jpeg` (miniMob evocato da Grum’Arat)
 - `assets/ingresso.jpeg` (tile illustrata della stanza di ingresso)
-- `assets/stanza-e2-01.jpeg` … `assets/stanza-e2-10.jpeg` (artwork delle Room Tile, E2-06 "Cripta delle Spore Dorate" inclusa) e `assets/trono-grumara.jpeg` (tile `SPECIAL-MINI-BOSS`, il Trono Sommerso di Grumara). Mappati in `ROOM_ART`.
+- `assets/stanza-e2-01.jpeg` … `assets/stanza-e2-10.jpeg` (artwork delle Room Tile, E2-06 "Cripta delle Spore Dorate" inclusa) e `assets/trono-grumara.jpeg` (tile `SPECIAL-MINI-BOSS`, il Trono Sommerso di Grum’Arat). Mappati in `ROOM_ART`.
 
 ## Dungeon ed esplorazione
 
 - Campagna ordinaria fino a 10 stanze.
 - Se il miniboss appare prima, la campagna continua finché la sua intera stanza è completata.
-- Se dopo 10 stanze non è apparso, la stanza 11 forza il Trono di Grumara.
+- Se dopo 10 stanze non è apparso, la stanza 11 forza il Trono di Grum’Arat.
 - Le stanze non hanno contenuto intrinseco: il contenuto nasce sommando le icone dell'uscita scelta dagli Eroi e quelle del lato della tile collegato dall'Overlord.
 - Una tile non ha entrata/uscita fissa: il lato collegato diventa l'ingresso e gli altri lati rimangono uscite.
 - Mappa e Marble Bag devono essere compatte; su mobile i target dei nemici devono restare vicini al giocatore attivo/sticky durante lo scorrimento.
@@ -182,7 +182,7 @@ Artwork:
 
 Bag:
 
-- Treasure Bag ordinaria: Bronze ×6, Silver ×3. La Gold non è nel bag: è ricompensa garantita di Grumara.
+- Treasure Bag ordinaria: Bronze ×6, Silver ×3. La Gold non è nel bag: è ricompensa garantita di Grum’Arat.
 - Threat Bag: Safe ×2, Ambush ×2, Enrage ×2; Enrage è persistente.
 - Una cassa rivela 3 carte al momento dell'apertura, non durante il setup della stanza.
 
@@ -195,7 +195,7 @@ Bag:
 - Tra le stanze c'è un Turno di Recupero: 3 azioni per Eroe per curarsi, usare oggetti, cambiare Stance/Position ed equipaggiarsi. Nessun recupero automatico precedente deve sommarsi a questa fase.
 - La demo dispone di 3 slot di salvataggio manuale nel browser, accessibili sia dalla schermata iniziale sia durante la partita.
 
-Gold Equipment garantito da Grumara:
+Gold Equipment garantito da Grum’Arat:
 
 - Warrior: Spada del Comandante; Scudo Spezzamagie; Ascia del Turbine.
 - Priest: Staffa della Misericordia; Bacchetta del Giudizio; Staffa del Dolore.
