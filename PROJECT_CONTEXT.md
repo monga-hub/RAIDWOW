@@ -210,3 +210,7 @@ I valori e i poteri completi sono definiti in `TREASURE_ITEMS` dentro `player-bo
 3. Verificare l'interazione manuale interessata e gli smoke test pertinenti prima del commit.
 4. Non implementare o cambiare tuning non richiesto silenziosamente.
 5. Dopo ogni modifica indicare file toccati, comportamento verificato e commit GitHub.
+
+## Icone carte
+
+- Icone delle carte Eroe da game-icons.net (CC BY 3.0), in `assets/icons/<cardId>.svg`. Sfondo nero rimosso; ricolorate via CSS mask (`.action.<id>::before`, `background-color:currentColor`). Attribuzione mostrata nella schermata iniziale.
