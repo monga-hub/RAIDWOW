@@ -98,7 +98,7 @@ function rogueHero(){return{role:'rogue',abilities:[],hp:9,maxHp:9,deck:[],draw:
 function mageHero(){return{role:'mage',abilities:[],hp:8,maxHp:8,deck:[],draw:[],discard:[],hand:[],levels:{},invested:{},casting:null,actions:CONFIG.actionsPerRound,shield:0,counter:0,evasion:false}}
 const COMMAND_DECK_V01=['attack','attack','attack','tactic','tactic','special'];
 const HERO_KILL_XP=4,HERO_MINIBOSS_KILL_XP=10,HERO_MINIMOB_KILL_XP=2,HERO_XP_THRESHOLDS=[9,11,13,15,17];
-const HERO_BAG_SLOTS=6,APPLE_HEAL=2;
+const HERO_BAG_SLOTS=9,APPLE_HEAL=2;
 const PLAYER_BOARD_ENEMIES={goblin:{hp:16,damage:3,tactic:2},engineer:{hp:18,damage:2,special:5},warchief:{hp:20,damage:4,special:5},miniBoss:{hp:40,damage:6,tactic:3,special:5,summonThresholds:[25,10]},miniMob:{hp:4,damage:1}};
 function enemyLabel(e){return e.type==='miniBoss'?'Grum’Arat, Strega del Miasma':e.type==='engineer'?`Artificiere Ranide ${e.id}`:e.type==='warchief'?`Rana Warchief ${e.id}`:e.type==='miniMob'?`Girino Putrescente ${e.id}`:`Razziatore Ranide ${e.id}`}
 const ENEMY_ART={goblin:'assets/rana-razziatrice.jpeg',warchief:'assets/rana-warchief.jpeg',engineer:'assets/rana-ingegnere.jpeg',miniBoss:'assets/grumara-miniboss.jpeg',miniMob:'assets/girino-putrescente.jpeg'}
