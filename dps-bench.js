@@ -17,7 +17,7 @@
     warrior:[['sword_base','Spada (arma base)',1],['heroic_strike','Heroic Strike (+ arma)',1],['rend_bleed','Rend — sanguinamento extra',0],['crit','Critico (+)',1],['cleave','Cleave (AOE) — talento',2]],
     rogue:[['dagger_base','Pugnale (base)',1],['backstab','Backstab (+)',2],['eviscerate','Eviscerate (+)',1],['kick','Kick',1],['crit','Critico (+)',1],['mutilate','Mutilate — talento',3],['vile_poison','Vile Poison /carta — talento',1],['garrote','Garrote /carta — talento',2]],
     healer:[['holy_pulse','Impulso Sacro',1],['divine_strike','Colpo Divino (cast corto)',2],['wand','Bacchetta (FAR)',1],['crit','Critico (+)',1],['holy_fire','Holy Fire /carta — talento',2],['holy_strike','Holy Strike (completo) — talento',4]],
-    mage:[['frostbolt','Frostbolt',2],['fireball','Fireball (completo)',4],['blizzard','Blizzard',1],['counterspell','Counterspell',1],['wand','Bacchetta (FAR)',1],['cone_of_cold','Cone of Cold (AOE) — talento',2],['living_bomb','Living Bomb /carta — talento',2]]
+    mage:[['frostbolt','Frostbolt',2],['fireball','Fireball (completo)',4],['blizzard','Blizzard',1],['counterspell','Counterspell',1],['wand','Bacchetta (FAR)',1],['crit','Critico (+)',1],['cone_of_cold','Cone of Cold (AOE) — talento',2],['living_bomb','Living Bomb /carta — talento',2]]
   };
   const PARAMS={};
   for(const r of ROLES){PARAMS[r]={};for(const [k,,d] of PARAM_DEFS[r])PARAMS[r][k]=d;}
@@ -49,7 +49,8 @@
       {id:'improved_frost',label:'Improved Frost',kind:'bonus',val:1,hint:'+ Frost'},
       {id:'improved_fire',label:'Improved Fire',kind:'bonus',val:1,hint:'+ Fire'},
       {id:'cone_of_cold',label:'Cone of Cold',kind:'count',val:2,card:'cone_of_cold',hint:'carte'},
-      {id:'living_bomb',label:'Living Bomb',kind:'count',val:2,card:'living_bomb',hint:'carte'}
+      {id:'living_bomb',label:'Living Bomb',kind:'count',val:2,card:'living_bomb',hint:'carte'},
+      {id:'improved_critical',label:'Improved Critical',kind:'count',val:1,card:'critical',hint:'carte'}
     ]
   };
   const ACTIVE={warrior:new Set(),rogue:new Set(),healer:new Set(),mage:new Set()};
@@ -104,7 +105,7 @@
       let d=P[card]||0;
       if(FROST.has(card))d+=bonus('mage','improved_frost');
       if(FIRE.has(card))d+=bonus('mage','improved_fire');
-      return d;
+      return d+(crit?P.crit:0);
     }
     return 0;
   }
@@ -127,13 +128,14 @@
   const CAST=new Set(['holy_strike','fireball']); // cast lungo: 2 azioni (Colpo Divino ora è cast corto)
   const critBoostable=(role,card)=>role==='warrior'?['sword','rend','cleave','bare'].includes(card)
     :role==='rogue'?['backstab','eviscerate','mutilate','bare'].includes(card)
-    :role==='healer'?card==='holy_pulse':false;
+    :role==='healer'?card==='holy_pulse'
+    :role==='mage'?['frostbolt','blizzard','counterspell','fireball','cone_of_cold'].includes(card):false;
   // ---- Simulatore astratto (niente motore): mazzo/pesca/stance/cast/carte morte, danno dai PARAMS ----
   const BASE_DECK={
     warrior:['sword','sword','rend','rend','parry','parry','parry','taunt','taunt','critical'],
     rogue:['backstab','backstab','backstab','eviscerate','eviscerate','eviscerate','evasion','kick','preparation','critical'],
     healer:['quick_heal','quick_heal','slow_heal','slow_heal','slow_heal','divine_strike','divine_strike','holy_pulse','holy_pulse','critical'],
-    mage:['frostbolt','frostbolt','frostbolt','frostbolt','blizzard','counterspell','fireball','fireball','fireball','blink']
+    mage:['frostbolt','frostbolt','frostbolt','critical','blizzard','counterspell','fireball','fireball','fireball','blink']
   };
   const START_STANCE={warrior:'AGGRESSIVE',rogue:'FRONT',healer:'FAR',mage:'FAR'};
   const HAND_LIMIT=5;
