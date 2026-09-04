@@ -78,14 +78,17 @@ Carte:
 - Slow Heal: FAR, cura grande/cast lungo; valore della carta ridotto di 1, poi riceve il bonus Staff.
 - Bandage: NEAR.
 - Holy Pulse: 1 danno a tutti i nemici; non usa il bonus cure della Staff. Critical lo porta a 2.
-- Colpo Divino: NEAR, Cast Lungo con 2 carte, 2 danni; il talento aggiunge 2 carte.
+- Colpo Divino: NEAR, Cast Lungo con 2 carte, 2 danni. ORA carta BASE (2 copie nel deck iniziale, al posto di Medicazione); non richiede più il talento Holy Fire per essere usato.
+- Holy Strike: NEAR, Cast Lungo con 2 carte, 4 danni; talento nel ramo Damage (rimpiazza il vecchio nodo Colpo Divino), aggiunge 3 carte. Stance NEAR ereditata dal vecchio slot Colpo Divino.
 - Holy Shield: target alleato, −2 danni; la carta resta davanti al bersaglio fino alla fine del turno Overlord; il talento aggiunge 2 carte.
 - Holy Fire: FAR, DoT cumulativo; a 3 stack esplode per 5 danni.
 
+Nota deck base Priest: Medicazione (Bandage) NON è più nel deck iniziale né in abilities; sostituita da Colpo Divino ×2. Le regole/DESC di Bandage restano nel codice ma inutilizzate.
+
 Talenti Heal/Damage (pagina richiudibile):
 
-- Heal: Improved Healing 2 step, totale +2 alle cure → Holy Shield → Divine Reach.
-- Damage: Holy Fire → Colpo Divino → Improved Spell Damage 2 step, totale +2 allo spell damage.
+- Heal: Improved Healing 2 step, totale +2 alle cure E rimuove 1 Ferita dal bersaglio (su Cura Veloce e su Cura Lenta completata) → Holy Shield → Divine Reach.
+- Damage: Holy Fire → Holy Strike → Improved Spell Damage 2 step, totale +2 allo spell damage.
 - Improved Critical 1, comune: aggiunge 1 Critical al deck.
 
 ## Rogue — Assassin
