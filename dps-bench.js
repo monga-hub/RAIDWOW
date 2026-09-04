@@ -53,15 +53,22 @@
   };
   const ACTIVE={warrior:new Set(),rogue:new Set(),healer:new Set(),mage:new Set()};
   const isOn=(role,id)=>ACTIVE[role].has(id);
+  let TARGETS=1;                                        // n. manichini (1-4)
 
-  function mkDummy(){return {id:99,type:'dummy',hp:1e9,maxHp:1e9,damage:0,draw:[],discard:[],bleeds:[],bleedCount:0,taunted:false,casting:null,holyFireDots:0,livingBomb:0,vilePoison:0,garrote:0,frostVulnerable:false,firePierced:false};}
+  function mkDummy(id){return {id,type:'dummy',hp:1e9,maxHp:1e9,damage:0,draw:[],discard:[],bleeds:[],bleedCount:0,taunted:false,casting:null,holyFireDots:0,livingBomb:0,vilePoison:0,garrote:0,frostVulnerable:false,firePierced:false};}
   const has=(h,c)=>h.hand.includes(c);
 
+  // carte ad area: il danno scala col numero di bersagli
+  const AOE=new Set(['cleave','holy_pulse','blizzard','cone_of_cold']);
   // schools per moltiplicatori mago
   const FROST=new Set(['frostbolt','blizzard','cone_of_cold']);
   const FIRE=new Set(['fireball','living_bomb']);
 
   function hitDamage(role,card,crit,h){
+    const d=hitPerTarget(role,card,crit,h);
+    return AOE.has(card)?d*TARGETS:d;                   // le carte ad area colpiscono tutti i manichini
+  }
+  function hitPerTarget(role,card,crit,h){
     const P=PARAMS[role], t=h.talents||{};
     if(role==='warrior'){
       let d=P.sword_base;
@@ -167,7 +174,7 @@
     try{ startBoardCampaign([role],'heroic'); }catch(e){}
     const g=game;
     game=savedGame; render=savedRender;
-    g.enemies=[mkDummy()]; g.state='playing'; g.activeRole=role; g.round=1;
+    g.enemies=Array.from({length:TARGETS},(_,i)=>mkDummy(99-i)); g.state='playing'; g.activeRole=role; g.round=1;
     g.currentEncounter={firstKillRound:null,won:false,size:1};
     const h=g.party[0];
     applyTalents(g,h,role);
@@ -219,6 +226,8 @@
     const style=document.createElement('style');
     style.textContent=`
       #benchPage .dps-controls{display:flex;gap:8px;align-items:center;margin-bottom:14px}
+      #benchPage .dps-tgt{min-width:34px;padding:6px 9px}
+      #benchPage .dps-tgt.active{background:var(--gold);color:#19150b;border-color:#e7ca76}
       #benchPage .dps-cards,#benchPage .dps-params{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
       #benchPage .dps-params{margin-top:14px;align-items:start}
       @media(max-width:900px){#benchPage .dps-cards,#benchPage .dps-params{grid-template-columns:1fr 1fr}}
@@ -250,6 +259,10 @@
           <button id="dps-run">▶ Run</button>
           <button id="dps-stop" class="secondary" disabled>■ Stop</button>
           <button id="dps-reset" class="secondary">↺ Reset</button>
+          <span class="dps-targets" style="margin-left:auto;display:flex;align-items:center;gap:6px">
+            <span style="color:var(--muted);font-size:12px">Manichini:</span>
+            ${[1,2,3,4].map(n=>`<button class="secondary dps-tgt${n===1?' active':''}" data-targets="${n}">${n}</button>`).join('')}
+          </span>
         </div>
         <div class="dps-cards">
           ${ROLES.map(r=>`
@@ -315,6 +328,10 @@
     });
     page.querySelectorAll('.dparam input[type=checkbox]').forEach(chk=>{
       chk.onchange=()=>{const s=ACTIVE[chk.dataset.trole];chk.checked?s.add(chk.dataset.tid):s.delete(chk.dataset.tid);reset();};
+    });
+
+    page.querySelectorAll('.dps-tgt').forEach(btn=>{
+      btn.onclick=()=>{TARGETS=+btn.dataset.targets;page.querySelectorAll('.dps-tgt').forEach(b=>b.classList.toggle('active',b===btn));reset();};
     });
 
     document.getElementById('dps-run').onclick=run;
