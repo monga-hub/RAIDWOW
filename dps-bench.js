@@ -1,45 +1,113 @@
-/* DPS Bench — banco di bilanciamento parametrico.
+/* DPS Bench — banco di bilanciamento parametrico con talenti.
    4 classi ciclano il mazzo su un manichino a HP infiniti, gioco greedy.
    Il MOTORE reale governa le meccaniche (mazzo, stance, cast lungo, carte morte);
-   il DANNO per carta viene da una tabella EDITABILE (PARAMS) così puoi tunare ogni
-   valore. Isolato: game monoclasse propri, non tocca la partita globale. */
+   il DANNO per carta viene da una tabella EDITABILE (PARAMS). I TALENTI sono
+   toggle: aggiungono le loro carte al mazzo e applicano i bonus. Isolato: game
+   monoclasse propri, non tocca la partita globale.
+   DoT (Vile Poison, Garrote, Holy Fire, Living Bomb) modellati come danno-per-carta
+   approssimato (valore editabile), non come tick nel turno Overlord. */
 (function(){
   const ROLES=['warrior','rogue','healer','mage'];
   const LABELS={warrior:'Guerriero',rogue:'Rogue',healer:'Prete',mage:'Mago'};
   const COLORS={warrior:'#c98b4b',rogue:'#8c6fd0',healer:'#e7ca76',mage:'#5aa9e6'};
   const T='enemy:99:99';
 
-  // definizione parametri editabili: [key, etichetta, default]
+  // parametri danno editabili: [key,label,default]. Le carte da talento sono in coda.
   const PARAM_DEFS={
-    warrior:[['sword_base','Spada (arma base)',1],['heroic_strike','Heroic Strike (+ arma)',1],['rend_bleed','Rend — sanguinamento extra',0],['crit','Critico (+)',1]],
-    rogue:[['dagger_base','Pugnale (base)',1],['backstab','Backstab (+)',2],['eviscerate','Eviscerate (+)',1],['kick','Kick',1],['crit','Critico (+)',1]],
-    healer:[['holy_pulse','Impulso Sacro',1],['divine_strike','Colpo Divino (completo)',2],['wand','Bacchetta (FAR)',1],['crit','Critico (+)',1]],
-    mage:[['frostbolt','Frostbolt',2],['fireball','Fireball (completo)',4],['blizzard','Blizzard',1],['counterspell','Counterspell',1],['wand','Bacchetta (FAR)',1]]
+    warrior:[['sword_base','Spada (arma base)',1],['heroic_strike','Heroic Strike (+ arma)',1],['rend_bleed','Rend — sanguinamento extra',0],['crit','Critico (+)',1],['cleave','Cleave (AOE) — talento',2]],
+    rogue:[['dagger_base','Pugnale (base)',1],['backstab','Backstab (+)',2],['eviscerate','Eviscerate (+)',1],['kick','Kick',1],['crit','Critico (+)',1],['mutilate','Mutilate — talento',3],['vile_poison','Vile Poison /carta — talento',1],['garrote','Garrote /carta — talento',2]],
+    healer:[['holy_pulse','Impulso Sacro',1],['divine_strike','Colpo Divino (completo)',2],['wand','Bacchetta (FAR)',1],['crit','Critico (+)',1],['holy_fire','Holy Fire /carta — talento',2],['holy_strike','Holy Strike (completo) — talento',4]],
+    mage:[['frostbolt','Frostbolt',2],['fireball','Fireball (completo)',4],['blizzard','Blizzard',1],['counterspell','Counterspell',1],['wand','Bacchetta (FAR)',1],['cone_of_cold','Cone of Cold (AOE) — talento',2],['living_bomb','Living Bomb /carta — talento',2]]
   };
-  // valori correnti (mutabili dall'utente)
   const PARAMS={};
   for(const r of ROLES){PARAMS[r]={};for(const [k,,d] of PARAM_DEFS[r])PARAMS[r][k]=d;}
 
-  function mkDummy(){return {id:99,type:'dummy',hp:1e9,maxHp:1e9,damage:0,draw:[],discard:[],bleeds:[],bleedCount:0,taunted:false,casting:null,holyFireDots:0,livingBomb:0,frostVulnerable:false,firePierced:false};}
+  // talenti rilevanti per il DPS: id, etichetta, carte aggiunte, flag h.talents impostati
+  const TALENT_DEFS={
+    warrior:[
+      {id:'heroic_mastery',label:'Heroic Mastery (Spada +1)',flags:{heroic_mastery:2}},
+      {id:'improved_rend',label:'Improved Rend (Rend +1)',flags:{improved_rend:1}},
+      {id:'cleave',label:'Cleave (+2 carte)',cards:['cleave','cleave']},
+      {id:'improved_critical',label:'Improved Critical (+1 Critico)',cards:['critical']}
+    ],
+    rogue:[
+      {id:'improved_backstab',label:'Improved Backstab (Backstab +2)',flags:{improved_backstab:2}},
+      {id:'evasion_tricky',label:'Evasion Tricky (flip gratis)',flags:{evasion_tricky:1}},
+      {id:'mutilate',label:'Mutilate (+2 carte)',cards:['mutilate','mutilate']},
+      {id:'vile_poison',label:'Vile Poison (+2 carte)',cards:['vile_poison','vile_poison']},
+      {id:'garrote',label:'Garrote (+4 carte)',cards:['garrote','garrote','garrote','garrote']},
+      {id:'improved_critical',label:'Improved Critical (+1 Critico)',cards:['critical']}
+    ],
+    healer:[
+      {id:'improved_spell_damage',label:'Improved Spell Damage (+2 spell)',flags:{improved_spell_damage:2}},
+      {id:'holy_fire',label:'Holy Fire (+3 carte)',cards:['holy_fire','holy_fire','holy_fire']},
+      {id:'holy_strike',label:'Holy Strike (+3 carte)',cards:['holy_strike','holy_strike','holy_strike']},
+      {id:'improved_critical',label:'Improved Critical (+1 Critico)',cards:['critical']}
+    ],
+    mage:[
+      {id:'improved_frost',label:'Improved Frost (+1 Frost)',flags:{improved_frost:1}},
+      {id:'improved_fire',label:'Improved Fire (+1 Fire)',flags:{improved_fire:1}},
+      {id:'cone_of_cold',label:'Cone of Cold (+2 carte)',cards:['cone_of_cold','cone_of_cold']},
+      {id:'living_bomb',label:'Living Bomb (+2 carte)',cards:['living_bomb','living_bomb']}
+    ]
+  };
+  const ACTIVE={warrior:new Set(),rogue:new Set(),healer:new Set(),mage:new Set()};
+  const isOn=(role,id)=>ACTIVE[role].has(id);
+
+  function mkDummy(){return {id:99,type:'dummy',hp:1e9,maxHp:1e9,damage:0,draw:[],discard:[],bleeds:[],bleedCount:0,taunted:false,casting:null,holyFireDots:0,livingBomb:0,vilePoison:0,garrote:0,frostVulnerable:false,firePierced:false};}
   const has=(h,c)=>h.hand.includes(c);
 
-  // danno di un colpo secondo la tabella parametri
-  function hitDamage(role,card,crit){
-    const P=PARAMS[role];
-    if(role==='warrior'){let d=P.sword_base;if(card==='sword')d+=P.heroic_strike;else if(card==='rend')d+=P.rend_bleed;return d+(crit?P.crit:0);}
-    if(role==='rogue'){let d;if(card==='backstab')d=P.dagger_base+P.backstab;else if(card==='eviscerate')d=P.dagger_base+P.eviscerate;else if(card==='kick')d=P.kick;else d=P.dagger_base;return d+(crit?P.crit:0);}
-    if(role==='healer'){if(card==='holy_pulse')return P.holy_pulse+(crit?P.crit:0);if(card==='divine_strike')return P.divine_strike;if(card==='wand')return P.wand;return 0;}
-    if(role==='mage')return P[card]||0;
+  // schools per moltiplicatori mago
+  const FROST=new Set(['frostbolt','blizzard','cone_of_cold']);
+  const FIRE=new Set(['fireball','living_bomb']);
+
+  function hitDamage(role,card,crit,h){
+    const P=PARAMS[role], t=h.talents||{};
+    if(role==='warrior'){
+      let d=P.sword_base;
+      if(card==='sword')d+=P.heroic_strike+(t.heroic_mastery>=2?1:0);
+      else if(card==='rend')d+=P.rend_bleed+(t.improved_rend||0);
+      else if(card==='cleave')return P.cleave+(crit?P.crit:0);
+      return d+(crit?P.crit:0);
+    }
+    if(role==='rogue'){
+      let d;
+      if(card==='backstab')d=P.dagger_base+P.backstab+(t.improved_backstab>=2?2:0);
+      else if(card==='eviscerate')d=P.dagger_base+P.eviscerate;
+      else if(card==='mutilate')return P.mutilate+(crit?P.crit:0);
+      else if(card==='vile_poison')return P.vile_poison;
+      else if(card==='garrote')return P.garrote;
+      else if(card==='kick')d=P.kick;
+      else d=P.dagger_base;
+      return d+(crit?P.crit:0);
+    }
+    if(role==='healer'){
+      const sd=t.improved_spell_damage>=2?2:0;
+      if(card==='holy_pulse')return P.holy_pulse+sd+(crit?P.crit:0);
+      if(card==='divine_strike')return P.divine_strike+sd;
+      if(card==='holy_strike')return P.holy_strike+sd;
+      if(card==='holy_fire')return P.holy_fire+sd;
+      if(card==='wand')return P.wand+sd;
+      return 0;
+    }
+    if(role==='mage'){
+      let d=P[card]||0;
+      if(FROST.has(card))d+=(t.improved_frost||0);
+      if(FIRE.has(card))d+=(t.improved_fire||0);
+      return d;
+    }
     return 0;
   }
 
-  // una decisione greedy; ritorna {acts, card|null, crit} — card!=null => colpo a segno
+  // decisione greedy; ritorna {acts, card|null, crit}
   function stepR(g,h,role,d){
     const pos=()=>h.board.position.card;
-    const flip=to=>{h.board.position.card=to;h.actions--;return {acts:1,card:null};};
+    const flipCost=(role==='rogue'&&isOn('rogue','evasion_tricky'))?0:1; // Evasion Tricky = flip gratis
+    const flip=to=>{h.board.position.card=to; if(flipCost)h.actions--; return {acts:flipCost,card:null};};
     const hit=(card,crit)=>({acts:1,card,crit:!!crit});
     if(role==='warrior'){
       const crit=has(h,'critical')&&!h.criticalArmed?(toggleCritical(g,h),true):h.criticalArmed;
+      if(has(h,'cleave')){toggleWarriorTechnique(g,h,'cleave',h.hand.indexOf('cleave'));useSword(g,h,T);return hit('cleave',crit);}
       if(has(h,'sword')){toggleWarriorTechnique(g,h,'sword',h.hand.indexOf('sword'));useSword(g,h,T);return hit('sword',crit);}
       if(has(h,'rend')){toggleWarriorTechnique(g,h,'rend',h.hand.indexOf('rend'));useSword(g,h,T);return hit('rend',crit);}
       if(has(h,'taunt')){play(g,h,'taunt',T);return {acts:1,card:null};}
@@ -49,7 +117,10 @@
     if(role==='rogue'){
       const crit=has(h,'critical')&&!h.criticalArmed?(toggleCritical(g,h),true):h.criticalArmed;
       if(has(h,'backstab')){if(pos()!=='BEHIND')return flip('BEHIND');h.rogueTechniqueArmed='backstab';h.rogueTechniqueIndex=h.hand.indexOf('backstab');useDagger(g,h,T,'left');return hit('backstab',crit);}
+      if(has(h,'mutilate')){if(pos()!=='FRONT')return flip('FRONT');play(g,h,'mutilate',T);return hit('mutilate',crit);}
       if(has(h,'eviscerate')){if(pos()!=='FRONT')return flip('FRONT');h.rogueTechniqueArmed='eviscerate';h.rogueTechniqueIndex=h.hand.indexOf('eviscerate');useDagger(g,h,T,'left');return hit('eviscerate',crit);}
+      if(has(h,'vile_poison')){if(pos()!=='FRONT'&&pos()!=='BEHIND'){};play(g,h,'vile_poison',T);return hit('vile_poison',false);}
+      if(has(h,'garrote')){play(g,h,'garrote',T);return hit('garrote',false);}
       if(has(h,'kick')){play(g,h,'kick',T);return hit('kick',false);}
       if(has(h,'preparation')){play(g,h,'preparation',T);h.preparationPending=0;return {acts:1,card:null};}
       if(has(h,'evasion')){const i=h.hand.indexOf('evasion');h.hand.splice(i,1);h.discard.push('evasion');h.actions--;return {acts:1,card:null};}
@@ -57,9 +128,12 @@
     }
     if(role==='healer'){
       if(h.divineStrikeCasting&&has(h,'divine_strike')){if(pos()!=='NEAR')return flip('NEAR');play(g,h,'divine_strike',T);return hit('divine_strike',false);}
+      if(h.holyStrikeCasting&&has(h,'holy_strike')){if(pos()!=='NEAR')return flip('NEAR');play(g,h,'holy_strike',T);return hit('holy_strike',false);}
       const crit=has(h,'critical')&&!h.criticalArmed?(toggleCritical(g,h),true):h.criticalArmed;
       if(has(h,'holy_pulse')){play(g,h,'holy_pulse',T);return hit('holy_pulse',crit);}
-      if(has(h,'divine_strike')&&!h.divineStrikeCasting){if(pos()!=='NEAR')return flip('NEAR');play(g,h,'divine_strike',T);return {acts:1,card:null};} // carica (no danno)
+      if(has(h,'holy_fire')){if(pos()!=='FAR')return flip('FAR');play(g,h,'holy_fire',T);return hit('holy_fire',false);}
+      if(has(h,'holy_strike')&&!h.holyStrikeCasting){if(pos()!=='NEAR')return flip('NEAR');play(g,h,'holy_strike',T);return {acts:1,card:null};} // carica
+      if(has(h,'divine_strike')&&!h.divineStrikeCasting){if(pos()!=='NEAR')return flip('NEAR');play(g,h,'divine_strike',T);return {acts:1,card:null};} // carica
       if(pos()==='FAR'){useWand(g,h,T);return hit('wand',false);}
       if(has(h,'quick_heal')){const i=h.hand.indexOf('quick_heal');h.hand.splice(i,1);h.discard.push('quick_heal');h.actions--;return {acts:1,card:null};}
       if(has(h,'slow_heal')){const i=h.hand.indexOf('slow_heal');h.hand.splice(i,1);h.discard.push('slow_heal');h.actions--;return {acts:1,card:null};}
@@ -68,6 +142,8 @@
     if(role==='mage'){
       if(h.fireballCasting&&has(h,'fireball')){if(pos()!=='FAR')return flip('FAR');playMageCard(g,h,'fireball',T);return hit('fireball',false);}
       if(has(h,'frostbolt')){if(pos()!=='NEAR')return flip('NEAR');playMageCard(g,h,'frostbolt',T);return hit('frostbolt',false);}
+      if(has(h,'cone_of_cold')){if(pos()!=='NEAR')return flip('NEAR');playMageCard(g,h,'cone_of_cold',T);return hit('cone_of_cold',false);}
+      if(has(h,'living_bomb')){if(pos()!=='NEAR')return flip('NEAR');playMageCard(g,h,'living_bomb',T);return hit('living_bomb',false);}
       if(has(h,'fireball')&&!h.fireballCasting){if(pos()!=='FAR')return flip('FAR');playMageCard(g,h,'fireball',T);return {acts:1,card:null};} // carica
       if(has(h,'blizzard')){if(pos()!=='FAR')return flip('FAR');playMageCard(g,h,'blizzard',T);return hit('blizzard',false);}
       if(has(h,'counterspell')){playMageCard(g,h,'counterspell',T);return hit('counterspell',false);}
@@ -77,6 +153,14 @@
     return {acts:1,card:null};
   }
 
+  function applyTalents(g,h,role){
+    for(const tal of TALENT_DEFS[role]){
+      if(!isOn(role,tal.id))continue;
+      if(tal.flags)Object.assign(h.talents,tal.flags);
+      if(tal.cards)for(const c of tal.cards)h.deck.push(c);
+    }
+    h.draw=shuffle(h.deck); h.discard=[]; h.hand=[]; refill(h,g);
+  }
   function buildSim(role){
     const savedGame=game, savedRender=render;
     render=function(){};
@@ -85,7 +169,9 @@
     game=savedGame; render=savedRender;
     g.enemies=[mkDummy()]; g.state='playing'; g.activeRole=role; g.round=1;
     g.currentEncounter={firstKillRound:null,won:false,size:1};
-    return {role, g, h:g.party[0], dummy:g.enemies[0], damage:0, actions:0, wasted:0, rounds:0};
+    const h=g.party[0];
+    applyTalents(g,h,role);
+    return {role, g, h, dummy:g.enemies[0], damage:0, actions:0, wasted:0, rounds:0};
   }
   function advance(sim, roundsToRun){
     const {g,h,role,dummy}=sim;
@@ -98,7 +184,7 @@
         if(res.acts===0)continue;
         if(h.actions===aBefore)h.actions--;
         sim.actions+=res.acts;
-        const dmg=res.card?hitDamage(role,res.card,res.crit):0;
+        const dmg=res.card?hitDamage(role,res.card,res.crit,h):0;
         sim.damage+=dmg; if(dmg<=0)sim.wasted+=res.acts;
       }
     }
@@ -134,7 +220,7 @@
     style.textContent=`
       #benchPage .dps-controls{display:flex;gap:8px;align-items:center;margin-bottom:14px}
       #benchPage .dps-cards,#benchPage .dps-params{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
-      #benchPage .dps-params{margin-top:14px}
+      #benchPage .dps-params{margin-top:14px;align-items:start}
       @media(max-width:900px){#benchPage .dps-cards,#benchPage .dps-params{grid-template-columns:1fr 1fr}}
       .dpsc{background:#18281d;border:1px solid var(--edge);border-radius:14px;padding:14px}
       .dpsc h3{margin:0 0 4px;font-size:1.05rem}
@@ -147,7 +233,10 @@
       .dparam h4{margin:0 0 8px;font-size:12px;letter-spacing:.05em;text-transform:uppercase}
       .dparam .prow{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:5px 0}
       .dparam .prow label{font-size:12px;color:var(--muted);flex:1;min-width:0}
-      .dparam input{width:58px;padding:5px 6px;text-align:center;font:inherit;font-weight:700;color:var(--ink);background:#0f1712;border:1px solid #3a4a3d;border-radius:7px}
+      .dparam input[type=number]{width:56px;padding:5px 6px;text-align:center;font:inherit;font-weight:700;color:var(--ink);background:#0f1712;border:1px solid #3a4a3d;border-radius:7px}
+      .dparam .thead{margin:12px 0 4px;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:#8a9287;border-top:1px solid #2c3a2f;padding-top:9px}
+      .dparam .trow{display:flex;align-items:center;gap:7px;margin:4px 0}
+      .dparam .trow label{font-size:12px;color:var(--ink);cursor:pointer}
       #benchPage .dps-note{color:#8a9287;font-size:11px;margin-top:14px;line-height:1.5}`;
     document.head.append(style);
 
@@ -156,7 +245,7 @@
     page.innerHTML=`
       <div class="card">
         <h2>DPS Bench — manichino</h2>
-        <p class="muted">Le 4 classi (livello 1, nessun talento) ciclano il mazzo su un manichino a HP infiniti, giocando per il massimo danno. I valori di danno delle carte sono modificabili qui sotto: cambiali e le curve si ricalcolano dal vivo.</p>
+        <p class="muted">Le 4 classi ciclano il mazzo su un manichino a HP infiniti, giocando per il massimo danno. Valori di danno e talenti sono modificabili qui sotto: le curve si ricalcolano dal vivo.</p>
         <div class="dps-controls">
           <button id="dps-run">▶ Run</button>
           <button id="dps-stop" class="secondary" disabled>■ Stop</button>
@@ -178,7 +267,7 @@
               </table>
             </article>`).join('')}
         </div>
-        <h3 style="margin:20px 0 0">Valori carte (modificabili)</h3>
+        <h3 style="margin:20px 0 0">Valori carte &amp; Talenti</h3>
         <div class="dps-params">
           ${ROLES.map(r=>`
             <div class="dparam" style="border-left:3px solid ${COLORS[r]}">
@@ -186,9 +275,12 @@
               ${PARAM_DEFS[r].map(([k,label,d])=>`
                 <div class="prow"><label for="p-${r}-${k}">${label}</label>
                 <input id="p-${r}-${k}" type="number" min="0" max="30" step="1" value="${d}" data-role="${r}" data-key="${k}"></div>`).join('')}
+              <div class="thead">Talenti</div>
+              ${TALENT_DEFS[r].map(t=>`
+                <div class="trow"><input type="checkbox" id="t-${r}-${t.id}" data-trole="${r}" data-tid="${t.id}"><label for="t-${r}-${t.id}">${t.label}</label></div>`).join('')}
             </div>`).join('')}
         </div>
-        <p class="dps-note">Il motore gestisce mazzo, pesca, stance e cast lungo; il danno per colpo viene da questi valori. Assunzioni: cambio stance = 1 azione (Rogue FRONT/BEHIND, Mago/Prete NEAR/FAR); carte non-danno giocate a 0 danni; cast lungo (Colpo Divino, Fireball) = 2 carte + 2 azioni; il Bleed del Rend è modellato come "sanguinamento extra" sul colpo (default 0). Cambiare un valore azzera e ricalcola i contatori.</p>
+        <p class="dps-note">Il motore gestisce mazzo, pesca, stance e cast lungo; il danno per colpo viene dai valori qui sopra. I talenti aggiungono le loro carte al mazzo e applicano i bonus. Assunzioni: cambio stance = 1 azione (gratis per il Rogue con Evasion Tricky); carte non-danno = 0 danni; cast lungo (Colpo Divino, Fireball, Holy Strike) = 2 carte + 2 azioni; i DoT (Vile Poison, Garrote, Holy Fire, Living Bomb) sono modellati come danno-per-carta approssimato, non come tick nel turno Overlord — tara quei valori a piacere. Cambiare qualcosa azzera e ricalcola.</p>
       </div>`;
     document.querySelector('main').append(page);
 
@@ -218,9 +310,11 @@
       entry.onclick=openBench; panel.append(entry);
     })(0);
 
-    // input parametri -> aggiorna PARAMS e ricalcola
-    page.querySelectorAll('.dparam input').forEach(inp=>{
-      inp.oninput=()=>{const v=Math.max(0,+inp.value||0);PARAMS[inp.dataset.role][inp.dataset.key]=v;reset();};
+    page.querySelectorAll('.dparam input[type=number]').forEach(inp=>{
+      inp.oninput=()=>{PARAMS[inp.dataset.role][inp.dataset.key]=Math.max(0,+inp.value||0);reset();};
+    });
+    page.querySelectorAll('.dparam input[type=checkbox]').forEach(chk=>{
+      chk.onchange=()=>{const s=ACTIVE[chk.dataset.trole];chk.checked?s.add(chk.dataset.tid):s.delete(chk.dataset.tid);reset();};
     });
 
     document.getElementById('dps-run').onclick=run;
