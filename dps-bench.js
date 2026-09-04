@@ -22,37 +22,42 @@
   const PARAMS={};
   for(const r of ROLES){PARAMS[r]={};for(const [k,,d] of PARAM_DEFS[r])PARAMS[r][k]=d;}
 
-  // talenti rilevanti per il DPS: id, etichetta, carte aggiunte, flag h.talents impostati
+  // talenti DPS. kind: 'bonus' (val = bonus modificabile) | 'count' (val = n. carte aggiunte,
+  // carta in `card`) | 'flag' (booleano, nessun valore).
   const TALENT_DEFS={
     warrior:[
-      {id:'heroic_mastery',label:'Heroic Mastery (Spada +1)',flags:{heroic_mastery:2}},
-      {id:'improved_rend',label:'Improved Rend (Rend +1)',flags:{improved_rend:1}},
-      {id:'cleave',label:'Cleave (+2 carte)',cards:['cleave','cleave']},
-      {id:'improved_critical',label:'Improved Critical (+1 Critico)',cards:['critical']}
+      {id:'heroic_mastery',label:'Heroic Mastery',kind:'bonus',val:1,hint:'+ Spada'},
+      {id:'improved_rend',label:'Improved Rend',kind:'bonus',val:1,hint:'+ Rend'},
+      {id:'cleave',label:'Cleave',kind:'count',val:2,card:'cleave',hint:'carte'},
+      {id:'improved_critical',label:'Improved Critical',kind:'count',val:1,card:'critical',hint:'carte'}
     ],
     rogue:[
-      {id:'improved_backstab',label:'Improved Backstab (Backstab +2)',flags:{improved_backstab:2}},
-      {id:'evasion_tricky',label:'Evasion Tricky (flip gratis)',flags:{evasion_tricky:1}},
-      {id:'mutilate',label:'Mutilate (+2 carte)',cards:['mutilate','mutilate']},
-      {id:'vile_poison',label:'Vile Poison (+2 carte)',cards:['vile_poison','vile_poison']},
-      {id:'garrote',label:'Garrote (+4 carte)',cards:['garrote','garrote','garrote','garrote']},
-      {id:'improved_critical',label:'Improved Critical (+1 Critico)',cards:['critical']}
+      {id:'improved_backstab',label:'Improved Backstab',kind:'bonus',val:2,hint:'+ Backstab'},
+      {id:'evasion_tricky',label:'Evasion Tricky (flip gratis)',kind:'flag'},
+      {id:'mutilate',label:'Mutilate',kind:'count',val:2,card:'mutilate',hint:'carte'},
+      {id:'vile_poison',label:'Vile Poison',kind:'count',val:2,card:'vile_poison',hint:'carte'},
+      {id:'garrote',label:'Garrote',kind:'count',val:4,card:'garrote',hint:'carte'},
+      {id:'improved_critical',label:'Improved Critical',kind:'count',val:1,card:'critical',hint:'carte'}
     ],
     healer:[
-      {id:'improved_spell_damage',label:'Improved Spell Damage (+2 spell)',flags:{improved_spell_damage:2}},
-      {id:'holy_fire',label:'Holy Fire (+3 carte)',cards:['holy_fire','holy_fire','holy_fire']},
-      {id:'holy_strike',label:'Holy Strike (+3 carte)',cards:['holy_strike','holy_strike','holy_strike']},
-      {id:'improved_critical',label:'Improved Critical (+1 Critico)',cards:['critical']}
+      {id:'improved_spell_damage',label:'Improved Spell Damage',kind:'bonus',val:2,hint:'+ spell'},
+      {id:'holy_fire',label:'Holy Fire',kind:'count',val:3,card:'holy_fire',hint:'carte'},
+      {id:'holy_strike',label:'Holy Strike',kind:'count',val:3,card:'holy_strike',hint:'carte'},
+      {id:'improved_critical',label:'Improved Critical',kind:'count',val:1,card:'critical',hint:'carte'}
     ],
     mage:[
-      {id:'improved_frost',label:'Improved Frost (+1 Frost)',flags:{improved_frost:1}},
-      {id:'improved_fire',label:'Improved Fire (+1 Fire)',flags:{improved_fire:1}},
-      {id:'cone_of_cold',label:'Cone of Cold (+2 carte)',cards:['cone_of_cold','cone_of_cold']},
-      {id:'living_bomb',label:'Living Bomb (+2 carte)',cards:['living_bomb','living_bomb']}
+      {id:'improved_frost',label:'Improved Frost',kind:'bonus',val:1,hint:'+ Frost'},
+      {id:'improved_fire',label:'Improved Fire',kind:'bonus',val:1,hint:'+ Fire'},
+      {id:'cone_of_cold',label:'Cone of Cold',kind:'count',val:2,card:'cone_of_cold',hint:'carte'},
+      {id:'living_bomb',label:'Living Bomb',kind:'count',val:2,card:'living_bomb',hint:'carte'}
     ]
   };
   const ACTIVE={warrior:new Set(),rogue:new Set(),healer:new Set(),mage:new Set()};
+  const TALENT_VALS={};                                 // valori correnti (modificabili)
+  for(const r of ROLES){TALENT_VALS[r]={};for(const t of TALENT_DEFS[r])if(t.kind!=='flag')TALENT_VALS[r][t.id]=t.val;}
   const isOn=(role,id)=>ACTIVE[role].has(id);
+  const V=(role,id)=>TALENT_VALS[role][id]||0;          // valore del talento (se attivo)
+  const bonus=(role,id)=>isOn(role,id)?V(role,id):0;    // bonus se il talento è attivo
   let TARGETS=1;                                        // n. manichini (1-4)
 
   function mkDummy(id){return {id,type:'dummy',hp:1e9,maxHp:1e9,damage:0,draw:[],discard:[],bleeds:[],bleedCount:0,taunted:false,casting:null,holyFireDots:0,livingBomb:0,vilePoison:0,garrote:0,frostVulnerable:false,firePierced:false};}
@@ -69,17 +74,17 @@
     return AOE.has(card)?d*TARGETS:d;                   // le carte ad area colpiscono tutti i manichini
   }
   function hitPerTarget(role,card,crit,h){
-    const P=PARAMS[role], t=h.talents||{};
+    const P=PARAMS[role];
     if(role==='warrior'){
       let d=P.sword_base;
-      if(card==='sword')d+=P.heroic_strike+(t.heroic_mastery>=2?1:0);
-      else if(card==='rend')d+=P.rend_bleed+(t.improved_rend||0);
+      if(card==='sword')d+=P.heroic_strike+bonus('warrior','heroic_mastery');
+      else if(card==='rend')d+=P.rend_bleed+bonus('warrior','improved_rend');
       else if(card==='cleave')return P.cleave+(crit?P.crit:0);
       return d+(crit?P.crit:0);
     }
     if(role==='rogue'){
       let d;
-      if(card==='backstab')d=P.dagger_base+P.backstab+(t.improved_backstab>=2?2:0);
+      if(card==='backstab')d=P.dagger_base+P.backstab+bonus('rogue','improved_backstab');
       else if(card==='eviscerate')d=P.dagger_base+P.eviscerate;
       else if(card==='mutilate')return P.mutilate+(crit?P.crit:0);
       else if(card==='vile_poison')return P.vile_poison;
@@ -89,7 +94,7 @@
       return d+(crit?P.crit:0);
     }
     if(role==='healer'){
-      const sd=t.improved_spell_damage>=2?2:0;
+      const sd=bonus('healer','improved_spell_damage');
       if(card==='holy_pulse')return P.holy_pulse+sd+(crit?P.crit:0);
       if(card==='divine_strike')return P.divine_strike+sd;
       if(card==='holy_strike')return P.holy_strike+sd;
@@ -99,8 +104,8 @@
     }
     if(role==='mage'){
       let d=P[card]||0;
-      if(FROST.has(card))d+=(t.improved_frost||0);
-      if(FIRE.has(card))d+=(t.improved_fire||0);
+      if(FROST.has(card))d+=bonus('mage','improved_frost');
+      if(FIRE.has(card))d+=bonus('mage','improved_fire');
       return d;
     }
     return 0;
@@ -163,8 +168,7 @@
   function applyTalents(g,h,role){
     for(const tal of TALENT_DEFS[role]){
       if(!isOn(role,tal.id))continue;
-      if(tal.flags)Object.assign(h.talents,tal.flags);
-      if(tal.cards)for(const c of tal.cards)h.deck.push(c);
+      if(tal.kind==='count')for(let i=0;i<V(role,tal.id);i++)h.deck.push(tal.card);
     }
     h.draw=shuffle(h.deck); h.discard=[]; h.hand=[]; refill(h,g);
   }
@@ -245,7 +249,9 @@
       .dparam input[type=number]{width:56px;padding:5px 6px;text-align:center;font:inherit;font-weight:700;color:var(--ink);background:#0f1712;border:1px solid #3a4a3d;border-radius:7px}
       .dparam .thead{margin:12px 0 4px;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:#8a9287;border-top:1px solid #2c3a2f;padding-top:9px}
       .dparam .trow{display:flex;align-items:center;gap:7px;margin:4px 0}
-      .dparam .trow label{font-size:12px;color:var(--ink);cursor:pointer}
+      .dparam .trow label{font-size:12px;color:var(--ink);cursor:pointer;flex:1;min-width:0}
+      .dparam .trow .tval{width:46px;padding:4px 5px;text-align:center;font:inherit;font-weight:700;color:var(--ink);background:#0f1712;border:1px solid #3a4a3d;border-radius:6px}
+      .dparam .trow .thint{font-size:10px;color:#8a9287;width:56px}
       #benchPage .dps-note{color:#8a9287;font-size:11px;margin-top:14px;line-height:1.5}`;
     document.head.append(style);
 
@@ -290,7 +296,7 @@
                 <input id="p-${r}-${k}" type="number" min="0" max="30" step="1" value="${d}" data-role="${r}" data-key="${k}"></div>`).join('')}
               <div class="thead">Talenti</div>
               ${TALENT_DEFS[r].map(t=>`
-                <div class="trow"><input type="checkbox" id="t-${r}-${t.id}" data-trole="${r}" data-tid="${t.id}"><label for="t-${r}-${t.id}">${t.label}</label></div>`).join('')}
+                <div class="trow"><input type="checkbox" id="t-${r}-${t.id}" data-trole="${r}" data-tid="${t.id}"><label for="t-${r}-${t.id}">${t.label}</label>${t.kind==='flag'?'':`<input class="tval" type="number" min="0" max="12" step="1" value="${t.val}" data-tvrole="${r}" data-tvid="${t.id}" title="${t.hint||''}"><span class="thint">${t.hint||''}</span>`}</div>`).join('')}
             </div>`).join('')}
         </div>
         <p class="dps-note">Il motore gestisce mazzo, pesca, stance e cast lungo; il danno per colpo viene dai valori qui sopra. I talenti aggiungono le loro carte al mazzo e applicano i bonus. Assunzioni: cambio stance = 1 azione (gratis per il Rogue con Evasion Tricky); carte non-danno = 0 danni; cast lungo (Colpo Divino, Fireball, Holy Strike) = 2 carte + 2 azioni; i DoT (Vile Poison, Garrote, Holy Fire, Living Bomb) sono modellati come danno-per-carta approssimato, non come tick nel turno Overlord — tara quei valori a piacere. Cambiare qualcosa azzera e ricalcola.</p>
@@ -323,8 +329,11 @@
       entry.onclick=openBench; panel.append(entry);
     })(0);
 
-    page.querySelectorAll('.dparam input[type=number]').forEach(inp=>{
+    page.querySelectorAll('.dparam input[data-key]').forEach(inp=>{
       inp.oninput=()=>{PARAMS[inp.dataset.role][inp.dataset.key]=Math.max(0,+inp.value||0);reset();};
+    });
+    page.querySelectorAll('.dparam input[data-tvid]').forEach(inp=>{
+      inp.oninput=()=>{TALENT_VALS[inp.dataset.tvrole][inp.dataset.tvid]=Math.max(0,+inp.value||0);reset();};
     });
     page.querySelectorAll('.dparam input[type=checkbox]').forEach(chk=>{
       chk.onchange=()=>{const s=ACTIVE[chk.dataset.trole];chk.checked?s.add(chk.dataset.tid):s.delete(chk.dataset.tid);reset();};
