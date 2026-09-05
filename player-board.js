@@ -496,16 +496,18 @@ function createSaveManager(){const overlay=document.createElement('section');ove
 const HERO_CLASSES=[['warrior','Guerriero'],['healer','Prete'],['rogue','Rogue'],['mage','Mago']];
 function levelButtonsHtml(unlocked){return RAID_LEVELS.map((l,i)=>{const locked=i>unlocked;return`<button class="level-btn ${locked?'locked':''}" data-level="${l.id}" ${locked?'disabled':''}><strong>${l.label}</strong><small>${l.sub}</small>${locked?'<span class="lock">🔒 Vinci il livello precedente</span>':'<span class="go">Entra ▸</span>'}</button>`}).join('')}
 function createCampaignSetup(){const overlay=document.createElement('section');overlay.id='campaignSetup';overlay.className='campaign-setup';overlay.hidden=true;overlay.innerHTML=`<div class="campaign-setup-panel"><h1 class="campaign-title">Le Paludi<br>della Luna<br>Avvelenata</h1><p class="campaign-subtitle">Il Tempio di Grum’Arat</p><div class="campaign-controls" id="homeBody"></div><p class="setup-credits">Icone carte: <a href="https://game-icons.net" target="_blank" rel="noopener">game-icons.net</a> — CC BY 3.0</p></div>`;document.body.append(overlay);const body=overlay.querySelector('#homeBody');
-  function startLevel(levelId,roles,roster){startBoardCampaign(roles,levelId,roster);overlay.hidden=true}
+  function gatherControllers(roles){const c={};roles.forEach((r,i)=>{const cb=body.querySelector(`.ai-choice[data-slot="${i}"]`)||body.querySelector(`.ai-choice[data-role="${r}"]`);c[r]=cb&&cb.checked?'ai':'human'});const ov=body.querySelector('#overlordAI');c.overlord=ov&&ov.checked?'ai':'human';return c}
+  function startLevel(levelId,roles,roster){startBoardCampaign(roles,levelId,roster,gatherControllers(roles));overlay.hidden=true}
+  const overlordToggle=`<label class="ai-toggle overlord"><input type="checkbox" id="overlordAI"> Overlord giocato dall’AI</label>`;
   function drawHome(){const journey=loadJourney();
     if(journey&&journey.roster?.length){const unlocked=journey.unlocked||0,roles=journey.roles||journey.roster.map(b=>b.role);
-      body.innerHTML=`<div class="journey-head"><span class="journey-tag">Percorso in corso</span><p class="journey-roster">${roles.map(r=>NAMES[r]||r).join(' · ')}</p></div><div class="level-grid">${levelButtonsHtml(unlocked)}</div><div class="home-actions"><button class="secondary" id="backMenu">← Menu</button><button class="secondary" id="newRun">Nuova partita da 0</button></div>`;
+      body.innerHTML=`<div class="journey-head"><span class="journey-tag">Percorso in corso</span><p class="journey-roster">${roles.map(r=>NAMES[r]||r).join(' · ')}</p></div><div class="ctrl-list">${roles.map(r=>`<label class="ai-toggle"><input type="checkbox" class="ai-choice" data-role="${r}"> <span>${NAMES[r]||r}</span> <em>AI</em></label>`).join('')}</div>${overlordToggle}<div class="level-grid">${levelButtonsHtml(unlocked)}</div><div class="home-actions"><button class="secondary" id="backMenu">← Menu</button><button class="secondary" id="newRun">Nuova partita da 0</button></div>`;
       body.querySelectorAll('[data-level]').forEach(btn=>btn.onclick=()=>startLevel(btn.dataset.level,roles,journey.roster));
       body.querySelector('#newRun').onclick=()=>{if(confirm('Iniziare una nuova partita da 0? Il percorso attuale resterà nei Salvataggi solo se lo hai salvato.')){clearJourney();drawHome()}};
     }else{
-      body.innerHTML=`<label>Numero di giocatori<select id="playerCount"><option>1</option><option>2</option><option>3</option><option selected>4</option></select></label><div class="class-slots" id="classSlots"></div><p class="setup-error" id="setupError"></p><div class="level-grid">${levelButtonsHtml(0)}</div><div class="home-actions"><button class="secondary" id="backMenu">← Menu</button></div>`;
+      body.innerHTML=`<label>Numero di giocatori<select id="playerCount"><option>1</option><option>2</option><option>3</option><option selected>4</option></select></label><div class="class-slots" id="classSlots"></div>${overlordToggle}<p class="setup-error" id="setupError"></p><div class="level-grid">${levelButtonsHtml(0)}</div><div class="home-actions"><button class="secondary" id="backMenu">← Menu</button></div>`;
       const count=body.querySelector('#playerCount'),slots=body.querySelector('#classSlots');
-      function drawSlots(){const n=+count.value;slots.innerHTML=Array.from({length:n},(_,i)=>`<label>Giocatore ${i+1}<select class="class-choice">${HERO_CLASSES.map(([id,name],j)=>`<option value="${id}" ${i===j?'selected':''}>${name}</option>`).join('')}</select></label>`).join('')}
+      function drawSlots(){const n=+count.value;slots.innerHTML=Array.from({length:n},(_,i)=>`<label class="class-slot">Giocatore ${i+1}<select class="class-choice">${HERO_CLASSES.map(([id,name],j)=>`<option value="${id}" ${i===j?'selected':''}>${name}</option>`).join('')}</select><span class="ai-toggle"><input type="checkbox" class="ai-choice" data-slot="${i}"> AI</span></label>`).join('')}
       count.onchange=drawSlots;drawSlots();
       body.querySelectorAll('[data-level]').forEach(btn=>btn.onclick=()=>{const roles=[...body.querySelectorAll('.class-choice')].map(s=>s.value),error=body.querySelector('#setupError');if(new Set(roles).size!==roles.length){error.textContent='Ogni classe può essere scelta una sola volta.';return}startLevel(btn.dataset.level,roles,null)});
     }
@@ -523,7 +525,7 @@ function createCredits(){const c=document.createElement('section');c.id='credits
   c.querySelector('#creditsBack').onclick=backToMenu;
   c.onclick=e=>{if(e.target===c)backToMenu()};
 }
-function startBoardCampaign(roles=['warrior','healer','rogue','mage'],difficulty='normale',roster=null){if(!Array.isArray(roles))roles=['warrior','healer','rogue','mage'];const sides={warrior:'front',healer:'front',rogue:'front',mage:'front',roles};window.PLAYER_BOARD_SETUP={enabled:true,sides};game=resetConnectedCampaignToEntrance(startExplorationGame(EXPLORATION_CONFIG_T7_B,true));game.difficulty=difficulty;game.selectedRoles=roles;if(roster)for(const b of roster){const h=game.party.find(x=>x.role===b.role);if(h)applyBuild(h,b)}applyPlayerBoardEnemyStats(game);render()}
+function startBoardCampaign(roles=['warrior','healer','rogue','mage'],difficulty='normale',roster=null,controllers=null){if(!Array.isArray(roles))roles=['warrior','healer','rogue','mage'];const sides={warrior:'front',healer:'front',rogue:'front',mage:'front',roles};window.PLAYER_BOARD_SETUP={enabled:true,sides};game=resetConnectedCampaignToEntrance(startExplorationGame(EXPLORATION_CONFIG_T7_B,true));game.difficulty=difficulty;game.selectedRoles=roles;if(roster)for(const b of roster){const h=game.party.find(x=>x.role===b.role);if(h)applyBuild(h,b)}game.controllers=Object.assign({warrior:'human',healer:'human',rogue:'human',mage:'human',overlord:'human'},controllers||{});applyPlayerBoardEnemyStats(game);render()}
 document.getElementById('startBoard').onclick=startBoardCampaign;
 document.getElementById('startLegacy').onclick=()=>{window.PLAYER_BOARD_SETUP={enabled:false,sides:{}};game=newGame(true);render()};
 document.getElementById('reset').onclick=()=>{const home=document.getElementById('campaignSetup');home.hidden=false;home._draw&&home._draw()};
@@ -623,3 +625,75 @@ createRaidRecap();
 
 const renderBeforeJourney=render;
 render=function(){renderBeforeJourney();if(!game?.playerBoardEnabled)return;const recap=document.getElementById('raidRecap');if(game.state==='won'){if(!game.__journeySaved){game.__journeySaved=true;persistJourneyOnWin(game)}showRecap(game)}else if(recap&&!recap.hidden)recap.hidden=true};
+
+/* ============================================================
+   AI ROLLOUT — attori (eroi + Overlord) controllabili AI/umano.
+   Decisioni di combattimento via rollout Monte-Carlo d6 su cloni dello stato;
+   transizioni (uscita/ricompense/loot/recupero/piazzamento) via auto-scelte.
+   ============================================================ */
+const AI_SAMPLES=6, AI_PLY_CAP=14, AI_PACE=350;
+function aiControls(g,role){return g?.controllers&&g.controllers[role]==='ai'}
+function aliveAiHeroesOnly(g){const alive=aliveHeroes(g);return alive.length>0&&alive.every(h=>aiControls(g,h.role))}
+function aiClone(g){try{return structuredClone(g)}catch{return restoreSnapshot(saveSnapshot.call({},g))}}
+function aiScore(g){let s=0;for(const h of g.party){s+=Math.max(0,h.hp)*2;if(h.hp<=0)s-=40}for(const e of aliveEnemies(g))s-=e.hp;if(!aliveEnemies(g).length)s+=120;if(g.state==='lost')s-=1000;else if(g.state==='won')s+=300;else if(['reward','exit_choice','loot','restoring'].includes(g.state))s+=60;return s}
+
+function heroMove(role,w,fn){return{w,apply:sg=>{const hh=sg.party.find(x=>x.role===role);if(!hh)return;const ok=fn(sg,hh);if(ok&&sg.state==='playing')advanceHeroTurn(sg);else if(!ok&&sg.state==='playing'&&sg.activeRole===role)passHeroTurn(sg)}}}
+function aiHeroMoves(g,h){const role=h.role,moves=[],enemies=aliveEnemies(g).slice().sort((a,b)=>a.hp-b.hp),allies=aliveHeroes(g).slice().sort((a,b)=>a.hp-b.hp),lowE=enemies[0],lowA=allies[0],pos=h.board?.position?.card;
+  const eTv=lowE?`enemy:x:${lowE.id}`:null,aTv=lowA?`ally:${lowA.role}:0`:null;
+  if(lowE){
+    if(role==='warrior'){moves.push(heroMove(role,3,(sg,hh)=>useSword(sg,hh,eTv)));if(h.offhand&&!h.twoHanded)moves.push(heroMove(role,h.maxHp-h.hp>=3?5:1,(sg,hh)=>useShield(sg,hh,eTv)))}
+    if(role==='rogue'){moves.push(heroMove(role,3,(sg,hh)=>useDagger(sg,hh,eTv,'left')));moves.push(heroMove(role,3,(sg,hh)=>useDagger(sg,hh,eTv,'right')))}
+    if(role==='healer'&&pos==='FAR')moves.push(heroMove(role,1,(sg,hh)=>useWand(sg,hh,eTv)));
+    if(role==='mage'){if(pos==='FAR')moves.push(heroMove(role,1,(sg,hh)=>useMageWand(sg,hh,eTv)));moves.push(heroMove(role,1,(sg,hh)=>flipMage(sg,hh)))}
+  }
+  const HEAL=['quick_heal','slow_heal','bandage','holy_shield','warrior_heal'];
+  const seen=new Set();
+  for(const card of h.hand){if(card==='wound'||card==='critical'||seen.has(card))continue;seen.add(card);
+    const canPlay=role==='mage'?mageCanPlay(h,card):role==='healer'?priestCanPlay(h,card):role==='rogue'?rogueCanPlay(h,card):role==='warrior'?warriorCanPlay(h,card):true;
+    if(!canPlay)continue;
+    const heal=HEAL.includes(card),def=['frost_armor','evasion'].includes(card),tv=(heal||def)?aTv:eTv;if(!tv)continue;
+    const w=heal?Math.max(1,(lowA.maxHp-lowA.hp)):def?(h.maxHp-h.hp>=3?5:2):4;
+    moves.push(heroMove(role,w,(sg,hh)=>play(sg,hh,card,tv)));
+  }
+  moves.push({w:0,apply:sg=>passHeroTurn(sg)}); // pass
+  return moves.map((m,idx)=>({...m,idx}));
+}
+function aiOverlordMoves(g){const turn=g.overlordTurn,e=g.enemies.find(x=>x.id===turn?.enemyId);if(!e||!turn)return[{w:0,idx:0,apply:sg=>{if(sg.overlordTurn){sg.overlordTurn.index++;prepareNextOverlordActivation(sg)}}}];
+  const heroesByHp=aliveHeroes(g).slice().sort((a,b)=>a.hp-b.hp),lowHero=turn.forcedTargetRole||heroesByHp[0]?.role,near=nearHeroes(g).map(h=>h.role),worstEnemy=aliveEnemies(g).slice().sort((a,b)=>a.hp-b.hp)[0]?.id,uniq=[...new Set(turn.cards||[])],moves=[];
+  for(const choice of uniq){
+    let targetRole=lowHero,targetRoles=[],secondary=null,w=2;
+    if(choice==='special'&&e.type==='goblin'){targetRoles=near.slice(0,2);w=3}
+    else if(choice==='tactic'&&e.type==='engineer'){secondary=worstEnemy;w=1}
+    moves.push({w,apply:sg=>{const st=sg.overlordTurn;if(st){st.targetRole=st.forcedTargetRole||targetRole||heroesByHp[0]?.role}resolveManualOverlordCard(sg,choice,targetRoles,secondary)}});
+  }
+  if(!moves.length)moves.push({w:0,apply:sg=>{if(sg.overlordTurn){sg.overlordTurn.index++;prepareNextOverlordActivation(sg)}}});
+  return moves.map((m,idx)=>({...m,idx}));
+}
+function aiMoves(g){if(g.state!=='playing')return[];return g.activeRole==='overlord'?aiOverlordMoves(g):(()=>{const h=g.party.find(x=>x.role===g.activeRole);return h&&h.hp>0?aiHeroMoves(g,h):[{w:0,idx:0,apply:sg=>passHeroTurn(sg)}]})()}
+function aiFastPlayout(sg){let plies=0;while(sg.state==='playing'&&plies<AI_PLY_CAP){const moves=aiMoves(sg);if(!moves.length)break;const roll=1+Math.floor(Math.random()*6),m=roll<=4?moves.reduce((a,b)=>b.w>a.w?b:a):moves[Math.floor(Math.random()*moves.length)];try{m.apply(sg)}catch{break}plies++}return aiScore(sg)}
+function aiChooseAndApply(g){const moves=aiMoves(g);if(!moves.length)return;if(moves.length===1){try{moves[0].apply(g)}catch(e){}return}const overlord=g.activeRole==='overlord';let best=moves[0],bestScore=-Infinity;for(const m of moves){let total=0;for(let s=0;s<AI_SAMPLES;s++){const sg=aiClone(g);const cm=aiMoves(sg)[m.idx];try{if(cm)cm.apply(sg);total+=aiFastPlayout(sg)}catch{total+=-9999}}const avg=(total/AI_SAMPLES)*(overlord?-1:1);if(avg>bestScore){bestScore=avg;best=m}}try{best.apply(g)}catch(e){}}
+
+// --- transizioni automatiche (fuori dal combattimento) ---
+function aiRecoveryStep(g){const h=g.party.find(x=>x.role===g.activeRole);if(!h)return;const runeIdx=(h.bag||[]).findIndex(s=>s&&s.item==='resurrection_rune');if(h.hp<=0&&runeIdx>=0){useResurrectionRune(g,h,runeIdx);return}passHeroTurn(g)}
+function aiClaimFirstReward(g){const first=g.pendingRewards?.[0];if(first)claimReward(g,0,'deck')}
+function aiExitStep(g){const room=currentExplorationRoom(g.exploration),exit=room?.exits?.[0];if(exit)choosePlayerExit(g,exit.id)}
+function aiPlaceOverlord(g){const x=g.exploration,pending=g.pendingOverlordPlacement;if(!pending)return;const tiles=pending.forceMiniBoss?x.overlordHand.filter(t=>t.id===MINI_BOSS_TILE_T2.id):x.overlordHand;const tile=tiles[0]||x.overlordHand[0];if(!tile)return;const conn=(typeof roomTileConnectors==='function'?roomTileConnectors(tile):tile.exits||[])[0];if(conn)resolveConnectedPlacement(g,tile.id,conn.id)}
+function aiLootStep(g){const loot=g.pendingLoot?.[0];if(!loot){finishLootDistribution(g);return}const item=TREASURE_ITEMS[loot.item],taker=lootEligibleHeroes(g,item).find(h=>canTakeBagItem(h,loot.item));if(taker)assignLoot(g,loot.uid,taker.role);else leaveLoot(g,loot.uid)}
+
+function aiNextStep(g){if(!g?.playerBoardEnabled||!g.controllers)return null;
+  switch(g.state){
+    case'playing':{const role=g.activeRole;return aiControls(g,role)?()=>aiChooseAndApply(g):null}
+    case'restoring':return aiControls(g,g.activeRole)?()=>aiRecoveryStep(g):null;
+    case'reward':{const first=g.pendingRewards?.[0];return first&&aiControls(g,first.hero.role)?()=>aiClaimFirstReward(g):null}
+    case'exit_choice':return aliveAiHeroesOnly(g)?()=>aiExitStep(g):null;
+    case'overlord_placement':return aiControls(g,'overlord')?()=>aiPlaceOverlord(g):null;
+    case'treasure':return aliveAiHeroesOnly(g)?()=>openExplorationChest(g):null;
+    case'loot':return aliveAiHeroesOnly(g)?()=>aiLootStep(g):null;
+    default:return null;
+  }
+}
+let aiTimer=null;
+function aiScheduleTick(){if(aiTimer||!game?.playerBoardEnabled)return;if(!aiNextStep(game))return;aiTimer=setTimeout(()=>{aiTimer=null;const step=aiNextStep(game);if(!step)return;try{step(game)}catch(e){console.warn('AI step error',e)}render()},AI_PACE)}
+
+const renderBeforeAi=render;
+render=function(){renderBeforeAi();if(game?.playerBoardEnabled&&game.controllers)aiScheduleTick()};
