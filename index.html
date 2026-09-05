@@ -62,7 +62,7 @@ const CONFIG={baseline:'party-v0.6',handSize:5,actionsPerRound:3,raid:[1,1,2,2,3
 const DECKS={warriorHeal:['sword','rend','parry','parry','warrior_heal'],warriorTaunt:['sword','rend','parry','parry','taunt'],healer:['quick_heal','slow_heal','slow_heal','bandage','holy_pulse']};
 const MAX_HP={warrior:12,healer:8};
 const NAMES={warrior:'Guerriero',healer:'Healer',sword:'Spada',rend:'Rend',parry:'Parata',warrior_heal:'Cura',taunt:'Provocazione',quick_heal:'Cura Veloce',slow_heal:'Cura Lenta',bandage:'Medicazione',holy_pulse:'Impulso Sacro',wound:'Ferita'};
-const DESC={sword:'1/2/3 danni',rend:'Sanguinamento top-deck',parry:'Difesa 1/2, poi contrattacco',warrior_heal:'+2/+3/+4 PV',taunt:'Forza il prossimo attacco sul Guerriero',quick_heal:'+1/+2 PV, L3 due target',slow_heal:'Avvia/completa canalizzazione',bandage:'Rimuove Ferite dalla mano',holy_pulse:'Danno sacro multi-target',wound:'Carta morta'};
+const DESC={sword:'Attacco base con arma',rend:'Sanguinamento top-deck',parry:'Guadagna Block, poi contrattacco',warrior_heal:'Cura il Guerriero',taunt:'Forza il prossimo attacco sul Guerriero',quick_heal:'Cura rapida un alleato',slow_heal:'Avvia/completa canalizzazione',bandage:'Rimuove Ferite dalla mano',holy_pulse:'Danno sacro a tutti',wound:'Carta morta'};
 const HEALER_ABILITIES=['quick_heal','slow_heal','bandage','holy_pulse'];
 const shuffle=a=>{a=[...a];for(let i=a.length-1;i;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
 const stats=()=>({damage:0,damageTaken:0,prevention:0,healingAllies:0,healingSelf:0,woundsRemoved:0,rendCancelled:0});
