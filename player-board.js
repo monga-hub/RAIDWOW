@@ -105,7 +105,7 @@ const ENEMY_ART={goblin:'assets/rana-razziatrice.jpeg',warchief:'assets/rana-war
 function weaponArt(h,slot){const m={warrior:['sword','shield'],healer:['staff-priest','wand-priest'],rogue:['dagger-left','dagger-right'],mage:['staff-mage','wand-mage']};return (m[h.role]||['sword','shield'])[slot]};
 const noteBeforeTheme=note;
 note=function(g,message){const themed=String(message).replace(/Mini Boss(?: \d+)?/g,'Grum’Arat, Strega del Miasma').replace(/Goblin Ingegnere (\d+)/g,(_,id)=>enemyLabel(g.enemies.find(e=>e.id===+id)||{id,type:'engineer'})).replace(/Goblin (\d+)/g,(_,id)=>enemyLabel(g.enemies.find(e=>e.id===+id)||{id,type:'goblin'})).replace(/(\d+) Goblin\b/g,(_,count)=>`${count} ${+count===1?'Razziatore Ranide':'Razziatori Ranidi'}`).replace(/\bServitori\b/g,'Girini Putrescenti').replace(/\bServitore\b/g,'Girino Putrescente');return noteBeforeTheme(g,themed)};
-const RAID_LEVELS=[{id:'normale',label:'Normale',sub:'HP standard',delta:0,dmg:0},{id:'heroic',label:'Heroic',sub:'+20 HP · +1 danni',delta:20,dmg:1},{id:'hardcore',label:'Hardcore',sub:'+40 HP · +2 danni · devastante',delta:40,dmg:2}];
+const RAID_LEVELS=[{id:'normale',label:'Normale',sub:'HP standard',delta:0,dmg:0},{id:'heroic',label:'Heroic',sub:'+20 HP · +2 danni',delta:20,dmg:2},{id:'hardcore',label:'Hardcore',sub:'+40 HP · +4 danni · devastante',delta:40,dmg:4}];
 function raidLevelIndex(id){const i=RAID_LEVELS.findIndex(l=>l.id===id);return i<0?0:i}
 function raidLevel(id){return RAID_LEVELS[raidLevelIndex(id)]}
 function diffDelta(g){return raidLevel(g&&g.difficulty).delta}
