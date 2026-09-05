@@ -42,7 +42,7 @@ const WARRIOR_EQUIPMENT={
   shield:{id:'shield',name:'Shield',block:1,itemId:'base_shield'},
   two_handed_fixture:{id:'two_handed_fixture',name:'Arma a due mani',damage:3,twoHanded:true,experimental:true}
 };
-const WARRIOR_CARD_AFFINITY={parry:['shield'],shield_slam:['shield'],sword:['sword'],cleave:['sword'],whirlwind:['sword'],rend:['shield','sword'],taunt:['shield','sword']};
+const WARRIOR_CARD_AFFINITY={parry:['shield'],shield_slam:['shield'],sword:['sword'],cleave:['shield'],whirlwind:['sword'],rend:['shield','sword'],taunt:['shield','sword']};
 const WARRIOR_TALENT_AFFINITY={improved_shield:['shield'],shield_slam:['shield'],cleave:['shield'],heroic_mastery:['sword'],improved_rend:['sword'],whirlwind:['sword'],improved_critical:['shield','sword']};
 const PRIEST_TALENTS={
   improved_healing:{name:'Improved Healing',cost:2,text:'Le cure +1 per punto (max +2) e rimuovono 1 Ferita'},
