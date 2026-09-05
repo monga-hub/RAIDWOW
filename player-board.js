@@ -655,6 +655,23 @@ function aiHeroMoves(g,h){const role=h.role,moves=[],enemies=aliveEnemies(g).sli
     const w=heal?Math.max(1,(lowA.maxHp-lowA.hp)):def?(h.maxHp-h.hp>=3?5:2):4;
     moves.push(heroMove(role,w,(sg,hh)=>play(sg,hh,card,tv)));
   }
+  // bag items (combat)
+  const enemyCount=enemies.length,hurt=h.maxHp-h.hp;
+  (h.bag||[]).forEach((slot,bi)=>{if(!slot)return;const id=slot.item;
+    if(id==='apple'){if(hurt>0)moves.push(heroMove(role,Math.min(hurt,2),(sg,hh)=>eatApple(sg,hh,bi)));return}
+    const item=TREASURE_ITEMS[id];if(!item||item.kind==='equipment')return;
+    let w=-1,target=null;
+    if(id.includes('bomb')){if(enemyCount)w=(id.includes('silver')?3:2)*enemyCount}
+    else if(id==='bronze_healing_potion'||id==='silver_major_potion'){if(hurt>=3)w=hurt}
+    else if(id==='bronze_bandage'||id==='silver_purifying_remedy'){if(h.hand.includes('wound')||hurt>=2)w=3}
+    else if(id==='silver_ward'){if(hurt>=3)w=3}
+    else if(id==='bronze_evasion'){if(hurt>=3)w=3}
+    else if((id==='bronze_whetstone'||id==='silver_runestone')&&!h.itemWeaponBonus&&['warrior','rogue'].includes(role)){w=2}
+    else if((id==='bronze_crystal'||id==='silver_sacred_crystal')&&!h.itemSpellBonus&&role==='healer'){w=2}
+    else if(id==='silver_haste'){w=2}
+    else if(id==='silver_revival'){const dead=g.party.find(x=>x.hp<=0);if(dead){w=8;target=dead.role}}
+    if(w>=0)moves.push(heroMove(role,w,(sg,hh)=>useBagItem(sg,hh,bi,target)));
+  });
   moves.push({w:0,apply:sg=>passHeroTurn(sg)}); // pass
   return moves.map((m,idx)=>({...m,idx}));
 }
@@ -674,7 +691,16 @@ function aiFastPlayout(sg){let plies=0;while(sg.state==='playing'&&plies<AI_PLY_
 function aiChooseAndApply(g){const moves=aiMoves(g);if(!moves.length)return;if(moves.length===1){try{moves[0].apply(g)}catch(e){}return}const overlord=g.activeRole==='overlord';let best=moves[0],bestScore=-Infinity;for(const m of moves){let total=0;for(let s=0;s<AI_SAMPLES;s++){const sg=aiClone(g);const cm=aiMoves(sg)[m.idx];try{if(cm)cm.apply(sg);total+=aiFastPlayout(sg)}catch{total+=-9999}}const avg=(total/AI_SAMPLES)*(overlord?-1:1);if(avg>bestScore){bestScore=avg;best=m}}try{best.apply(g)}catch(e){}}
 
 // --- transizioni automatiche (fuori dal combattimento) ---
-function aiRecoveryStep(g){const h=g.party.find(x=>x.role===g.activeRole);if(!h)return;const runeIdx=(h.bag||[]).findIndex(s=>s&&s.item==='resurrection_rune');if(h.hp<=0&&runeIdx>=0){useResurrectionRune(g,h,runeIdx);return}passHeroTurn(g)}
+function aiEquipUpgrade(g,h){for(let i=0;i<(h.bag||[]).length;i++){const slot=h.bag[i];if(!slot)continue;const item=TREASURE_ITEMS[slot.item];if(!item||item.kind!=='equipment')continue;const roleOk=item.role?item.role===h.role:item.roles?item.roles.includes(h.role):false;if(!roleOk)continue;
+    if(h.role==='warrior'){if(item.slot==='weapon'&&(item.damage||0)>(h.weapon?.damage||0))return{i};if(item.slot==='offhand'&&!h.twoHanded&&(item.block||0)>(h.offhand?.block||0))return{i}}
+    else if(h.role==='healer'){const cur=item.slot==='staff'?h.staff:h.wand,key=item.slot==='staff'?'healingBonus':'damage';if(((item[key]||0)+(item.spellDamageBonus||0))>((cur?.[key]||0)+(cur?.spellDamageBonus||0)))return{i}}
+    else if(h.role==='mage'){const cur=item.slot==='staff'?h.staff:h.wand,key=item.slot==='staff'?'spellDamageBonus':'damage';if((item[key]||0)>(cur?.[key]||0))return{i}}
+    else if(h.role==='rogue'&&item.slot==='dagger'){const l=h.daggers?.left?.damage||0,r=h.daggers?.right?.damage||0;if((item.damage||0)>Math.min(l,r))return{i,hand:l<=r?'left':'right'}}
+  }return null}
+function aiRecoveryStep(g){const h=g.party.find(x=>x.role===g.activeRole);if(!h)return;const runeIdx=(h.bag||[]).findIndex(s=>s&&s.item==='resurrection_rune');if(h.hp<=0){if(runeIdx>=0)useResurrectionRune(g,h,runeIdx);else passHeroTurn(g);return}
+  if(h.actions>0){const up=aiEquipUpgrade(g,h);if(up){equipBagItem(g,h,up.i,up.hand||'left');return}}
+  if(h.actions>0&&h.hp<h.maxHp){const potIdx=(h.bag||[]).findIndex(s=>s&&['bronze_healing_potion','silver_major_potion','bronze_bandage','silver_purifying_remedy'].includes(s.item));if(potIdx>=0){useBagItem(g,h,potIdx);return}const appleIdx=(h.bag||[]).findIndex(s=>s&&s.item==='apple');if(appleIdx>=0){eatApple(g,h,appleIdx);return}}
+  passHeroTurn(g)}
 function aiClaimFirstReward(g){const first=g.pendingRewards?.[0];if(first)claimReward(g,0,'deck')}
 function aiExitStep(g){const room=currentExplorationRoom(g.exploration),exit=room?.exits?.[0];if(exit)choosePlayerExit(g,exit.id)}
 function aiPlaceOverlord(g){const x=g.exploration,pending=g.pendingOverlordPlacement;if(!pending)return;const tiles=pending.forceMiniBoss?x.overlordHand.filter(t=>t.id===MINI_BOSS_TILE_T2.id):x.overlordHand;const tile=tiles[0]||x.overlordHand[0];if(!tile)return;const conn=(typeof roomTileConnectors==='function'?roomTileConnectors(tile):tile.exits||[])[0];if(conn)resolveConnectedPlacement(g,tile.id,conn.id)}
