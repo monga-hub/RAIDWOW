@@ -61,7 +61,7 @@ generateExplorationRoom=function(x,placement={}){
   const treasures=Array.from({length:totalIcons.TREASURE||0},()=>drawExplorationBag(x,x.treasureBag,'TREASURE'));
   x.fighterSequence.push(...fighters);x.treasureSequence.push(...treasures);
   const exitIcons=clone(selectedExit.icons),connectorIcons=clone(connector.icons);
-  const room={id:`room-${x.roomsExplored+1}`,tileId:tile.id,parentRoomId:parent.id,entryExitId:selectedExit.id,entryConnectorId:connector.id,fighters,treasures,exits:clone(remainingConnectors),state:'READY',canExplore:false,depth:x.roomsExplored+1,composition:{exit:exitIcons,connector:connectorIcons,known:exitIcons,hidden:connectorIcons,total:totalIcons},agency:{heroAvoidance,overlordCounterplay},bagAtCreation:{fighter:fighterBefore,treasure:treasureBefore}};
+  const room={id:`room-${x.roomsExplored+1}`,tileId:tile.id,parentRoomId:parent.id,entryExitId:selectedExit.id,entryConnectorId:connector.id,fighters,treasures,heroExitTreasure:selectedExit.icons.TREASURE||0,exits:clone(remainingConnectors),state:'READY',canExplore:false,depth:x.roomsExplored+1,composition:{exit:exitIcons,connector:connectorIcons,known:exitIcons,hidden:connectorIcons,total:totalIcons},agency:{heroAvoidance,overlordCounterplay},bagAtCreation:{fighter:fighterBefore,treasure:treasureBefore}};
   x.map.rooms.push(room);
   x.map.connections.push({fromRoomId:parent.id,fromExitId:selectedExit.id,toRoomId:room.id,toConnectorId:connector.id});
   x.map.currentRoomId=room.id;x.roomsExplored++;
