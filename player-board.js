@@ -586,10 +586,11 @@ function createCampaignSetup(){const overlay=document.createElement('section');o
   }
   overlay._draw=drawHome;drawHome();
 };
-function createMainMenu(){const menu=document.createElement('section');menu.id='mainMenu';menu.className='campaign-setup main-menu';menu.innerHTML=`<div class="campaign-setup-panel"><h1 class="campaign-title">Le Paludi<br>della Luna<br>Avvelenata</h1><p class="campaign-subtitle">Il Tempio di Grum’Arat</p><div class="menu-buttons"><button class="campaign-start" id="menuNew">Nuova campagna</button><button class="campaign-start secondary" id="menuResume">Riprendi campagna</button><button class="secondary" id="menuStory">Storia</button><button class="secondary" id="menuCredits">Credits</button></div></div>`;document.body.append(menu);
+function createMainMenu(){const menu=document.createElement('section');menu.id='mainMenu';menu.className='campaign-setup main-menu';menu.innerHTML=`<div class="campaign-setup-panel"><h1 class="campaign-title">Le Paludi<br>della Luna<br>Avvelenata</h1><p class="campaign-subtitle">Il Tempio di Grum’Arat</p><div class="menu-buttons"><button class="campaign-start" id="menuNew">Nuova campagna</button><button class="campaign-start secondary" id="menuResume">Riprendi campagna</button><button class="secondary" id="menuStory">Storia</button><button class="secondary" id="menuRules">📜 Regolamento</button><button class="secondary" id="menuCredits">Credits</button></div></div>`;document.body.append(menu);
   menu.querySelector('#menuNew').onclick=()=>{menu.hidden=true;const home=document.getElementById('campaignSetup');home.hidden=false;home._draw&&home._draw()};
   menu.querySelector('#menuResume').onclick=()=>window.__openSaves&&window.__openSaves();
   menu.querySelector('#menuStory').onclick=()=>{const s=document.getElementById('storyOverlay');if(s){menu.hidden=true;s.hidden=false;s.scrollTop=0}};
+  menu.querySelector('#menuRules').onclick=()=>{const r=document.getElementById('rulesOverlay');if(r){menu.hidden=true;r.hidden=false;const b=r.querySelector('.rules-body');if(b)b.scrollTop=0}};
   menu.querySelector('#menuCredits').onclick=()=>{const c=document.getElementById('creditsOverlay');if(c){menu.hidden=true;c.hidden=false}};
 }
 function createStory(){const s=document.createElement('section');s.id='storyOverlay';s.className='campaign-setup story-overlay';s.hidden=true;s.innerHTML=`<div class="campaign-setup-panel story-panel"><h1 class="campaign-title" style="font-size:clamp(30px,5vw,52px)">Le Paludi della Luna Avvelenata</h1><p class="campaign-subtitle">La Veglia Avvelenata</p><div class="story-body">
@@ -616,7 +617,148 @@ document.getElementById('startLegacy').onclick=()=>{window.PLAYER_BOARD_SETUP={e
 document.getElementById('reset').onclick=()=>{const home=document.getElementById('campaignSetup');home.hidden=false;home._draw&&home._draw()};
 document.getElementById('end').onclick=()=>{if(game.playerBoardEnabled)passHeroTurn(game);else endRound(game);render()};
 document.getElementById('boardSmoke').onclick=()=>{const previous=window.PLAYER_BOARD_SETUP;window.PLAYER_BOARD_SETUP={enabled:false,sides:{}};const legacy=legacyNewGame(true),board=attachBoard(legacyNewGame(true),{warrior:'front',healer:'front'}),w=board.party[0],deckBefore=w.deck.length;boardInvest(board,w,'parry');boardInvest(board,w,'parry');const trackPass=w.mastery.parry===2&&w.levels.parry===2&&w.deck.length===deckBefore;addDeckCard(w,'parry');const deckPass=w.deck.length===deckBefore+1&&w.mastery.parry===2;w.hp=w.maxHp+1;const hpViolation=validateBoard(board).length===1;w.hp=w.maxHp;const events=board.playerBoardAudit.events.map(e=>e.type);const result={test:'Player Board feature-flag smoke',passed:!legacy.playerBoardEnabled&&trackPass&&deckPass&&hpViolation&&events.includes('ENGINE_INVESTED')&&events.includes('ABILITY_LEVEL_UP')&&events.includes('PLAYER_BOARD_SIDE_SELECTED'),baselineUnchanged:!legacy.playerBoardEnabled,trackPass,deckPass,hpViolation,audit:board.playerBoardAudit};document.getElementById('results').textContent=JSON.stringify(result,null,2);window.PLAYER_BOARD_SETUP=previous};
-if(new URLSearchParams(location.search).get('legacy')==='1')render();else{createCampaignSetup();createCredits();createStory();createMainMenu()}
+function createRules(){const r=document.createElement('section');r.id='rulesOverlay';r.className='campaign-setup rules-overlay';r.hidden=true;r.innerHTML=`<div class="campaign-setup-panel rules-panel"><h1 class="campaign-title" style="font-size:clamp(26px,4vw,44px)">📜 Regolamento</h1><p class="campaign-subtitle">Le Paludi della Luna Avvelenata — come si gioca</p><div class="rules-body">
+
+<h3>1 · Cos'è il gioco e come si vince</h3>
+<p>Siete una compagnia di 4 eroi-ratto che esplora un tempio di palude infestato. Ogni <b>stanza</b> è uno scontro contro i mostri dell'<b>Overlord</b> (il "cattivo", gestito dall'AI o da un giocatore). Ripulite una stanza, scegliete un'uscita, entrate nella successiva. <b>Vincete</b> quando arrivate in fondo e sconfiggete il boss finale, <b>Grum'Arat</b>. Se tutti gli eroi cadono, avete perso.</p>
+
+<h3>2 · Preparazione (nuova campagna)</h3>
+<ul>
+<li>Dal menu, <b>Nuova campagna</b>: dai un nome alla <b>compagnia</b> e scegli il <b>numero di giocatori</b> (fino a 4).</li>
+<li>Per ogni eroe scrivi un <b>nome</b> e scegli la <b>classe</b> (Guerriero, Priest, Rogue, Mago — ogni classe una sola volta). Il tasto <b>🎲 Genera nomi random</b> riempie tutto in automatico.</li>
+<li>Puoi far giocare qualche eroe all'<b>AI</b>, e decidere se l'<b>Overlord</b> è AI (con cursore di spietatezza).</li>
+<li>Scegli la <b>difficoltà</b>: Normale, Heroic, Hardcore (vedi sez. 11).</li>
+</ul>
+
+<h3>3 · Il turno e l'INIZIATIVA</h3>
+<p>L'ordine di gioco è una <b>fila di 5 dischi</b>: i 4 eroi + l'Overlord. Si agisce uno alla volta seguendo la fila. <b>L'Overlord è dentro la fila</b>: quando tocca al suo disco fa il turno dei nemici — non è sempre l'ultimo!</p>
+<ul>
+<li>Nel tuo turno puoi spendere 1 azione per muovere il tuo disco: <b>↑ Iniziativa</b> (sali di un posto, ti conviene nei round successivi) o <b>↓ Ritarda</b> (scendi di un posto, agisci più tardi).</li>
+<li>La fila <b>resta</b> uguale round dopo round dentro la stanza.</li>
+<li><b>Fine stanza</b>: la fila ruota (il primo va ultimo) e l'Overlord si sposta di un posto — così ogni stanza l'ordine cambia.</li>
+</ul>
+
+<h3>4 · Azioni, carte e Position/Stance</h3>
+<ul>
+<li>Ogni eroe ha <b>3 azioni</b> per turno e una <b>mano di 5 carte</b> (si ripesca a inizio turno). Giocare una carta costa in genere 1 azione.</li>
+<li>Ogni classe ha una <b>Position/Stance</b> che cambia cosa può fare: il Guerriero ha <b>Stance</b> AGGRESSIVE/DEFENSIVE; Priest e Mago hanno <b>Position</b> NEAR/FAR; il Rogue ha FRONT/BEHIND. Cambiarla costa <b>1 azione</b> (bottone "Cambia").</li>
+<li>Alcune carte si usano solo in una certa Position (es. Backstab solo BEHIND, Fireball solo FAR).</li>
+<li>Quando hai finito, premi <b>Passa</b>.</li>
+</ul>
+
+<h3>5 · Combattimento</h3>
+<ul>
+<li>Scegli il <b>bersaglio</b> (un nemico o un alleato) e gioca le carte. Il danno abbassa la <b>barra HP</b>.</li>
+<li><b>Ferite</b> (Wound): carte morte che alcuni attacchi nemici infilano nel tuo mazzo; non fanno nulla e sprecano spazio. Si <b>puliscono da sole al Campo</b>.</li>
+<li><b>Bleed</b>: la carta <b>Rend</b> del Guerriero mette Sanguinamento su un nemico e può <b>bloccargli</b> le attivazioni.</li>
+<li><b>DoT</b> (danno nel tempo): Vile Poison, Garrote, Living Bomb, Holy Fire lasciano un effetto che continua a ferire.</li>
+<li><b>Cure</b>: il Priest rimette HP agli alleati.</li>
+</ul>
+
+<h3>6 · Il CAMPO: costruisci il mazzo (deckbuilding) + talenti</h3>
+<p>Tra una stanza e l'altra c'è il <b>Campo</b> (turno di Recupero): qui curi, usi oggetti e <b>sistemi il mazzo</b>.</p>
+<ul>
+<li><b>Collezione</b> = tutte le carte che possiedi. <b>Mazzo</b> = quelle che porti in battaglia.</li>
+<li>Regole del mazzo: <b>massimo 12 carte</b>, <b>massimo 3 copie</b> della stessa carta.</li>
+<li><b>Togliere</b> una carta è gratis; <b>aggiungere</b> costa 1 "cambio", e hai <b>3 cambi per Campo</b>.</li>
+<li>Le <b>Ferite</b> spariscono automaticamente qui.</li>
+<li><b>Talenti</b>: potenziamenti permanenti della classe. Le carte-ricompensa vanno in collezione e si possono spendere per i talenti (2 carte della stessa affinità → 1 punto talento).</li>
+</ul>
+
+<h3>7 · Ricompense, XP e livelli</h3>
+<ul>
+<li>Uccidere nemici dà <b>XP</b> (mostro normale 4, mini-mob 2, mini-boss 10).</li>
+<li>Sali di <b>livello</b> quando riempi la barra XP (serve 9, poi 14, 19… cioè +5 ogni livello). Ogni livello: <b>+2 HP</b> e una ricompensa (carta o talento).</li>
+<li>Le carte vinte finiscono in <b>collezione</b> (le metti in mazzo al Campo).</li>
+<li>Se rigiochi una difficoltà già completata, l'<b>XP è dimezzata</b>.</li>
+</ul>
+
+<h3>8 · Stanze: scelta dell'uscita e tesori</h3>
+<ul>
+<li>Pulita la stanza, scegli una <b>porta d'uscita</b>. Ogni porta mostra delle icone: <b>⚔</b> = nemici che troverai, <b>◆</b> = tesori.</li>
+<li>In base all'uscita, l'<b>Overlord</b> compone la stanza successiva (metà la scegli tu con l'uscita, metà la mette lui).</li>
+<li>I tesori danno <b>casse</b> con equipaggiamento di tier crescente: <b>Bronzo → Argento → Oro → Mitico</b>. Alle difficoltà alte i tier salgono di grado.</li>
+</ul>
+
+<h3>9 · L'Overlord passo passo</h3>
+<ul>
+<li>Quando esce il disco Overlord, ogni nemico si attiva pescando dal <b>Command Deck</b>: <b>3 Attack</b> (danno), <b>2 Tactic</b> (danno + Ferita), <b>1 Special</b> (colpo AOE su tutti).</li>
+<li><b>Bleed</b>: se un nemico ha Sanguinamento (da Rend), salta o riduce le sue attivazioni.</li>
+<li><b>Aggro/Taunt</b>: la carta <b>Provocazione</b> del Guerriero costringe i nemici a colpire lui — protegge gli altri.</li>
+<li><b>Mini-boss</b> e boss finale <b>Grum'Arat</b> sono più forti e hanno mosse speciali (es. AOE).</li>
+<li><b>Funghi del Miasma</b> (solo Heroic/Hardcore): pericoli ambientali che caricano e poi esplodono.</li>
+</ul>
+
+<h3>10 · Morte e Runa di Resurrezione</h3>
+<ul>
+<li>Un eroe a 0 HP è a terra. Se ha una <b>Runa della Resurrezione</b> nello zaino, quando tocca al suo disco <b>non viene saltato</b>: può <b>usarla</b> (torna con metà HP) oppure passare.</li>
+<li>Senza Runa, il suo turno viene saltato finché non lo cura qualcuno.</li>
+</ul>
+
+<h3>11 · Difficoltà</h3>
+<ul>
+<li><b>Normale</b>: valori base.</li>
+<li><b>Heroic</b>: nemici +20 HP e +2 danni, compaiono i Funghi del Miasma; loot migliore.</li>
+<li><b>Hardcore</b>: nemici +40 HP e +4 danni, Funghi potenziati; loot ancora migliore.</li>
+</ul>
+
+<h2 style="color:#f1d77c;margin-top:22px">Le classi</h2>
+
+<h3>🛡 Guerriero — Guardian (TANK)</h3>
+<p><b>HP 12.</b> Passiva: Stance <b>AGGRESSIVE / DEFENSIVE</b>. Mazzo iniziale: 2 Heroic Strike, 2 Rend, 3 Parata, 2 Provocazione, 1 Critico.</p>
+<p><b>Abilità:</b></p>
+<ul>
+<li><b>Heroic Strike (sword)</b> — attacco base con l'arma.</li>
+<li><b>Rend</b> — mette Sanguinamento (Bleed) sul nemico.</li>
+<li><b>Parata (parry)</b> — guadagni Block e poi contrattacchi (richiede DEFENSIVE).</li>
+<li><b>Provocazione (taunt)</b> — forza il prossimo attacco nemico su di te.</li>
+<li><b>Critico</b> — si abbina gratis alla prossima abilità compatibile per potenziarla.</li>
+</ul>
+<p><b>Talenti:</b> Improved Shield (Block +1/2), Shield Slam (3 danni, interrompe Cast Lunghi), Cleave (3 danni a tutti), Heroic Strike Mastery (danno fino a +4), Improved Rend (+1), Whirlwind (danno base a tutti, 3 azioni, arma a due mani), Improved Critical. <b>Equip:</b> Spada + Scudo (o un'arma a due mani).</p>
+
+<h3>✚ Priest — Healer (CURA)</h3>
+<p><b>HP 8.</b> Passiva: Position <b>NEAR / FAR</b>. Mazzo iniziale: 2 Cura Veloce, 3 Cura Lenta, 2 Colpo Divino, 2 Impulso Sacro, 1 Critico.</p>
+<p><b>Abilità:</b></p>
+<ul>
+<li><b>Cura Veloce (quick_heal)</b> — cura rapida un alleato.</li>
+<li><b>Cura Lenta (slow_heal)</b> — canalizzazione: si avvia e si completa (richiede FAR).</li>
+<li><b>Colpo Divino (divine_strike)</b> — NEAR · 3 danni (cast corto).</li>
+<li><b>Impulso Sacro (holy_pulse)</b> — 1 danno a tutti i nemici.</li>
+<li><b>Critico</b> — potenzia gratis la prossima abilità compatibile.</li>
+</ul>
+<p><b>Talenti:</b> Improved Healing (cure +1/2 e −1 Ferita), Holy Shield (−2 danni), Divine Reach (Cura Veloce anche in FAR), Holy Fire (DoT sacro che esplode), Holy Strike (Cast Lungo, 4 danni), Improved Spell Damage, Improved Critical. <b>Equip:</b> Bastone (cure) + Bacchetta (danno FAR).</p>
+
+<h3>🗡 Rogue — Assassin (DPS)</h3>
+<p><b>HP 9.</b> Passiva: Position <b>FRONT / BEHIND</b>. Mazzo iniziale: 3 Backstab, 3 Eviscerate, 1 Evasion, 1 Kick, 1 Preparation, 1 Critico.</p>
+<p><b>Abilità:</b></p>
+<ul>
+<li><b>Backstab</b> — solo BEHIND · 3 danni.</li>
+<li><b>Eviscerate</b> — solo FRONT · 2/3 danni (di più se il nemico è sotto metà HP).</li>
+<li><b>Evasion</b> — annulla il prossimo Attack o AOE.</li>
+<li><b>Kick</b> — 1 danno e interrompe un Cast Lungo.</li>
+<li><b>Preparation</b> — pesca 2 carte, poi ne scarti 2.</li>
+<li><b>Critico</b> — potenzia gratis la prossima abilità compatibile.</li>
+</ul>
+<p><b>Talenti:</b> Mutilate (danno delle due armi +1), Vile Poison (DoT 2), Improved Mutilate, Improved Backstab, Evasion Tricky (Position gratis dopo Evasion), Garrote (DoT 3), Fan of Knives (3 a tutti), Improved Critical. <b>Equip:</b> due Pugnali (sinistra + destra).</p>
+
+<h3>🔥 Mago — Elementalist (DPS)</h3>
+<p><b>HP 8.</b> Passiva: Position <b>NEAR / FAR</b>. Mazzo iniziale: 3 Frostbolt, 3 Fireball, 1 Blizzard, 1 Counterspell, 1 Blink, 1 Critico.</p>
+<p><b>Abilità:</b></p>
+<ul>
+<li><b>Frostbolt</b> — NEAR · 2 danni (Frost).</li>
+<li><b>Fireball</b> — FAR · Cast Lungo da 2 carte · 4 danni (Fire).</li>
+<li><b>Blizzard</b> — FAR · AOE a tutti, scala col Frost.</li>
+<li><b>Counterspell</b> — NEAR/FAR · 1 danno · interrompe un Cast Lungo.</li>
+<li><b>Blink</b> — cambia Position gratis.</li>
+</ul>
+<p><b>Talenti:</b> Improved Frost/Fire Damage (+1), Frost Armor (−2 al primo danno), Cone of Cold (AOE NEAR + vulnerabilità Frost), Living Bomb (DoT che esplode), Fire Piercing (vulnerabilità Fire +2), Improved Critical. <b>Equip:</b> Bastone arcano (spell) + Bacchetta.</p>
+
+<p style="margin-top:20px;color:#9aa892;font-size:12px">Buona caccia nelle Paludi! ⚔</p>
+</div><button class="campaign-start" id="rulesBack">← Menu</button></div>`;document.body.append(r);
+  const back=()=>{r.hidden=true;const menu=document.getElementById('mainMenu');if(menu)menu.hidden=false};
+  r.querySelector('#rulesBack').onclick=back;r.onclick=e=>{if(e.target===r)back()};
+}
+if(new URLSearchParams(location.search).get('legacy')==='1')render();else{createCampaignSetup();createCredits();createStory();createRules();createMainMenu()}
 createSaveManager();
 
 const HERO_ART={warrior:'assets/eroe-guerriero.jpeg',healer:'assets/eroe-priest.jpeg',rogue:'assets/eroe-rogue.jpeg',mage:'assets/eroe-mago.jpeg'};
