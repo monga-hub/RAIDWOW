@@ -981,7 +981,7 @@ const TUTORIAL_TOUR_STEPS=[
 {sel:'#dungeonMap',t:'🗺 La Mappa',b:'Qui vedi dove ti trovi nelle Terre Desolate e i tuoi avanzamenti.'},
 {sel:'#enemies',t:'🎯 I Bersagli',b:'Tocca un nemico per bersagliarlo: la barra verde è la sua vita. Con la card “Compagnia” passi agli alleati e ne controlli la salute.'},
 {sel:'.init-track',t:'⚔ L’Iniziativa',b:'L’ordine dei turni fra i tuoi eroi e l’Overlord (i nemici). A fine round chi ha giocato per primo passa in fondo, mentre l’Overlord avanza di uno.'},
-{sel:'.hero-column',t:'🧙 Il tuo Eroe',b:'Questo è il tuo eroe.'},
+{sel:'.hero-column.role-warrior .card-cell.art.has-portrait',t:'🧙 Il tuo Eroe',b:'Questo è il tuo eroe.'},
 {sel:'.hero-column .hero-stats',t:'❤ Salute ed Esperienza',b:'La barra verde è la tua salute, la barra sotto è l’indicatore di esperienza. Più uccidi cattivi, più fai esperienza.'},
 {sel:'.hero-column .hand',t:'🃏 Le Carte Abilità',b:'Nel tuo turno puoi giocare fino a un massimo di tre azioni. Per ora hai 2 carte. Giocarle costa un’azione. Salendo di livello sbloccherai nuove carte, fino a un mazzo di 10.'},
 {sel:'.hero-column .weapon-bar',t:'🛡 L’Equipaggiamento',b:'Arma e scudo: puoi usarli ogni turno. Costano una azione ciascuno, sono sempre attivi e non consumano carte.'},
