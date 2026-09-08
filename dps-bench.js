@@ -379,6 +379,7 @@
   }
 
   function init(){
+    if(new URLSearchParams(location.search).get('legacy')!=='1')return;
     if(!document.querySelector('.page-tabs')||typeof startBoardCampaign!=='function'){setTimeout(init,150);return;}
     buildUI();
   }
