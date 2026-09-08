@@ -785,20 +785,19 @@ function heroArt(h){return h&&h.role==='warrior'&&h.twoHanded?'assets/eroe-guerr
     if(card==='slow_heal')return !!h.casting;                                   // solo la 2a carta (completamento)
     return false;
   }
-  function renderFriendlyTargets(g){
-    const p=g.pendingFriendly,label=NAMES[p.card]||p.card;
-    const list=aliveHeroes(g).map(h=>{
-      const cfg=h.board&&h.board.config,name=(cfg&&cfg.className)||NAMES[h.role]||h.role;
-      const wounds=h.deck.filter(c=>c==='wound').length;
-      const pips=Array.from({length:h.maxHp},(_,k)=>`<i class="${k<h.hp?'full':''}"></i>`).join('');
-      const extra=(h.shield>0?` · 🛡 ${h.shield}`:'')+(h.casting?' · ✨ Cast':'');
-      return `<button class="room-target friendly-pick has-art" data-ally-pick="${h.role}"><img class="enemy-art" src="${heroArt(h)}" alt="" aria-hidden="true"><strong>${name}</strong>${hpBarHtml('h-'+h.role,h.hp,h.maxHp)}<small>${wounds?`🩹 ${wounds} Ferit${wounds===1?'a':'e'}`:'Nessuna ferita'}${extra}</small></button>`;
-    }).join('');
-    document.getElementById('enemies').innerHTML=`<h2>${label} — scegli un alleato</h2><p class="target-help">Tocca l'alleato da curare o supportare.</p><div class="room-targets">${list}</div>`;
-    const hidden=document.getElementById('target');if(hidden)hidden.value=g.selectedTarget||'';
-  }
+  // cure card-first: riusa il pannello target NORMALE switchato su Compagnia (alleati),
+  // niente picker separato. Durante pendingFriendly forziamo showFriendly e la scelta
+  // dell'alleato dalla lista normale (data-target="ally:role:0") risolve la carta.
   const _renderRoomTargets=renderRoomTargets;
-  renderRoomTargets=function(g){if(g&&g.pendingFriendly){renderFriendlyTargets(g);return}return _renderRoomTargets(g)};
+  renderRoomTargets=function(g){
+    if(g&&g.pendingFriendly)g.showFriendly=true;
+    _renderRoomTargets(g);
+    if(g&&g.pendingFriendly){
+      const en=document.getElementById('enemies'),h2=en&&en.querySelector('h2'),help=en&&en.querySelector('.target-help');
+      if(h2)h2.textContent=`${NAMES[g.pendingFriendly.card]||g.pendingFriendly.card} — scegli un alleato`;
+      if(help)help.textContent='Tocca l’alleato da curare o supportare.';
+    }
+  };
   const _sync=syncMobileTargetBar;
   syncMobileTargetBar=function(){_sync();if(game&&game.pendingFriendly){const s=document.querySelector('.mobile-target-bar>strong');if(s)s.textContent='Scegli un alleato'}};
   const _pass=passHeroTurn;
@@ -806,13 +805,13 @@ function heroArt(h){return h&&h.role==='warrior'&&h.twoHanded?'assets/eroe-guerr
 
   document.addEventListener('click',function(ev){
     const g=game;if(!g||!g.playerBoardEnabled)return;
-    const pick=ev.target.closest('.friendly-pick[data-ally-pick]');
+    const pick=ev.target.closest('.room-target[data-target^="ally:"]');
     if(pick&&g.pendingFriendly){
       ev.stopImmediatePropagation();ev.preventDefault();
       const p=g.pendingFriendly,h=g.party.find(x=>x.role===p.role);
-      g.selectedTarget=`ally:${pick.dataset.allyPick}:0`;
+      g.selectedTarget=pick.dataset.target;
       const played=h&&play(g,h,p.card,g.selectedTarget);
-      g.pendingFriendly=null;automaticEnemyTarget(g);
+      g.pendingFriendly=null;g.showFriendly=false;automaticEnemyTarget(g);
       if(!played)note(g,'Giocata non valida per il bersaglio o il timing scelto.');else advanceHeroTurn(g);
       render();return;
     }
@@ -1000,7 +999,6 @@ render=function(){renderBeforeTutMsgs();if(!game||!game.tutorial||game._tourActi
 // ---- Scripted forced-click tutorial combat (first turn) ----
 function scEnemy(id){return `#enemies .room-target[data-target="enemy:x:${id}"]`;}
 function scAlly(role){return `#enemies .room-target[data-target="ally:${role}:0"]`;}
-function scAllyPick(role){return `#enemies .friendly-pick[data-ally-pick="${role}"]`;}
 function scActs(role){return game.party.find(h=>h.role===role)?.actions}
 function scPos(role){return game.party.find(h=>h.role===role)?.board?.position?.card}
 function scDmg(role,amt){const h=game.party.find(x=>x.role===role);if(h)h.hp=Math.max(0,h.hp-amt)}
@@ -1019,9 +1017,9 @@ function buildTutorialScript(){return [
  {who:'overlord',auto:true,sel:()=>document.querySelector(scHeroCol('rogue')),text:'Il 3° Serpente morde il <b>Rogue</b> (1 danno). Ora il <b>Prete</b> curerà i feriti.',run:()=>{scDmg('rogue',1);scEndOverlord()}},
  // PRIEST (NEAR)
  {who:'healer',pre:()=>{game.showFriendly=false},text:'Turno del <b>Prete</b>. Clicca la carta <b>Cura Veloce</b>: ti chiederà chi curare.',sel:()=>document.querySelector(scHeroCol('healer')+' .hand button:not(:disabled)'),done:g=>!!g.pendingFriendly},
- {who:'healer',text:'Scegli chi curare: clicca il <b>Guerriero</b>.',sel:()=>document.querySelector(scAllyPick('warrior')),done:(g,b)=>scActs('healer')<b.acts},
+ {who:'healer',text:'Scegli chi curare: clicca il <b>Guerriero</b> tra gli alleati.',sel:()=>document.querySelector(scAlly('warrior')),done:(g,b)=>scActs('healer')<b.acts},
  {who:'healer',text:'Lancia di nuovo <b>Cura Veloce</b>.',sel:()=>document.querySelector(scHeroCol('healer')+' .hand button:not(:disabled)'),done:g=>!!g.pendingFriendly||g.activeRole!=='healer'},
- {who:'healer',text:'Ora cura il <b>Rogue</b>: cliccalo.',sel:()=>document.querySelector(scAllyPick('rogue')),done:(g,b)=>scActs('healer')<b.acts||g.activeRole!=='healer'},
+ {who:'healer',text:'Ora cura il <b>Rogue</b>: cliccalo tra gli alleati.',sel:()=>document.querySelector(scAlly('rogue')),done:(g,b)=>scActs('healer')<b.acts||g.activeRole!=='healer'},
  {who:'healer',text:'Hai finito: premi <b>Passa</b> (ultimo tasto della tua tabella).',sel:()=>document.querySelector(scHeroCol('healer')+' .turn-ctrl.pass'),done:g=>g.activeRole!=='healer'},
  // ROGUE (FRONT -> BEHIND)
  {who:'rogue',pre:()=>{game.showFriendly=false},text:'Turno del <b>Rogue</b>. Ha due <b>Backstab</b>, ma servono in posizione BEHIND. Cambia posizione.',sel:()=>document.querySelector(scHeroCol('rogue')+' [data-flip]'),done:(g,b)=>scPos('rogue')!==b.pos},
