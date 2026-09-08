@@ -1000,6 +1000,7 @@ render=function(){renderBeforeTutMsgs();if(!game||!game.tutorial||game._tourActi
 // ---- Scripted forced-click tutorial combat (first turn) ----
 function scEnemy(id){return `#enemies .room-target[data-target="enemy:x:${id}"]`;}
 function scAlly(role){return `#enemies .room-target[data-target="ally:${role}:0"]`;}
+function scAllyPick(role){return `#enemies .friendly-pick[data-ally-pick="${role}"]`;}
 function scActs(role){return game.party.find(h=>h.role===role)?.actions}
 function scPos(role){return game.party.find(h=>h.role===role)?.board?.position?.card}
 function scDmg(role,amt){const h=game.party.find(x=>x.role===role);if(h)h.hp=Math.max(0,h.hp-amt)}
@@ -1017,11 +1018,10 @@ function buildTutorialScript(){return [
  {who:'overlord',auto:true,sel:()=>document.querySelector(scHeroCol('warrior')),text:'Il 2° Serpente morde ancora il <b>Guerriero</b> (1 danno).',run:()=>scDmg('warrior',1)},
  {who:'overlord',auto:true,sel:()=>document.querySelector(scHeroCol('rogue')),text:'Il 3° Serpente morde il <b>Rogue</b> (1 danno). Ora il <b>Prete</b> curerà i feriti.',run:()=>{scDmg('rogue',1);scEndOverlord()}},
  // PRIEST (NEAR)
- {who:'healer',pre:()=>{game.showFriendly=false},text:'Turno del <b>Prete</b>. Passa agli alleati: clicca la card <b>Compagnia</b>.',sel:()=>document.querySelector('#enemies .friendly-toggle'),done:g=>g.showFriendly===true},
- {who:'healer',text:'Cura il <b>Guerriero</b>: cliccalo.',sel:()=>document.querySelector(scAlly('warrior')),done:g=>g.selectedTarget==='ally:warrior:0'},
- {who:'healer',text:'Lancia <b>Cura Veloce</b> sul Guerriero.',sel:()=>document.querySelector(scHeroCol('healer')+' .hand button:not(:disabled)'),done:(g,b)=>scActs('healer')<b.acts},
- {who:'healer',text:'Ora cura il <b>Rogue</b>: cliccalo.',sel:()=>document.querySelector(scAlly('rogue')),done:g=>g.selectedTarget==='ally:rogue:0'},
- {who:'healer',text:'Lancia di nuovo <b>Cura Veloce</b>.',sel:()=>document.querySelector(scHeroCol('healer')+' .hand button:not(:disabled)'),done:(g,b)=>scActs('healer')<b.acts},
+ {who:'healer',pre:()=>{game.showFriendly=false},text:'Turno del <b>Prete</b>. Clicca la carta <b>Cura Veloce</b>: ti chiederà chi curare.',sel:()=>document.querySelector(scHeroCol('healer')+' .hand button:not(:disabled)'),done:g=>!!g.pendingFriendly},
+ {who:'healer',text:'Scegli chi curare: clicca il <b>Guerriero</b>.',sel:()=>document.querySelector(scAllyPick('warrior')),done:(g,b)=>scActs('healer')<b.acts},
+ {who:'healer',text:'Lancia di nuovo <b>Cura Veloce</b>.',sel:()=>document.querySelector(scHeroCol('healer')+' .hand button:not(:disabled)'),done:g=>!!g.pendingFriendly||g.activeRole!=='healer'},
+ {who:'healer',text:'Ora cura il <b>Rogue</b>: cliccalo.',sel:()=>document.querySelector(scAllyPick('rogue')),done:(g,b)=>scActs('healer')<b.acts||g.activeRole!=='healer'},
  {who:'healer',text:'Hai finito: premi <b>Passa</b>.',sel:()=>document.getElementById('end'),done:g=>g.activeRole!=='healer'},
  // ROGUE (FRONT -> BEHIND)
  {who:'rogue',pre:()=>{game.showFriendly=false},text:'Turno del <b>Rogue</b>. Ha due <b>Backstab</b>, ma servono in posizione BEHIND. Cambia posizione.',sel:()=>document.querySelector(scHeroCol('rogue')+' [data-flip]'),done:(g,b)=>scPos('rogue')!==b.pos},
