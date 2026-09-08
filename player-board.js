@@ -792,7 +792,7 @@ function heroArt(h){return h&&h.role==='warrior'&&h.twoHanded?'assets/eroe-guerr
       const wounds=h.deck.filter(c=>c==='wound').length;
       const pips=Array.from({length:h.maxHp},(_,k)=>`<i class="${k<h.hp?'full':''}"></i>`).join('');
       const extra=(h.shield>0?` · 🛡 ${h.shield}`:'')+(h.casting?' · ✨ Cast':'');
-      return `<button class="room-target friendly-pick has-art" data-ally-pick="${h.role}"><img class="enemy-art" src="${heroArt(h)}" alt="" aria-hidden="true"><strong>${name}</strong><div class="hp-track">${hpBarHtml('h-'+h.role,h.hp,h.maxHp)}</div><small>${wounds?`🩹 ${wounds} Ferit${wounds===1?'a':'e'}`:'Nessuna ferita'}${extra}</small></button>`;
+      return `<button class="room-target friendly-pick has-art" data-ally-pick="${h.role}"><img class="enemy-art" src="${heroArt(h)}" alt="" aria-hidden="true"><strong>${name}</strong>${hpBarHtml('h-'+h.role,h.hp,h.maxHp)}<small>${wounds?`🩹 ${wounds} Ferit${wounds===1?'a':'e'}`:'Nessuna ferita'}${extra}</small></button>`;
     }).join('');
     document.getElementById('enemies').innerHTML=`<h2>${label} — scegli un alleato</h2><p class="target-help">Tocca l'alleato da curare o supportare.</p><div class="room-targets">${list}</div>`;
     const hidden=document.getElementById('target');if(hidden)hidden.value=g.selectedTarget||'';
@@ -1022,7 +1022,7 @@ function buildTutorialScript(){return [
  {who:'healer',text:'Scegli chi curare: clicca il <b>Guerriero</b>.',sel:()=>document.querySelector(scAllyPick('warrior')),done:(g,b)=>scActs('healer')<b.acts},
  {who:'healer',text:'Lancia di nuovo <b>Cura Veloce</b>.',sel:()=>document.querySelector(scHeroCol('healer')+' .hand button:not(:disabled)'),done:g=>!!g.pendingFriendly||g.activeRole!=='healer'},
  {who:'healer',text:'Ora cura il <b>Rogue</b>: cliccalo.',sel:()=>document.querySelector(scAllyPick('rogue')),done:(g,b)=>scActs('healer')<b.acts||g.activeRole!=='healer'},
- {who:'healer',text:'Hai finito: premi <b>Passa</b>.',sel:()=>document.getElementById('end'),done:g=>g.activeRole!=='healer'},
+ {who:'healer',text:'Hai finito: premi <b>Passa</b> (ultimo tasto della tua tabella).',sel:()=>document.querySelector(scHeroCol('healer')+' .turn-ctrl.pass'),done:g=>g.activeRole!=='healer'},
  // ROGUE (FRONT -> BEHIND)
  {who:'rogue',pre:()=>{game.showFriendly=false},text:'Turno del <b>Rogue</b>. Ha due <b>Backstab</b>, ma servono in posizione BEHIND. Cambia posizione.',sel:()=>document.querySelector(scHeroCol('rogue')+' [data-flip]'),done:(g,b)=>scPos('rogue')!==b.pos},
  {who:'rogue',text:'Bersaglia il <b>2° Serpente</b>.',sel:()=>document.querySelector(scEnemy(2)),done:g=>g.selectedTarget==='enemy:x:2'},
@@ -1032,7 +1032,7 @@ function buildTutorialScript(){return [
  {who:'mage',pre:()=>{game.showFriendly=false},text:'Turno del <b>Mago</b>. Bersaglia il <b>3° Serpente</b>.',sel:()=>document.querySelector(scEnemy(3)),done:g=>g.selectedTarget==='enemy:x:3'},
  {who:'mage',text:'Lancia <b>Frostbolt</b>.',sel:()=>document.querySelector(scHeroCol('mage')+' .hand button:not(:disabled)'),done:(g,b)=>scActs('mage')<b.acts},
  {who:'mage',text:'Ancora <b>Frostbolt</b>.',sel:()=>document.querySelector(scHeroCol('mage')+' .hand button:not(:disabled)'),done:(g,b)=>scActs('mage')<b.acts},
- {who:'mage',text:'Fine del primo turno: premi <b>Passa</b>.',sel:()=>document.getElementById('end'),done:g=>g.activeRole!=='mage'}
+ {who:'mage',text:'Fine del primo turno: premi <b>Passa</b> (ultimo tasto della tua tabella).',sel:()=>document.querySelector(scHeroCol('mage')+' .turn-ctrl.pass'),done:g=>g.activeRole!=='mage'}
 ];}
 function scriptEnsureBlocker(){if(!document.getElementById('scriptBlocker')){const b=document.createElement('div');b.id='scriptBlocker';b.className='script-blocker';document.body.append(b)}}
 function scriptCleanup(){document.getElementById('scriptBlocker')?.remove();document.getElementById('scriptBox')?.remove();document.querySelectorAll('.script-live').forEach(e=>e.classList.remove('script-live'))}
