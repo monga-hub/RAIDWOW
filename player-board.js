@@ -1039,11 +1039,11 @@ function buildTutorialScript(enc){
  if(enc===1)return [
  // FASE 2 — lezione CAMBIO POSIZIONE. Iniziativa: Rogue, Mago, Overlord, Prete, War. 1 mob (12 HP).
  // ROGUE: FRONT->BEHIND, Backstab ×2 (6)
- {who:'rogue',pre:()=>{game.showFriendly=false},text:'Fase 2: la <b>posizione</b>. Il Rogue ha <b>Backstab</b>, ma serve <b>BEHIND</b>. Cambia posizione.',sel:()=>document.querySelector(scHeroCol('rogue')+' .turn-ctrl.flip'),done:(g,b)=>scPos('rogue')==='BEHIND'},
+ {who:'rogue',pre:()=>{game.showFriendly=false;game.selectedTarget='enemy:x:1'},text:'Fase 2: la <b>posizione</b>. Il Rogue ha <b>Backstab</b>, ma serve <b>BEHIND</b>. Cambia posizione.',sel:()=>document.querySelector(scHeroCol('rogue')+' .turn-ctrl.flip'),done:(g,b)=>scPos('rogue')==='BEHIND'},
  {who:'rogue',text:'Ora <b>Backstab</b> sul mob (3 danni).',sel:()=>document.querySelector(scHeroCol('rogue')+' .hand button.backstab:not(:disabled)'),done:(g,b)=>scActs('rogue')<b.acts},
  {who:'rogue',text:'Ancora <b>Backstab</b>.',sel:()=>document.querySelector(scHeroCol('rogue')+' .hand button.backstab:not(:disabled)'),done:(g,b)=>scActs('rogue')<b.acts||g.activeRole!=='rogue'},
  // MAGE: FAR->NEAR, Frostbolt ×2 (4)
- {who:'mage',pre:()=>{game.showFriendly=false},text:'Il Mago ha <b>Frostbolt</b>, che serve <b>NEAR</b>. Cambia posizione.',sel:()=>document.querySelector(scHeroCol('mage')+' .turn-ctrl.flip'),done:(g,b)=>scPos('mage')==='NEAR'},
+ {who:'mage',pre:()=>{game.showFriendly=false;game.selectedTarget='enemy:x:1'},text:'Il Mago ha <b>Frostbolt</b>, che serve <b>NEAR</b>. Cambia posizione.',sel:()=>document.querySelector(scHeroCol('mage')+' .turn-ctrl.flip'),done:(g,b)=>scPos('mage')==='NEAR'},
  {who:'mage',text:'Lancia <b>Frostbolt</b> (2 danni).',sel:()=>document.querySelector(scHeroCol('mage')+' .hand button.frostbolt:not(:disabled)'),done:(g,b)=>scActs('mage')<b.acts},
  {who:'mage',text:'Ancora <b>Frostbolt</b>.',sel:()=>document.querySelector(scHeroCol('mage')+' .hand button.frostbolt:not(:disabled)'),done:(g,b)=>scActs('mage')<b.acts||g.activeRole!=='mage'},
  // OVERLORD (auto): 4 danni al Rogue
@@ -1056,7 +1056,7 @@ function buildTutorialScript(enc){
  {who:'healer',text:'Gioca la <b>2ª Cura Lenta</b> per completare.',sel:()=>document.querySelector(scHeroCol('healer')+' .hand button.slow_heal:not(:disabled)'),done:g=>!!g.pendingFriendly||!game.party.find(x=>x.role==='healer')?.casting},
  {who:'healer',text:'Scegli di nuovo il <b>Rogue</b>: la cura si completa.',sel:()=>document.querySelector(scAlly('rogue')),done:(g,b)=>!game.party.find(x=>x.role==='healer')?.casting||g.activeRole!=='healer'},
  // WAR: DEFENSIVE->AGGRESSIVE, Heroic ×2 → uccide il mob
- {who:'warrior',pre:()=>{game.showFriendly=false},text:'Il Guerriero ha <b>Heroic Strike</b>, forte in <b>AGGRESSIVE</b>. Cambia Stance.',sel:()=>document.querySelector(scHeroCol('warrior')+' .turn-ctrl.flip'),done:(g,b)=>scPos('warrior')==='AGGRESSIVE'},
+ {who:'warrior',pre:()=>{game.showFriendly=false;game.selectedTarget='enemy:x:1'},text:'Il Guerriero ha <b>Heroic Strike</b>, forte in <b>AGGRESSIVE</b>. Cambia Stance.',sel:()=>document.querySelector(scHeroCol('warrior')+' .turn-ctrl.flip'),done:(g,b)=>scPos('warrior')==='AGGRESSIVE'},
  {who:'warrior',text:'Colpisci con <b>Heroic Strike</b>.',sel:()=>document.querySelector(scHeroCol('warrior')+' .hand button.sword:not(:disabled)'),done:(g,b)=>scActs('warrior')<b.acts},
  {who:'warrior',text:'Ancora <b>Heroic Strike</b>: il mob cade.',sel:()=>document.querySelector(scHeroCol('warrior')+' .hand button.sword:not(:disabled)'),done:(g,b)=>scActs('warrior')<b.acts||g.activeRole!=='warrior'||!aliveEnemies(g).length}
  ];
