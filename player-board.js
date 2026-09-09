@@ -1072,7 +1072,8 @@ function buildTutorialScript(enc){
  ];
  return [
  // WARRIOR (DEFENSIVE): Provocazione su S1, Provocazione su S2, Spada su S1
- {who:'warrior',pre:()=>{game.showFriendly=false},text:'Tocca a te, <b>Guerriero</b>. Bersaglia il <b>1° Serpente</b>: cliccalo in alto.',sel:()=>document.querySelector(scEnemy(1)),done:g=>g.selectedTarget==='enemy:x:1'},
+ scTurnIntro('warrior'),
+ {who:'warrior',pre:()=>{game.showFriendly=false},text:'Bersaglia il <b>1° Serpente</b>: cliccalo in alto.',sel:()=>document.querySelector(scEnemy(1)),done:g=>g.selectedTarget==='enemy:x:1'},
  {who:'warrior',text:'Gioca <b>Provocazione</b> sul 1° Serpente: lo costringe ad attaccare te.',sel:()=>document.querySelector(scHeroCol('warrior')+' .hand button:not(:disabled)'),done:(g,b)=>scActs('warrior')<b.acts},
  {who:'warrior',text:'Ora bersaglia il <b>2° Serpente</b>.',sel:()=>document.querySelector(scEnemy(2)),done:g=>g.selectedTarget==='enemy:x:2'},
  {who:'warrior',text:'Gioca <b>Provocazione</b> anche sul 2° Serpente.',sel:()=>document.querySelector(scHeroCol('warrior')+' .hand button:not(:disabled)'),done:(g,b)=>scActs('warrior')<b.acts},
