@@ -1038,6 +1038,8 @@ function scPos(role){return game.party.find(h=>h.role===role)?.board?.position?.
 function scDmg(role,amt){const h=game.party.find(x=>x.role===role);if(h)h.hp=Math.max(0,h.hp-amt)}
 function scEndOverlord(){game.overlordTurn=null;game.showFriendly=false;automaticEnemyTarget(game);game.initIndex=game.initiative.indexOf('overlord')+1;if(typeof activateInitiativeSlot==='function')activateInitiativeSlot(game)}
 function scHeroCol(role){return `.hero-column.role-${role}`}
+// Step intermedio "Ora tocca al [Eroe]": evidenzia il ritratto, avanza al tocco (tap).
+function scTurnIntro(role){const nm={warrior:'Guerriero',rogue:'Rogue',mage:'Mago',healer:'Prete'}[role]||NAMES[role];return {who:role,tap:true,pre:()=>{game.showFriendly=false},text:`Ora è il turno del <b>${nm}</b>. Tocca il suo eroe per iniziare.`,sel:()=>document.querySelector(scHeroCol(role)+' .card-cell.art.has-portrait')||document.querySelector(scHeroCol(role)),done:g=>{if(g._script&&g._script._tap){g._script._tap=false;return true}return false}}}
 function scOverlordTarget(role){return `#enemies [data-target="ally:${role}:0"]`}
 function scOverlordAttack(){return document.querySelector('.overlord-column [data-overlord-command="attack"]')||document.querySelector('.overlord-column .overlord-hand-actions')}
 function buildTutorialScript(enc){
@@ -1048,6 +1050,7 @@ function buildTutorialScript(enc){
  {who:'rogue',text:'Ora <b>Backstab</b> sul mob (3 danni).',sel:()=>document.querySelector(scHeroCol('rogue')+' .hand button.backstab:not(:disabled)'),done:(g,b)=>scActs('rogue')<b.acts},
  {who:'rogue',text:'Ancora <b>Backstab</b>.',sel:()=>document.querySelector(scHeroCol('rogue')+' .hand button.backstab:not(:disabled)'),done:(g,b)=>scActs('rogue')<b.acts||g.activeRole!=='rogue'},
  // MAGE: FAR->NEAR, Frostbolt ×2 (4)
+ scTurnIntro('mage'),
  {who:'mage',pre:()=>{game.showFriendly=false;game.selectedTarget='enemy:x:1'},text:'Il Mago ha <b>Frostbolt</b>, che serve <b>NEAR</b>. Cambia posizione.',sel:()=>document.querySelector(scHeroCol('mage')+' .turn-ctrl.flip'),done:(g,b)=>scPos('mage')==='NEAR'},
  {who:'mage',text:'Lancia <b>Frostbolt</b> (2 danni).',sel:()=>document.querySelector(scHeroCol('mage')+' .hand button.frostbolt:not(:disabled)'),done:(g,b)=>scActs('mage')<b.acts},
  {who:'mage',text:'Ancora <b>Frostbolt</b>.',sel:()=>document.querySelector(scHeroCol('mage')+' .hand button.frostbolt:not(:disabled)'),done:(g,b)=>scActs('mage')<b.acts||g.activeRole!=='mage'},
@@ -1055,12 +1058,14 @@ function buildTutorialScript(enc){
  {who:'overlord',auto:true,delay:2000,sel:()=>document.querySelector(scOverlordTarget('rogue')),text:'☠ Turno dell’<b>Overlord</b>: il mob prende di mira il <b>Rogue</b>.',run:()=>selectOverlordTarget(game,'rogue')},
  {who:'overlord',auto:true,delay:2600,sel:scOverlordAttack,text:'Il mob usa <b>ATTACK</b>: 4 danni al Rogue. Ora il <b>Prete</b> lo curerà.',run:()=>{scDmg('rogue',4);scEndOverlord()}},
  // PRIEST: NEAR->FAR, seleziona Rogue, Cura Lenta ×2 (canalizzazione 2 carte)
+ scTurnIntro('healer'),
  {who:'healer',pre:()=>{game.showFriendly=false},text:'Il Prete ha <b>Cura Lenta</b>, che serve <b>FAR</b>. Cambia posizione.',sel:()=>document.querySelector(scHeroCol('healer')+' .turn-ctrl.flip'),done:(g,b)=>scPos('healer')==='FAR'},
  {who:'healer',pre:()=>{game.showFriendly=true},text:'Passa agli <b>alleati</b> e scegli il <b>Rogue</b> ferito.',sel:()=>document.querySelector(scAlly('rogue')),done:g=>g.selectedTarget==='ally:rogue:0'},
  {who:'healer',text:'Gioca <b>Cura Lenta</b>: avvia la canalizzazione (1ª carta).',sel:()=>document.querySelector(scHeroCol('healer')+' .hand button.slow_heal:not(:disabled)'),done:g=>!!g.party.find(x=>x.role==='healer')?.casting},
  {who:'healer',text:'Gioca la <b>2ª Cura Lenta</b> per completare.',sel:()=>document.querySelector(scHeroCol('healer')+' .hand button.slow_heal:not(:disabled)'),done:g=>!!g.pendingFriendly||!game.party.find(x=>x.role==='healer')?.casting},
  {who:'healer',text:'Scegli di nuovo il <b>Rogue</b>: la cura si completa.',sel:()=>document.querySelector(scAlly('rogue')),done:(g,b)=>!game.party.find(x=>x.role==='healer')?.casting||g.activeRole!=='healer'},
  // WAR: DEFENSIVE->AGGRESSIVE, Heroic ×2 → uccide il mob
+ scTurnIntro('warrior'),
  {who:'warrior',pre:()=>{game.showFriendly=false;game.selectedTarget='enemy:x:1'},text:'Il Guerriero ha <b>Heroic Strike</b>, forte in <b>AGGRESSIVE</b>. Cambia Stance.',sel:()=>document.querySelector(scHeroCol('warrior')+' .turn-ctrl.flip'),done:(g,b)=>scPos('warrior')==='AGGRESSIVE'},
  {who:'warrior',text:'Colpisci con <b>Heroic Strike</b>.',sel:()=>document.querySelector(scHeroCol('warrior')+' .hand button.sword:not(:disabled)'),done:(g,b)=>scActs('warrior')<b.acts},
  {who:'warrior',text:'Ancora <b>Heroic Strike</b>: il mob cade.',sel:()=>document.querySelector(scHeroCol('warrior')+' .hand button.sword:not(:disabled)'),done:(g,b)=>scActs('warrior')<b.acts||g.activeRole!=='warrior'||!aliveEnemies(g).length}
@@ -1074,25 +1079,28 @@ function buildTutorialScript(enc){
  {who:'warrior',text:'Ri-bersaglia il <b>1° Serpente</b>.',sel:()=>document.querySelector(scEnemy(1)),done:g=>g.selectedTarget==='enemy:x:1'},
  {who:'warrior',text:'Colpiscilo con la <b>Spada</b> (l’arma non consuma carte).',sel:()=>document.querySelector(scHeroCol('warrior')+' [data-sword]'),done:(g,b)=>scActs('warrior')<b.acts||g.activeRole!=='warrior'},
  // ROGUE (FRONT): Eviscerate su S1, Eviscerate su S2, Pugnale su S2
- {who:'rogue',pre:()=>{game.showFriendly=false},text:'Turno del <b>Rogue</b>. Bersaglia il <b>1° Serpente</b>.',sel:()=>document.querySelector(scEnemy(1)),done:g=>g.selectedTarget==='enemy:x:1'},
+ scTurnIntro('rogue'),
+ {who:'rogue',pre:()=>{game.showFriendly=false},text:'Bersaglia il <b>1° Serpente</b>.',sel:()=>document.querySelector(scEnemy(1)),done:g=>g.selectedTarget==='enemy:x:1'},
  {who:'rogue',text:'Colpisci con <b>Eviscerate</b> (richiede posizione FRONT).',sel:()=>document.querySelector(scHeroCol('rogue')+' .hand button:not(:disabled)'),done:(g,b)=>scActs('rogue')<b.acts},
  {who:'rogue',text:'Ora bersaglia il <b>2° Serpente</b>.',sel:()=>document.querySelector(scEnemy(2)),done:g=>g.selectedTarget==='enemy:x:2'},
  {who:'rogue',text:'<b>Eviscerate</b> anche sul 2° Serpente.',sel:()=>document.querySelector(scHeroCol('rogue')+' .hand button:not(:disabled)'),done:(g,b)=>scActs('rogue')<b.acts},
  {who:'rogue',text:'Finisci col <b>Pugnale</b> sul 2° Serpente.',sel:()=>document.querySelector(scHeroCol('rogue')+' [data-dagger]'),done:(g,b)=>scActs('rogue')<b.acts||g.activeRole!=='rogue'},
  // MAGE (FAR): Fireball ×2 (Cast Lungo) + Wand su S1 → lo uccide
- {who:'mage',pre:()=>{game.showFriendly=false},text:'Turno del <b>Mago</b>. Bersaglia il <b>1° Serpente</b>.',sel:()=>document.querySelector(scEnemy(1)),done:g=>g.selectedTarget==='enemy:x:1'},
+ scTurnIntro('mage'),
+ {who:'mage',pre:()=>{game.showFriendly=false},text:'Bersaglia il <b>1° Serpente</b>.',sel:()=>document.querySelector(scEnemy(1)),done:g=>g.selectedTarget==='enemy:x:1'},
  {who:'mage',text:'Lancia <b>Fireball</b>: è un Cast Lungo, serve una 2ª carta per completarlo.',sel:()=>document.querySelector(scHeroCol('mage')+' .hand button:not(:disabled)'),done:(g,b)=>scActs('mage')<b.acts},
  {who:'mage',text:'Completa il <b>Fireball</b> con la 2ª carta: 4 danni.',sel:()=>document.querySelector(scHeroCol('mage')+' .hand button:not(:disabled)'),done:(g,b)=>scActs('mage')<b.acts},
  {who:'mage',text:'Finisci il 1° Serpente con la <b>Wand</b>.',sel:()=>document.querySelector(scHeroCol('mage')+' [data-mage-wand]'),done:(g,b)=>scActs('mage')<b.acts||g.activeRole!=='mage'},
  // PRIEST (NEAR): Colpo Divino ×2 su S2 → lo uccide (la Wand non serve, i nemici muoiono)
- {who:'healer',pre:()=>{game.showFriendly=false},text:'Turno del <b>Prete</b>. Bersaglia il <b>2° Serpente</b>.',sel:()=>document.querySelector(scEnemy(2)),done:g=>g.selectedTarget==='enemy:x:2'},
+ scTurnIntro('healer'),
+ {who:'healer',pre:()=>{game.showFriendly=false},text:'Bersaglia il <b>2° Serpente</b>.',sel:()=>document.querySelector(scEnemy(2)),done:g=>g.selectedTarget==='enemy:x:2'},
  {who:'healer',text:'Colpiscilo con <b>Colpo Divino</b> (3 danni, richiede NEAR).',sel:()=>document.querySelector(scHeroCol('healer')+' .hand button:not(:disabled)'),done:(g,b)=>scActs('healer')<b.acts},
  {who:'healer',text:'Ancora <b>Colpo Divino</b>: uccidi il 2° Serpente e chiudi la zona.',sel:()=>document.querySelector(scHeroCol('healer')+' .hand button:not(:disabled)'),done:(g,b)=>scActs('healer')<b.acts||g.activeRole!=='healer'||!aliveEnemies(g).length}
 ];}
 function scriptEnsureBlocker(){if(!document.getElementById('scriptBlocker')){const b=document.createElement('div');b.id='scriptBlocker';b.className='script-blocker';document.body.append(b)}}
 function scriptCleanup(){document.getElementById('scriptBlocker')?.remove();document.getElementById('scriptBox')?.remove();document.querySelectorAll('.script-live').forEach(e=>e.classList.remove('script-live'))}
 function placeScriptBox(box,el){box.classList.remove('pos-top','pos-bottom');if(!el){box.style.top='';box.style.bottom='14px';box.style.transform='translateX(-50%)';return}const r=el.getBoundingClientRect(),bh=box.offsetHeight||90,m=12;let top=r.bottom+m;if(top+bh>innerHeight-m)top=r.top-m-bh;top=Math.max(m,Math.min(top,innerHeight-bh-m));box.style.top=top+'px';box.style.bottom='auto';box.style.transform='translateX(-50%)'}
-function scriptShowStep(step,isAuto){scriptEnsureBlocker();document.querySelectorAll('.script-live').forEach(e=>e.classList.remove('script-live'));const el=step.sel&&step.sel();if(el){el.classList.add('script-live');try{el.scrollIntoView({block:'center',inline:'nearest',behavior:'smooth'})}catch(e){}}let box=document.getElementById('scriptBox');if(!box){box=document.createElement('div');box.id='scriptBox';box.className='script-box';document.body.append(box)}box.innerHTML=`<span class="script-arrow">${isAuto?'☠':'👉'}</span><span>${step.text}</span>`;placeScriptBox(box,el);setTimeout(()=>{if(document.getElementById('scriptBox')===box)placeScriptBox(box,step.sel&&step.sel())},420)}
+function scriptShowStep(step,isAuto){scriptEnsureBlocker();document.querySelectorAll('.script-live').forEach(e=>e.classList.remove('script-live'));const el=step.sel&&step.sel();if(el){el.classList.add('script-live');if(step.tap){el.style.cursor='pointer';el.onclick=function(ev){ev.preventDefault();ev.stopPropagation();if(game._script)game._script._tap=true;render()}}try{el.scrollIntoView({block:'center',inline:'nearest',behavior:'smooth'})}catch(e){}}let box=document.getElementById('scriptBox');if(!box){box=document.createElement('div');box.id='scriptBox';box.className='script-box';document.body.append(box)}box.innerHTML=`<span class="script-arrow">${isAuto?'☠':'👉'}</span><span>${step.text}</span>`;placeScriptBox(box,el);setTimeout(()=>{if(document.getElementById('scriptBox')===box)placeScriptBox(box,step.sel&&step.sel())},420)}
 function scriptDrive(){const sc=game._script;if(game.state!=='playing'||game.round>1){game._script=null;game._scriptDone=true;scriptCleanup();return}for(let guard=0;guard<40;guard++){if(sc.i>=sc.steps.length){game._script=null;game._scriptDone=true;scriptCleanup();return}if(sc.shownFor===sc.i&&sc.base&&sc.steps[sc.i].done&&sc.steps[sc.i].done(game,sc.base)){sc.i++;continue}const step=sc.steps[sc.i];if(step.pre&&!step.preDone){step.preDone=true;step.pre(game);render();return}if(step.who&&step.who!=='overlord'&&game.activeRole!==step.who){scriptCleanup();return}if(step.auto){scriptShowStep(step,true);if(!sc.autoScheduled){sc.autoScheduled=true;const at=sc.i;setTimeout(()=>{if(!game._script||game._script.i!==at)return;try{step.run&&step.run(game)}catch(e){}game._script.autoScheduled=false;game._script.i++;render()},step.delay||1600)}return}if(sc.shownFor!==sc.i){sc.shownFor=sc.i;sc.base={acts:scActs(step.who),pos:scPos(step.who),active:game.activeRole,showFriendly:game.showFriendly}}scriptShowStep(step,false);return}}
 const renderBeforeScript=render;
 render=function(){renderBeforeScript();if(!game||!game.tutorial||game._scriptDone){if(!game||!game._script)scriptCleanup();return}if(game._tourActive||document.getElementById('tourBox')||document.getElementById('tutMsgBox')){if(!game._script)scriptCleanup();return}if(!game._script&&game._scriptPending&&game.state==='playing'&&game.activeRole&&game.activeRole!=='overlord'&&game.activeRole!=='enemies'){game._script={i:0,steps:buildTutorialScript(game.encounter),clicked:false};game._scriptPending=false}if(!game._script){scriptCleanup();return}scriptDrive()};
