@@ -13,7 +13,7 @@
 
   // parametri danno editabili: [key,label,default]. Le carte da talento sono in coda.
   const PARAM_DEFS={
-    warrior:[['sword_base','Spada (arma base)',1],['heroic_strike','Heroic Strike (+ arma)',2],['rend_bleed','Rend (ferita fissa)',1],['crit','Critico (+)',1],['cleave','Cleave (AOE) — talento',3]],
+    warrior:[['sword_base','Spada (arma base)',1],['heroic_strike','Heroic Strike (+ arma)',2],['rend_bleed','Rend (+ arma)',1],['crit','Critico (+)',1],['cleave','Cleave (AOE) — talento',3]],
     rogue:[['dagger_base','Pugnale (base)',1],['backstab','Backstab (+)',2],['eviscerate','Eviscerate (+)',1],['kick','Kick',1],['crit','Critico (+)',1],['mutilate','Mutilate — talento',3],['vile_poison','Vile Poison /carta — talento',2],['garrote','Garrote /carta — talento',3],['fan_of_knives','Fan of Knives (AOE) — talento',3]],
     healer:[['holy_pulse','Impulso Sacro',1],['divine_strike','Colpo Divino (cast corto)',3],['wand','Bacchetta (FAR)',1],['crit','Critico (+)',1],['holy_fire','Holy Fire /carta — talento',3],['holy_strike','Holy Strike (completo) — talento',4]],
     mage:[['frostbolt','Frostbolt',2],['fireball','Fireball (completo)',4],['blizzard','Blizzard',1],['counterspell','Counterspell',1],['wand','Bacchetta (FAR)',1],['crit','Critico (+)',1],['cone_of_cold','Cone of Cold (AOE) — talento',2],['living_bomb','Living Bomb (AOE/carta) — talento',4]]
@@ -27,6 +27,7 @@
     warrior:[
       {id:'heroic_mastery',label:'Heroic Mastery · 2 step',kind:'bonus',val:2,hint:'+ Spada'},
       {id:'improved_rend',label:'Improved Rend · 1 step',kind:'bonus',val:1,hint:'+ Rend'},
+      {id:'sunder_armor',label:'Sunder Armor · 1 step',kind:'count',val:2,card:'sunder_armor',hint:'carte'},
       {id:'cleave',label:'Cleave · 1 step',kind:'count',val:2,card:'cleave',hint:'carte'},
       {id:'improved_critical',label:'Improved Critical · 1 step',kind:'count',val:1,card:'critical',hint:'carte'}
     ],
@@ -49,6 +50,7 @@
       {id:'improved_frost',label:'Improved Frost · 1 step',kind:'bonus',val:1,hint:'+ Frost'},
       {id:'improved_fire',label:'Improved Fire · 1 step',kind:'bonus',val:1,hint:'+ Fire'},
       {id:'cone_of_cold',label:'Cone of Cold · 1 step',kind:'count',val:2,card:'cone_of_cold',hint:'carte'},
+      {id:'improved_cone_of_cold',label:'Improved Cone of Cold · 2 step',kind:'bonus',val:2,hint:'+ Cone'},
       {id:'living_bomb',label:'Living Bomb · 1 step',kind:'count',val:2,card:'living_bomb',hint:'carte'},
       {id:'improved_critical',label:'Improved Critical · 1 step',kind:'count',val:1,card:'critical',hint:'carte'}
     ]
@@ -77,7 +79,7 @@
     if(role==='warrior'){
       let d=P.sword_base;
       if(card==='sword')d+=P.heroic_strike+bonus('warrior','heroic_mastery');
-      else if(card==='rend')return P.rend_bleed+bonus('warrior','improved_rend')+(crit?P.crit:0);
+      else if(card==='rend')return d+P.rend_bleed+bonus('warrior','improved_rend')+(crit?P.crit:0);
       else if(card==='cleave')return P.cleave+(crit?P.crit:0);
       return d+(crit?P.crit:0);
     }
@@ -105,6 +107,7 @@
     if(role==='mage'){
       let d=P[card]||0;
       if(FROST.has(card))d+=bonus('mage','improved_frost');
+      if(card==='cone_of_cold')d+=bonus('mage','improved_cone_of_cold');
       if(FIRE.has(card))d+=bonus('mage','improved_fire');
       return d+(crit?P.crit:0);
     }
@@ -113,13 +116,13 @@
 
   // metadati carte per il greedy value-based
   const CARD_STANCE={
-    warrior:{sword:'AGGRESSIVE',cleave:'AGGRESSIVE',rend:null,bare:null},
+    warrior:{sword:'AGGRESSIVE',cleave:'DEFENSIVE',rend:null,sunder_armor:'AGGRESSIVE',bare:null},
     rogue:{backstab:'BEHIND',eviscerate:'FRONT',mutilate:'FRONT',vile_poison:null,garrote:null,kick:null,fan_of_knives:null,bare:null},
     healer:{holy_pulse:null,divine_strike:'NEAR',holy_strike:'NEAR',holy_fire:'FAR',wand:'FAR'},
     mage:{frostbolt:'NEAR',fireball:'FAR',blizzard:'FAR',cone_of_cold:'NEAR',living_bomb:'NEAR',counterspell:null,wand:'FAR'}
   };
   const DMG_CARDS={
-    warrior:['cleave','sword','rend','bare'],
+    warrior:['cleave','sword','rend','sunder_armor','bare'],
     rogue:['backstab','eviscerate','mutilate','vile_poison','garrote','fan_of_knives','kick','bare'],
     healer:['holy_pulse','divine_strike','holy_strike','holy_fire','wand'],
     mage:['frostbolt','fireball','blizzard','cone_of_cold','living_bomb','counterspell','wand']
@@ -127,7 +130,7 @@
   const DEAD_CARDS={warrior:['taunt','parry'],rogue:['evasion','preparation'],healer:['quick_heal','slow_heal'],mage:['blink']};
   const WEAPON=new Set(['bare','wand']);                 // colpo d'arma: non consuma carta dal mazzo
   const CAST=new Set(['holy_strike','fireball']); // cast lungo: 2 azioni (Colpo Divino ora è cast corto)
-  const critBoostable=(role,card)=>role==='warrior'?['sword','rend','cleave','bare'].includes(card)
+  const critBoostable=(role,card)=>role==='warrior'?['sword','rend','cleave','sunder_armor','bare'].includes(card)
     :role==='rogue'?['backstab','eviscerate','mutilate','bare'].includes(card)
     :role==='healer'?card==='holy_pulse'
     :role==='mage'?['frostbolt','blizzard','counterspell','fireball','cone_of_cold'].includes(card):false;
@@ -323,7 +326,7 @@
                 <div class="trow"><input type="checkbox" id="t-${r}-${t.id}" data-trole="${r}" data-tid="${t.id}"><label for="t-${r}-${t.id}">${t.label}</label>${t.kind==='flag'?'':`<input class="tval" type="number" min="0" max="12" step="1" value="${t.val}" data-tvrole="${r}" data-tvid="${t.id}" title="${t.hint||''}"><span class="thint">${t.hint||''}</span>`}</div>`).join('')}
             </div>`).join('')}
         </div>
-        <p class="dps-note">Il simulatore gestisce mazzo, pesca, stance e cast lungo; il danno per colpo viene dai valori qui sopra. AI: <b>Greedy</b> = ogni azione sceglie il miglior danno/azione; <b>Rollout MC</b> = per ogni azione simula più giocate future casuali (profondità = d6) e sceglie la mossa col miglior esito medio (lookahead). I talenti aggiungono le loro carte al mazzo e applicano i bonus. Assunzioni: cambio stance = 1 azione (gratis per il Rogue con Evasion Tricky); carte non-danno = 0 danni; cast lungo (Fireball, Holy Strike) = 2 carte + 2 azioni (Colpo Divino è cast corto: 1 carta, 1 azione); i DoT (Vile Poison, Garrote, Holy Fire, Living Bomb) sono modellati come danno-per-carta approssimato, non come tick nel turno Overlord — tara quei valori a piacere. Cambiare qualcosa azzera e ricalcola.</p>
+        <p class="dps-note">Il simulatore gestisce mazzo, pesca, stance e cast lungo; il danno per colpo viene dai valori qui sopra. AI: <b>Greedy</b> = ogni azione sceglie il miglior danno/azione; <b>Rollout MC</b> = per ogni azione simula più giocate future casuali (profondità = d6) e sceglie la mossa col miglior esito medio (lookahead). I talenti aggiungono le loro carte al mazzo e applicano i bonus. Assunzioni: cambio stance = 1 azione (gratis per il Rogue con Evasion Tricky); carte non-danno = 0 danni; cast lungo (Fireball, Holy Strike) = 2 carte + 2 azioni (Colpo Divino è cast corto: 1 carta, 1 azione); i DoT (Vile Poison, Garrote, Holy Fire, Living Bomb) sono modellati come danno-per-carta approssimato, non come tick nel turno Overlord. Il bonus di squadra Guerriero + Rogue di Sunder Armor non è incluso nel banco monoclasse. Cambiare qualcosa azzera e ricalcola.</p>
       </div>`;
     document.querySelector('main').append(page);
 
