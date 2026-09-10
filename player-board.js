@@ -155,7 +155,7 @@ function advanceHeroTurn(g){if(!g.playerBoardEnabled)return;if(g.state==='restor
 // INIZIATIVA: classifica persistente (eroi + 'overlord') interlacciata. Vedi handoff. Il bench/full-auto (endRound 300) resta a blocchi, non interlaccia.
 function startInitiativeRound(g){if(!g.initiative)g.initiative=[...(g.selectedRoles||g.party.map(h=>h.role)),'overlord'];g.initIndex=0;activateInitiativeSlot(g)}
 function heroHasResRune(h){return (h?.bag||[]).some(s=>s?.item==='resurrection_rune'&&s.count>0)}
-function activateInitiativeSlot(g){if(g.state!=='playing')return;while(g.initIndex<g.initiative.length){const tok=g.initiative[g.initIndex];if(tok==='overlord')return prepareManualOverlordTurn(g);const hero=g.party.find(h=>h.role===tok);if(hero&&(hero.hp>0||heroHasResRune(hero))){g.activeRole=tok;note(g,hero.hp>0?`▶ Turno ${NAMES[tok]}.`:`✝ ${NAMES[tok]} è a terra: usa la Runa o passa.`);return}g.initIndex++}endRoundBoard(g)}
+function activateInitiativeSlot(g){if(g.state!=='playing')return;while(g.initIndex<g.initiative.length){const tok=g.initiative[g.initIndex];if(tok==='overlord')return prepareManualOverlordTurn(g);const hero=g.party.find(h=>h.role===tok);if(hero&&(hero.hp>0||heroHasResRune(hero))){g.activeRole=tok;note(g,hero.hp>0?`▶ Turno ${NAMES[tok]}.`:`✝ ${NAMES[tok]} è a terra: usa la Runa o passa.`);setTimeout(()=>{if(game===g&&!g.tutorial&&g.state==='playing'&&g.activeRole===tok&&!aiControls(g,tok))showTurnAnnounce(tok)},0);return}g.initIndex++}endRoundBoard(g)}
 function advanceAfterOverlord(g){g.overlordTurn=null;g.showFriendly=false;automaticEnemyTarget(g);if(g.state!=='playing')return;g.initIndex++;activateInitiativeSlot(g)}
 function endRoundBoard(g){if(g.state!=='playing')return;g.round++;maybeSpawnFungi(g);if(g.tauntMode==='round')g.enemies.forEach(e=>{if(e.tauntExpiresRound<=g.round){e.taunted=false;e.tauntExpiresRound=null}});g.party.forEach(h=>{h.actions=CONFIG.actionsPerRound;h.shield=0;h.counter=0;refill(h,g)});g.initIndex=0;note(g,`▶ Round ${g.round}.`);activateInitiativeSlot(g)}
 // riordino tra stanze: primo->ultimo (rotazione, preserva l'ordine relativo), poi l'Overlord scivola di 1 verso l'inizio (ultima parola). ponytail: nudge Overlord placeholder aggressivo; sostituire con euristica AI in Fase 2.
@@ -1045,7 +1045,7 @@ function scEndOverlord(){game.overlordTurn=null;game.showFriendly=false;automati
 function scHeroCol(role){return `.hero-column.role-${role}`}
 // Annuncio turno animato "Ora tocca a [Eroe]": popup ritratto centrato con glow/pulse/shine, poi sfuma.
 const TURN_ANN={warrior:{n:'Guerriero',c:'Difensore',a:'assets/eroe-guerriero.jpeg',ac:'#f0c24a',g:'#f0c24a88'},rogue:{n:'Rogue',c:'Assassino',a:'assets/eroe-rogue.jpeg',ac:'#5fd0a8',g:'#5fd0a888'},mage:{n:'Mago',c:'Arcanista',a:'assets/eroe-mago.jpeg',ac:'#7db8ff',g:'#7db8ff88'},healer:{n:'Prete',c:'Guaritore',a:'assets/eroe-priest.jpeg',ac:'#ffe6a0',g:'#ffe6a088'}};
-function showTurnAnnounce(role){const cur=document.getElementById('turnAnnounce');if(cur&&cur.dataset.role===role)return;if(cur)cur.remove();const h=TURN_ANN[role]||TURN_ANN.warrior;const el=document.createElement('div');el.id='turnAnnounce';el.className='turn-ann';el.dataset.role=role;el.innerHTML=`<div class="ta-card in" style="--accent:${h.ac};--glow:${h.g}"><div class="ta-kicker">Ora tocca a</div><div class="ta-portrait"><img src="${h.a}" alt=""><div class="ta-shine"></div></div><div class="ta-name">${h.n}</div><div class="ta-cls">${h.c}</div></div>`;document.body.append(el);setTimeout(()=>{const c=el.querySelector('.ta-card');if(c){c.classList.remove('in');c.classList.add('out')}},1900)}
+function showTurnAnnounce(role){const cur=document.getElementById('turnAnnounce');if(cur&&cur.dataset.role===role)return;if(cur)cur.remove();const h=TURN_ANN[role]||TURN_ANN.warrior;const el=document.createElement('div');el.id='turnAnnounce';el.className='turn-ann';el.dataset.role=role;el.innerHTML=`<div class="ta-card in" style="--accent:${h.ac};--glow:${h.g}"><div class="ta-kicker">Ora tocca a</div><div class="ta-portrait"><img src="${h.a}" alt=""><div class="ta-shine"></div></div><div class="ta-name">${h.n}</div><div class="ta-cls">${h.c}</div></div>`;document.body.append(el);setTimeout(()=>{const c=el.querySelector('.ta-card');if(c){c.classList.remove('in');c.classList.add('out')}},1900);setTimeout(()=>el.remove(),2500)}
 // Step intermedio: mostra l'animazione dell'annuncio, poi avanza da solo (nessun tap).
 function scTurnIntro(role){return {who:role,auto:true,announce:role,delay:2600,run:()=>{},pre:()=>{game.showFriendly=false}}}
 function scOverlordTarget(role){return `#enemies [data-target="ally:${role}:0"]`}
@@ -1156,3 +1156,70 @@ function scriptShowStep(step,isAuto){scriptEnsureBlocker();document.querySelecto
 function scriptDrive(){const sc=game._script;if(game.state!=='playing'||game.round>sc.maxRound){game._script=null;game._scriptDone=true;scriptCleanup();return}for(let guard=0;guard<40;guard++){if(sc.i>=sc.steps.length){game._script=null;game._scriptDone=true;scriptCleanup();return}if(sc.shownFor===sc.i&&sc.base&&sc.steps[sc.i].done&&sc.steps[sc.i].done(game,sc.base)){sc.i++;continue}const step=sc.steps[sc.i];if(step.pre&&!step.preDone){step.preDone=true;step.pre(game);render();return}if(step.who&&step.who!=='overlord'&&game.activeRole!==step.who){scriptCleanup();return}if(step.auto){scriptShowStep(step,true);if(!sc.autoScheduled){sc.autoScheduled=true;const at=sc.i;setTimeout(()=>{if(!game._script||game._script.i!==at)return;try{step.run&&step.run(game)}catch(e){}game._script.autoScheduled=false;game._script.i++;render()},step.delay||1600)}return}if(sc.shownFor!==sc.i){sc.shownFor=sc.i;sc.base={acts:scActs(step.who),pos:scPos(step.who),active:game.activeRole,showFriendly:game.showFriendly}}scriptShowStep(step,false);return}}
 const renderBeforeScript=render;
 render=function(){renderBeforeScript();if(!game||!game.tutorial||game._scriptDone){if(!game||!game._script)scriptCleanup();return}if(game._tourActive||document.getElementById('tourBox')||document.getElementById('tutMsgBox')){if(!game._script)scriptCleanup();return}if(!game._script&&game._scriptPending&&game.state==='playing'&&game.activeRole&&game.activeRole!=='enemies'){game._script={i:0,steps:buildTutorialScript(game.encounter),maxRound:game.encounter===2?2:1,clicked:false};game._scriptPending=false}if(!game._script){scriptCleanup();return}scriptDrive()};
+
+/* Effetto condiviso: l'icona dell'abilità raggiunge il bersaglio prima di risolvere il colpo. */
+(()=>{
+  const offensive=new Set(['sword','rend','cleave','shield_slam','whirlwind','taunt','backstab','eviscerate','kick','mutilate','vile_poison','garrote','fan_of_knives','holy_pulse','holy_fire','divine_strike','holy_strike','frostbolt','blizzard','counterspell','fireball','cone_of_cold','living_bomb','fire_piercing']);
+  const melee=new Set(['sword','rend','cleave','shield_slam','whirlwind','backstab','eviscerate','kick','mutilate','vile_poison','garrote','fan_of_knives']);
+  const aoe=new Set(['cleave','whirlwind','fan_of_knives','holy_pulse','blizzard','cone_of_cold']);
+  const iconAlias={holy_strike:'divine_strike',fan_of_knives:'mutilate',wand:'divine_strike',mage_wand:'frostbolt'};
+  let busy=false;
+
+  function cardFrom(button){
+    for(const card of offensive)if(button.classList.contains(card))return card;
+    if(button.matches('[data-sword]'))return 'sword';
+    if(button.matches('[data-dagger]'))return 'backstab';
+    if(button.matches('[data-wand]'))return 'wand';
+    if(button.matches('[data-mage-wand]'))return 'mage_wand';
+    return null;
+  }
+  function isFirstLongCast(card,button){
+    if(card==='fireball'){const h=game.party[+button.dataset.h];return !h?.fireballCasting}
+    if(card==='holy_strike'){const h=game.party[+button.dataset.h];return !h?.holyStrikeCasting}
+    return false;
+  }
+  function targetFor(value){
+    const matches=[...document.querySelectorAll(`[data-target="${value}"]`)];
+    return matches.find(el=>el.closest('.mobile-target-bar.visible'))||matches.find(el=>{const r=el.getBoundingClientRect(),s=getComputedStyle(el);return s.display!=='none'&&r.width>0&&r.height>0&&r.bottom>0&&r.top<innerHeight})||matches[0]||null;
+  }
+  function visibleTargets(card){
+    if(aoe.has(card))return aliveEnemies(game).map(enemy=>targetFor(`enemy:x:${enemy.id}`)).filter(Boolean);
+    const value=String(game.selectedTarget||'');return value.startsWith('enemy:')?[targetFor(value)].filter(Boolean):[];
+  }
+  function iconSource(button){
+    const r=button.getBoundingClientRect(),isCard=button.classList.contains('action');
+    return {x:isCard?r.right-Math.min(30,r.width/2):r.left+r.width/2,y:r.top+r.height/2};
+  }
+  function iconFor(button,card){
+    const pseudo=button.classList.contains('action')?getComputedStyle(button,'::after').backgroundImage:'none';
+    return pseudo&&pseudo!=='none'?pseudo:`url("assets/icons/${iconAlias[card]||card}.svg")`;
+  }
+  async function animateAbility(button,card,targets,critical){
+    busy=true;document.body.classList.add('ability-fx-busy');
+    const start=iconSource(button),kind=melee.has(card)?'melee':'spell',icon=iconFor(button,card),impacts=[];
+    await Promise.all(targets.map(async target=>{
+      const hit=target.querySelector('.enemy-art')||target,rect=hit.getBoundingClientRect(),end={x:rect.left+rect.width/2,y:rect.top+rect.height/2},dx=end.x-start.x,dy=end.y-start.y;
+      const projectile=document.createElement('i');projectile.className=`ability-projectile ${kind}${critical?' critical':''}`;projectile.style.left=`${start.x}px`;projectile.style.top=`${start.y}px`;projectile.style.setProperty('--ability-icon',icon);document.body.append(projectile);
+      const turn=kind==='melee'?'420deg':'80deg',flight=projectile.animate([
+        {opacity:0,transform:'translate(-50%,-50%) scale(.3) rotate(-25deg)'},
+        {opacity:1,transform:'translate(-50%,-50%) scale(1.28) rotate(12deg)',offset:.2},
+        {opacity:1,transform:`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(.78) rotate(${turn})`}
+      ],{duration:650,easing:'cubic-bezier(.22,.72,.18,1)',fill:'forwards'});
+      try{await flight.finished}catch(e){}
+      projectile.remove();target.classList.add('ability-target-hit');
+      const impact=document.createElement('i');impact.className=`ability-impact ${kind}${critical?' critical':''}`;impact.style.left=`${end.x}px`;impact.style.top=`${end.y}px`;document.body.append(impact);impacts.push(impact);
+    }));
+    await new Promise(resolve=>setTimeout(resolve,150));
+    button.dataset.abilityFxReplay='1';button.click();
+    setTimeout(()=>{impacts.forEach(impact=>impact.remove());targets.forEach(target=>target.classList.remove('ability-target-hit'));document.body.classList.remove('ability-fx-busy');busy=false},420);
+  }
+  document.addEventListener('click',ev=>{
+    const button=ev.target.closest('.action[data-h][data-i],.action[data-war-tech],.action[data-rogue-tech],[data-sword],[data-dagger],[data-wand],[data-mage-wand]');
+    if(!button||button.disabled||!game?.playerBoardEnabled||game.state!=='playing')return;
+    if(button.dataset.abilityFxReplay){delete button.dataset.abilityFxReplay;return}
+    if(busy){ev.preventDefault();ev.stopImmediatePropagation();return}
+    const card=cardFrom(button),targets=card?visibleTargets(card):[],critical=!!game.party.find(h=>h.role===game.activeRole)?.criticalArmed;
+    if(!card||isFirstLongCast(card,button)||!targets.length||matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+    ev.preventDefault();ev.stopImmediatePropagation();animateAbility(button,card,targets,critical);
+  },true);
+})();
