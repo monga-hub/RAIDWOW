@@ -1158,6 +1158,76 @@ function scriptDrive(){const sc=game._script;if(game.state!=='playing'||game.rou
 const renderBeforeScript=render;
 render=function(){renderBeforeScript();if(!game||!game.tutorial||game._scriptDone){if(!game||!game._script)scriptCleanup();return}if(game._tourActive||document.getElementById('tourBox')||document.getElementById('tutMsgBox')){if(!game._script)scriptCleanup();return}if(!game._script&&game._scriptPending&&game.state==='playing'&&game.activeRole&&game.activeRole!=='enemies'){game._script={i:0,steps:buildTutorialScript(game.encounter),maxRound:game.encounter===2?2:1,clicked:false};game._scriptPending=false}if(!game._script){scriptCleanup();return}scriptDrive()};
 
+/* Pressione prolungata: una sola scheda informativa condivisa da tutte le Ability. */
+(()=>{
+  const cards=new Set(['sword','rend','parry','taunt','cleave','shield_slam','whirlwind','quick_heal','slow_heal','bandage','holy_pulse','holy_shield','holy_fire','divine_strike','holy_strike','backstab','eviscerate','evasion','kick','preparation','mutilate','vile_poison','garrote','fan_of_knives','critical','frostbolt','blizzard','counterspell','fireball','blink','frost_armor','cone_of_cold','living_bomb','fire_piercing']);
+  const position={sword:'AGGRESSIVE',cleave:'AGGRESSIVE',whirlwind:'AGGRESSIVE',parry:'DEFENSIVE',shield_slam:'DEFENSIVE',backstab:'BEHIND',eviscerate:'FRONT',mutilate:'FRONT',quick_heal:'NEAR',slow_heal:'FAR',bandage:'NEAR',holy_fire:'FAR',divine_strike:'NEAR',holy_strike:'NEAR',frostbolt:'NEAR',blizzard:'FAR',fireball:'FAR',cone_of_cold:'NEAR',living_bomb:'NEAR',fire_piercing:'FAR'};
+  const cost={sword:'0 per agganciarla · 1 per colpire',rend:'0 per agganciarla · 1 per colpire',parry:'0 per agganciarla · 1 per parare',cleave:'0 per agganciarla · 1 per colpire',shield_slam:'0 per agganciarla · 1 per colpire',whirlwind:'3 azioni (2 con bonus)',backstab:'0 per agganciarla · 1 per colpire',eviscerate:'0 per agganciarla · 1 per colpire',critical:'0 azioni',blink:'0 azioni',fireball:'1 azione per carta · 2 carte',holy_strike:'1 azione per carta · 2 carte',slow_heal:'1 azione per carta · 2 carte'};
+  const effect={sword:'+2 danni al prossimo colpo di Sword',rend:'1 danno e +1 Bleed',parry:'+1 Block al prossimo uso dello Shield',taunt:'Costringe il nemico scelto ad attaccare il Guerriero',critical:'+1 livello o +1 danno alla prossima Ability compatibile'};
+  const detail={
+    sword:'Heroic Strike è un colpo potente che si combina con la Sword equipaggiata: al danno base dell’arma aggiunge +2, oltre agli eventuali bonus di talento, equipaggiamento e Critico. La carta si può agganciare solo in Stance AGGRESSIVE.',
+    rend:'Si aggancia al prossimo attacco con la Sword. Il colpo infligge 1 danno e applica un Bleed: alla prossima attivazione quel nemico pescherà una Command Card in meno.',
+    parry:'Si aggancia allo Shield. Al prossimo uso dello scudo aumenta il Block; richiede Stance DEFENSIVE e non è disponibile con un’arma a due mani.',
+    critical:'È un modificatore gratuito: resta pronto finché non giochi un’Ability compatibile. Potenzia temporaneamente quella giocata e viene poi scartato.',
+    fireball:'È un Cast Lungo: la prima carta prepara l’incantesimo, la seconda lo completa. Un’interruzione nemica può spezzare il cast prima della seconda carta.',
+    holy_strike:'È un Cast Lungo da due carte. La prima avvia il cast e la seconda infligge il danno; deve essere completato senza essere interrotto.',
+    slow_heal:'È una cura canalizzata da due carte. La prima avvia la canalizzazione e la seconda completa la cura sul bersaglio scelto.',
+    kick:'Infligge 1 danno e interrompe immediatamente un Cast Lungo del nemico bersagliato. Può essere usato da qualsiasi Position.',
+    counterspell:'Infligge 1 danno e interrompe un Cast Lungo. Funziona sia da NEAR sia da FAR.',
+    preparation:'Pesca subito due carte, poi obbliga a scartare due Ability valide. Wound e Critico non possono essere scelti come scarto.',
+    blink:'Cambia gratuitamente la Position del Mago tra NEAR e FAR, senza consumare un’azione.'
+  };
+  let timer=null,pressed=null,startX=0,startY=0;
+  const dialog=document.createElement('dialog');
+  dialog.className='ability-info';
+  dialog.setAttribute('aria-labelledby','abilityInfoTitle');
+  dialog.innerHTML='<article class="ability-info-card"><button class="ability-info-close" type="button" aria-label="Chiudi">×</button><header class="ability-info-head"><i class="ability-info-icon" aria-hidden="true"></i><div><span class="ability-info-kicker">Dettagli Ability</span><h2 id="abilityInfoTitle"></h2></div></header><p class="ability-info-effect"></p><dl class="ability-info-rules"><div><dt>Position / Stance</dt><dd data-info-position></dd></div><div><dt>Costo</dt><dd data-info-cost></dd></div><div><dt>Tipo</dt><dd data-info-type></dd></div><div><dt>Livello attuale</dt><dd data-info-level></dd></div></dl><p class="ability-info-detail"></p><small class="ability-info-hint">Tocca fuori dalla scheda o premi × per chiudere.</small></article>';
+  document.body.append(dialog);
+
+  function cardFrom(button){for(const card of cards)if(button.classList.contains(card))return card;return null}
+  function heroFrom(button){
+    const index=button.dataset.h??button.dataset.warrior??button.dataset.rogue??button.dataset.critical;
+    if(index!==undefined&&game?.party?.[+index])return game.party[+index];
+    const role=['warrior','healer','rogue','mage'].find(value=>button.closest(`.role-${value}`));
+    return game?.party?.find(hero=>hero.role===role);
+  }
+  function kindOf(card){
+    if(['quick_heal','slow_heal','bandage'].includes(card))return'Cura';
+    if(['parry','holy_shield','evasion','frost_armor'].includes(card))return'Difesa';
+    if(card==='critical')return'Modificatore';
+    if(['blink','preparation','taunt'].includes(card))return'Utilità';
+    if(['cleave','whirlwind','holy_pulse','fan_of_knives','blizzard','cone_of_cold'].includes(card))return'Attacco AOE';
+    return'Attacco';
+  }
+  function showInfo(button,card){
+    const hero=heroFrom(button),level=hero?.levels?.[card]||1,pseudo=getComputedStyle(button,'::after').backgroundImage,icon=pseudo&&pseudo!=='none'?pseudo:`url("assets/icons/${card}.svg")`;
+    dialog.style.setProperty('--ability-info-icon',icon);
+    dialog.querySelector('#abilityInfoTitle').textContent=NAMES[card]||card;
+    dialog.querySelector('.ability-info-effect').textContent=effect[card]||DESC[card]||'Consulta l’effetto della carta.';
+    dialog.querySelector('[data-info-position]').textContent=position[card]||'ANY';
+    dialog.querySelector('[data-info-cost]').textContent=cost[card]||'1 azione';
+    dialog.querySelector('[data-info-type]').textContent=kindOf(card);
+    dialog.querySelector('[data-info-level]').textContent=`L${level}`;
+    dialog.querySelector('.ability-info-detail').textContent=detail[card]||`Gioca ${NAMES[card]||card} su un bersaglio valido per applicare l’effetto indicato. La carta viene poi scartata, salvo effetti che la agganciano a un’azione base.`;
+    if(!dialog.open)dialog.showModal();
+  }
+  function clearPress(){clearTimeout(timer);timer=null;pressed=null}
+  function begin(ev){
+    const button=ev.target.closest('button.action'),card=button&&cardFrom(button);
+    if(!button||!card||ev.button>0)return;
+    clearPress();pressed=button;startX=ev.clientX;startY=ev.clientY;
+    timer=setTimeout(()=>{if(pressed!==button)return;button.dataset.infoLongPress='1';showInfo(button,card);navigator.vibrate?.(20);setTimeout(()=>delete button.dataset.infoLongPress,900)},580);
+  }
+  document.addEventListener('pointerdown',begin,true);
+  document.addEventListener('pointermove',ev=>{if(pressed&&(Math.abs(ev.clientX-startX)>12||Math.abs(ev.clientY-startY)>12))clearPress()},true);
+  document.addEventListener('pointerup',clearPress,true);
+  document.addEventListener('pointercancel',clearPress,true);
+  document.addEventListener('click',ev=>{const button=ev.target.closest('button.action[data-info-long-press]');if(!button)return;delete button.dataset.infoLongPress;ev.preventDefault();ev.stopImmediatePropagation()},true);
+  document.addEventListener('contextmenu',ev=>{const button=ev.target.closest('button.action'),card=button&&cardFrom(button);if(!button||!card)return;ev.preventDefault();button.dataset.infoLongPress='1';showInfo(button,card);setTimeout(()=>delete button.dataset.infoLongPress,900)},true);
+  dialog.querySelector('.ability-info-close').onclick=()=>dialog.close();
+  dialog.addEventListener('click',ev=>{if(ev.target===dialog)dialog.close()});
+})();
+
 /* Effetto condiviso: l'icona dell'abilità raggiunge il bersaglio prima di risolvere il colpo. */
 (()=>{
   const offensive=new Set(['sword','rend','cleave','shield_slam','whirlwind','taunt','backstab','eviscerate','kick','mutilate','vile_poison','garrote','fan_of_knives','holy_pulse','holy_fire','divine_strike','holy_strike','frostbolt','blizzard','counterspell','fireball','cone_of_cold','living_bomb','fire_piercing']);
