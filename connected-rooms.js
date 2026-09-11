@@ -93,7 +93,7 @@ function resolveConnectedPlacement(g,tileId,connectorId){
   if(!g.playerBoardEnabled||!x?.config.connectionPlacement||g.state!=='overlord_placement'||!pending)return false;
   const tile=x.overlordHand.find(item=>item.id===tileId),connector=roomTileConnectors(tile||{}).find(side=>side.id===connectorId);
   if(!tile||!connector||pending.forceMiniBoss&&tile.id!==MINI_BOSS_TILE_T2.id)return false;
-  const next=generateExplorationRoom(x,{tileId,connectorId});recordMiniBossMaterialization(x,next);g.pendingOverlordPlacement=null;g.forceMiniBossPlacement=false;
+  const next=generateExplorationRoom(x,{tileId,connectorId});recordMiniBossMaterialization(x,next);g.roomEntryAnnouncement=next;g.pendingOverlordPlacement=null;g.forceMiniBossPlacement=false;
   boardAudit(g,'OVERLORD_CONNECTION_SELECTED',{tileId,connectorId,connectorIcons:connector.icons,nextRoomId:next.id});
   if(initial){g.sequence=[next.fighters.length];g.encounter=0;g.state='playing';startEncounter(g);note(g,`🧩 ${roomDisplayName(x,next)}: uscita Eroi + lato ${connectorId} dell’Overlord.`);return true}
   g.sequence.push(next.fighters.length);g.encounter++;
