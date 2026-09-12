@@ -698,7 +698,7 @@ function createTempleMapExplorer(){
   const launch=document.createElement('button');launch.className='secondary';launch.type='button';launch.textContent='🗺 Esplora la mappa del Tempio';menu.querySelector('.menu-buttons').append(launch);
   const overlay=document.createElement('section');overlay.id='templeMapExplorer';overlay.className='temple-map-explorer';overlay.hidden=true;document.body.append(overlay);
   const atlasTiles=[{x:0,y:0,art:'assets/optimized/dungeon-atlas-v1/tile-0-0.png'},{x:1,y:0,art:'assets/optimized/dungeon-atlas-v1/tile-1-0.png'},{x:0,y:1,art:'assets/optimized/dungeon-atlas-v1/tile-0-1.png'},{x:1,y:1,art:'assets/optimized/dungeon-atlas-v1/tile-1-1.png'}];
-  let roomId=GRUMARAT_TEMPLE.start,zoom=1,pan={x:0,y:0},drag=null;
+  let roomId=GRUMARAT_TEMPLE.start,zoom=1,pan={x:0,y:0},drag=null,glideFrame=0;
   const clamp=(value,min,max)=>Math.min(max,Math.max(min,value));
   const currentRoom=()=>fixedTempleRoom(roomId)||fixedTempleRoom(GRUMARAT_TEMPLE.start);
   const draw=()=>{
@@ -714,9 +714,10 @@ function createTempleMapExplorer(){
     overlay.querySelector('#templeZoomOut').onclick=()=>zoomAt(zoom/1.35,viewport.getBoundingClientRect().left+viewport.clientWidth/2,viewport.getBoundingClientRect().top+viewport.clientHeight/2);
     stage.querySelectorAll('[data-temple-room]').forEach(button=>button.onclick=event=>{event.stopPropagation();centerOn(fixedTempleRoom(button.dataset.templeRoom))});
     viewport.onwheel=event=>{event.preventDefault();zoomAt(zoom*(event.deltaY<0?1.22:1/1.22),event.clientX,event.clientY)};
-    viewport.onpointerdown=event=>{if(event.target.closest('.temple-node'))return;drag={x:event.clientX,y:event.clientY,panX:pan.x,panY:pan.y};viewport.setPointerCapture(event.pointerId);stage.classList.add('is-dragging')};
-    viewport.onpointermove=event=>{if(!drag)return;pan.x=drag.panX+event.clientX-drag.x;pan.y=drag.panY+event.clientY-drag.y;applyCamera()};
-    viewport.onpointerup=viewport.onpointercancel=()=>{drag=null;stage.classList.remove('is-dragging')};
+    const stopGlide=()=>{cancelAnimationFrame(glideFrame);glideFrame=0};
+    viewport.onpointerdown=event=>{if(event.target.closest('.temple-node'))return;stopGlide();drag={x:event.clientX,y:event.clientY,panX:pan.x,panY:pan.y,lastX:event.clientX,lastY:event.clientY,lastAt:performance.now(),vx:0,vy:0};viewport.setPointerCapture(event.pointerId);stage.classList.add('is-dragging')};
+    viewport.onpointermove=event=>{if(!drag)return;const now=performance.now(),elapsed=Math.max(1,now-drag.lastAt);drag.vx=(event.clientX-drag.lastX)/elapsed*16;drag.vy=(event.clientY-drag.lastY)/elapsed*16;drag.lastX=event.clientX;drag.lastY=event.clientY;drag.lastAt=now;pan.x=drag.panX+event.clientX-drag.x;pan.y=drag.panY+event.clientY-drag.y;applyCamera()};
+    viewport.onpointerup=viewport.onpointercancel=()=>{const release=drag;drag=null;stage.classList.remove('is-dragging');if(!release||Math.hypot(release.vx,release.vy)<.3)return;let{vx,vy}=release;const glide=()=>{pan.x+=vx;pan.y+=vy;vx*=.91;vy*=.91;applyCamera();if(Math.hypot(vx,vy)>.15)glideFrame=requestAnimationFrame(glide)};glideFrame=requestAnimationFrame(glide)};
     applyCamera();
   };
   launch.onclick=()=>{roomId=GRUMARAT_TEMPLE.start;zoom=1;pan={x:0,y:0};draw();menu.hidden=true;overlay.hidden=false};
