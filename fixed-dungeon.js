@@ -4,7 +4,7 @@
 // dalle scelte di partita, non dalla generazione della mappa.
 const GRUMARAT_TEMPLE={
   id:'grumarat-temple',
-  art:'assets/optimized/dungeon-paludi-organic-master-v3.png',
+  art:'assets/optimized/dungeon-paludi-organic-master-v4.png',
   start:'gate',
   rooms:[
     {id:'gate',number:1,name:'La Scalinata delle Tre Bocche',kind:'entrance',x:50,y:84,links:['vestibule'],closeup:'assets/optimized/dungeon-closeups/01-ingresso-tempio.webp?v=3'},
