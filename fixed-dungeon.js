@@ -7,17 +7,17 @@ const GRUMARAT_TEMPLE={
   art:'assets/optimized/dungeon-paludi-organic-master-v4.png',
   start:'gate',
   rooms:[
-    {id:'gate',number:1,name:'La Scalinata delle Tre Bocche',kind:'entrance',x:50,y:84,links:['vestibule'],closeup:'assets/optimized/dungeon-closeups/01-ingresso-tempio.webp?v=3'},
-    {id:'vestibule',number:2,name:'Il Vestibolo della Veglia',kind:'hall',x:50,y:72,links:['gate','cistern','ossuary'],closeup:'assets/optimized/dungeon-closeups/02-vestibolo-veglia.webp?v=3'},
-    {id:'cistern',number:3,name:'La Rotonda del Girino Sacro',kind:'crossroads',x:50,y:58,links:['vestibule','ossuary','root-gallery','high-stairs'],closeup:'assets/optimized/dungeon-closeups/03-rotonda-girino-sacro.webp?v=3'},
-    {id:'ossuary',number:4,name:'L’Ossario delle Ossa Fradice',kind:'chapel',x:22,y:59,links:['vestibule','cistern','tongue-pools'],closeup:'assets/optimized/dungeon-closeups/04-ossario-ossa-fradice.webp?v=3'},
-    {id:'tongue-pools',number:5,name:'Le Pozze delle Lingue in Agguato',kind:'pools',x:19,y:43,links:['ossuary','high-stairs'],closeup:'assets/optimized/dungeon-closeups/05-pozze-lingue-agguato.webp?v=5',key:'Chiave Enrage I'},
-    {id:'root-gallery',number:6,name:'La Galleria delle Radici che Ascoltano',kind:'gallery',x:77,y:47,links:['cistern','eye-well','high-stairs'],closeup:'assets/optimized/dungeon-closeups/06-galleria-radici.webp?v=3'},
-    {id:'eye-well',number:7,name:'Il Pozzo dell’Occhio Insonne',kind:'sanctuary',x:79,y:64,links:['root-gallery','high-stairs'],closeup:'assets/optimized/dungeon-closeups/07-pozzo-occhio-insonne.webp?v=3',key:'Chiave Enrage II'},
-    {id:'high-stairs',number:8,name:'Le Scale del Miasma',kind:'stairs',x:50,y:41,links:['cistern','tongue-pools','root-gallery','skull-sanctum','four-eyes-chapel'],closeup:'assets/optimized/dungeon-closeups/08-scale-miasma.webp?v=4'},
-    {id:'skull-sanctum',number:9,name:'Il Santuario dei Teschi Sommersi',kind:'sanctuary',x:75,y:26,links:['high-stairs','throne'],closeup:'assets/optimized/dungeon-closeups/09-santuario-teschi.webp?v=3'},
-    {id:'throne',number:10,name:'Il Trono Sommerso di Grum’Arat',kind:'finale',x:50,y:25,links:['skull-sanctum'],closeup:'assets/optimized/dungeon-closeups/10-trono-sommerso.webp?v=3'},
-    {id:'four-eyes-chapel',number:11,name:'La Cappella delle Quattro Pupille',kind:'chapel',x:23,y:28,links:['high-stairs'],closeup:'assets/optimized/dungeon-closeups/11-cappella-quattro-pupille.webp?v=3'}
+    {id:'gate',number:1,name:'La Scalinata delle Tre Bocche',kind:'entrance',x:49.9,y:92.99,links:['vestibule'],closeup:'assets/optimized/dungeon-closeups/01-ingresso-tempio.webp?v=3'},
+    {id:'vestibule',number:2,name:'Il Vestibolo della Veglia',kind:'hall',x:49.68,y:78.5,links:['gate','cistern'],closeup:'assets/optimized/dungeon-closeups/02-vestibolo-veglia.webp?v=3'},
+    {id:'cistern',number:3,name:'La Rotonda del Girino Sacro',kind:'crossroads',x:49.77,y:62.54,links:['vestibule','ossuary','high-stairs','eye-well','tongue-pools','root-gallery'],closeup:'assets/optimized/dungeon-closeups/03-rotonda-girino-sacro.webp?v=3'},
+    {id:'ossuary',number:4,name:'L’Ossario delle Ossa Fradice',kind:'chapel',x:18.42,y:68.71,links:['cistern','tongue-pools','high-stairs'],closeup:'assets/optimized/dungeon-closeups/04-ossario-ossa-fradice.webp?v=3'},
+    {id:'tongue-pools',number:5,name:'Le Pozze delle Lingue in Agguato',kind:'pools',x:16.74,y:47.04,links:['ossuary','high-stairs','four-eyes-chapel','cistern'],closeup:'assets/optimized/dungeon-closeups/05-pozze-lingue-agguato.webp?v=5',key:'Chiave Enrage I'},
+    {id:'root-gallery',number:6,name:'La Galleria delle Radici che Ascoltano',kind:'gallery',x:81.36,y:47.59,links:['eye-well','high-stairs','skull-sanctum','cistern'],closeup:'assets/optimized/dungeon-closeups/06-galleria-radici.webp?v=3'},
+    {id:'eye-well',number:7,name:'Il Pozzo dell’Occhio Insonne',kind:'sanctuary',x:80.46,y:70.15,links:['root-gallery','cistern','high-stairs'],closeup:'assets/optimized/dungeon-closeups/07-pozzo-occhio-insonne.webp?v=3',key:'Chiave Enrage II'},
+    {id:'high-stairs',number:8,name:'Le Scale del Miasma',kind:'stairs',x:49.48,y:39.78,links:['cistern','tongue-pools','root-gallery','skull-sanctum','four-eyes-chapel','throne','ossuary','eye-well'],closeup:'assets/optimized/dungeon-closeups/08-scale-miasma.webp?v=4'},
+    {id:'skull-sanctum',number:9,name:'Il Santuario dei Teschi Sommersi',kind:'sanctuary',x:76.76,y:28.28,links:['high-stairs','root-gallery'],closeup:'assets/optimized/dungeon-closeups/09-santuario-teschi.webp?v=3'},
+    {id:'throne',number:10,name:'Il Trono Sommerso di Grum’Arat',kind:'finale',x:49.74,y:25.66,links:['high-stairs'],closeup:'assets/optimized/dungeon-closeups/10-trono-sommerso.webp?v=3'},
+    {id:'four-eyes-chapel',number:11,name:'La Cappella delle Quattro Pupille',kind:'chapel',x:23.42,y:27.58,links:['high-stairs','tongue-pools'],closeup:'assets/optimized/dungeon-closeups/11-cappella-quattro-pupille.webp?v=3'}
   ]
 };
 
