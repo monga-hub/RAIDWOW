@@ -22,6 +22,29 @@ function roomTileConnectors(tile){
   return[{id:'LEGACY',icons:tile.contentIcons||{}},...(tile.exits||[])];
 }
 
+// A/B/C/D stay the rule labels, but also identify the physical sides of a tile.
+const MAP_SIDE_BY_CONNECTOR={A:'north',B:'east',C:'south',D:'west',LEGACY:'north'};
+const MAP_VECTOR={north:{x:0,y:-1},east:{x:1,y:0},south:{x:0,y:1},west:{x:-1,y:0}};
+const MAP_SIDE_INDEX={north:0,east:1,south:2,west:3};
+function mapSideForConnector(connectorId){
+  const id=String(connectorId||'').toLowerCase().replace(/^start-/,'');
+  if(['north','east','south','west'].includes(id))return id;
+  return MAP_SIDE_BY_CONNECTOR[id.toUpperCase()]||'north';
+}
+function oppositeMapSide(side){return ['north','east','south','west'][(MAP_SIDE_INDEX[side]+2)%4]}
+function mapShapeForConnectors(connectors,rotation){
+  const sides=connectors.map(side=>(MAP_SIDE_INDEX[mapSideForConnector(side.id)]+rotation)%4);
+  if(sides.length===2)return Math.abs(sides[0]-sides[1])===2?'corridor':'corner';
+  return sides.length===3?'triangle':'cross';
+}
+function mapRoomPlacement(x,parent,exitId,connectorId,connectors){
+  const side=mapSideForConnector(exitId),vector=MAP_VECTOR[side],occupied=new Set(x.map.rooms.map(room=>`${room.mapX||0},${room.mapY||0}`));
+  let mapX=(parent.mapX||0)+vector.x,mapY=(parent.mapY||0)+vector.y,steps=1;
+  while(occupied.has(`${mapX},${mapY}`)){mapX+=vector.x;mapY+=vector.y;steps++}
+  const entrySide=oppositeMapSide(side),rotation=(MAP_SIDE_INDEX[entrySide]-MAP_SIDE_INDEX[mapSideForConnector(connectorId)]+4)%4;
+  return{mapX,mapY,mapSide:side,mapEntrySide:entrySide,mapRotation:rotation,mapSteps:steps,mapShape:mapShapeForConnectors(connectors,rotation)};
+}
+
 function chooseConnectedTile(x,selectedExit,tileId){
   if(!tileId)return chooseRoomTile(x.overlordHand,selectedExit,x);
   const index=x.overlordHand.findIndex(tile=>tile.id===tileId),tile=x.overlordHand[index];
@@ -61,7 +84,7 @@ generateExplorationRoom=function(x,placement={}){
   const treasures=Array.from({length:totalIcons.TREASURE||0},()=>drawExplorationBag(x,x.treasureBag,'TREASURE'));
   x.fighterSequence.push(...fighters);x.treasureSequence.push(...treasures);
   const exitIcons=clone(selectedExit.icons),connectorIcons=clone(connector.icons);
-  const room={id:`room-${x.roomsExplored+1}`,tileId:tile.id,parentRoomId:parent.id,entryExitId:selectedExit.id,entryConnectorId:connector.id,fighters,treasures,heroExitTreasure:selectedExit.icons.TREASURE||0,exits:clone(remainingConnectors),state:'READY',canExplore:false,depth:x.roomsExplored+1,composition:{exit:exitIcons,connector:connectorIcons,known:exitIcons,hidden:connectorIcons,total:totalIcons},agency:{heroAvoidance,overlordCounterplay},bagAtCreation:{fighter:fighterBefore,treasure:treasureBefore}};
+  const room={id:`room-${x.roomsExplored+1}`,tileId:tile.id,parentRoomId:parent.id,entryExitId:selectedExit.id,entryConnectorId:connector.id,fighters,treasures,heroExitTreasure:selectedExit.icons.TREASURE||0,exits:clone(remainingConnectors),state:'READY',canExplore:false,depth:x.roomsExplored+1,...mapRoomPlacement(x,parent,selectedExit.id,connector.id,connectors),composition:{exit:exitIcons,connector:connectorIcons,known:exitIcons,hidden:connectorIcons,total:totalIcons},agency:{heroAvoidance,overlordCounterplay},bagAtCreation:{fighter:fighterBefore,treasure:treasureBefore}};
   x.map.rooms.push(room);
   x.map.connections.push({fromRoomId:parent.id,fromExitId:selectedExit.id,toRoomId:room.id,toConnectorId:connector.id});
   x.map.currentRoomId=room.id;x.roomsExplored++;
@@ -95,10 +118,9 @@ function resolveConnectedPlacement(g,tileId,connectorId){
   if(!tile||!connector||pending.forceMiniBoss&&tile.id!==MINI_BOSS_TILE_T2.id)return false;
   const next=generateExplorationRoom(x,{tileId,connectorId});recordMiniBossMaterialization(x,next);if(!initial){roomTransitionInitiative(g);g.initiativePreparedForRoom=true}g.roomEntryAnnouncement=next;g.pendingOverlordPlacement=null;g.forceMiniBossPlacement=false;
   boardAudit(g,'OVERLORD_CONNECTION_SELECTED',{tileId,connectorId,connectorIcons:connector.icons,nextRoomId:next.id});
-  if(initial){g.sequence=[next.fighters.length];g.encounter=0;g.state='playing';startEncounter(g);note(g,`🧩 ${roomDisplayName(x,next)}: uscita Eroi + lato ${connectorId} dell’Overlord.`);return true}
-  g.sequence.push(next.fighters.length);g.encounter++;
-  g.pendingRewards=advancementRewards(g);
-  note(g,`🧩 L’Overlord collega ${roomDisplayName(x,next)} dal lato ${connectorId}.`);if(g.pendingRewards.length){g.state='reward';note(g,'★ Scegli DECK, TALENTO o RISERVA per ogni ricompensa di livello.')}else continueAfterRewards(g);return true;
+  g.state='map_reveal';g.mapConnectionReveal={fromRoomId:pending.roomId,toRoomId:next.id,exitId:pending.exitId,connectorId};
+  const continueFromMapReveal=()=>{if(g.mapConnectionReveal?.toRoomId!==next.id)return;delete g.mapConnectionReveal;if(initial){g.sequence=[next.fighters.length];g.encounter=0;g.state='playing';startEncounter(g);note(g,`🧩 ${roomDisplayName(x,next)}: uscita Eroi + lato ${connectorId} dell’Overlord.`);render();return}g.sequence.push(next.fighters.length);g.encounter++;g.pendingRewards=advancementRewards(g);note(g,`🧩 L’Overlord collega ${roomDisplayName(x,next)} dal lato ${connectorId}.`);if(g.pendingRewards.length){g.state='reward';note(g,'★ Scegli DECK, TALENTO o RISERVA per ogni ricompensa di livello.')}else continueAfterRewards(g);render()};
+  setTimeout(continueFromMapReveal,1450);return true;
 }
 
 function connectedPlacementPanel(g){
