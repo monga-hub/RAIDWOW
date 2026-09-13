@@ -192,7 +192,7 @@ function drawLootItem(g,tier,role=null){if(tier==='GOLD'||tier==='GOLD2'){const 
 function revealTreasureLoot(g,boxTier){const poolTier=effectiveLootTier(g,boxTier),perRole=poolTier==='GOLD'||poolTier==='GOLD2',ids=perRole?['warrior','healer','rogue'].map(role=>drawLootItem(g,poolTier,role)):Array.from({length:3},()=>drawLootItem(g,poolTier)),diff=g.difficulty||'normale';g.pendingLoot=ids.map((item,index)=>({uid:`${poolTier}-${g.encounter}-${Date.now()}-${index}`,item,diff}));g.pendingLootTier=boxTier;g.telemetry.items.treasuresOpened[poolTier]=(g.telemetry.items.treasuresOpened[poolTier]||0)+1;boardAudit(g,'TREASURE_CONTENT_REVEALED',{boxTier,poolTier,diff,items:ids});note(g,`🎁 Cassa ${lootTierLabel(boxTier)}: rivelate ${ids.map(id=>TREASURE_ITEMS[id].name).join(', ')}.`)}
 function assignLoot(g,uid,role){const loot=g.pendingLoot?.find(entry=>entry.uid===uid),h=g.party.find(hero=>hero.role===role),item=TREASURE_ITEMS[loot?.item];if(!loot||!h||item.role&&item.role!==role||item.roles&&!item.roles.includes(role)||!addBagItem(h,loot.item,1,loot.diff))return false;g.pendingLoot.splice(g.pendingLoot.indexOf(loot),1);g.telemetry.items.lootAssigned++;boardAudit(g,'TREASURE_ASSIGNED',{tier:item.tier,item:loot.item,hero:role});note(g,`🎒 ${item.name} assegnato a ${NAMES[role]}.`);finishLootDistribution(g);return true}
 function leaveLoot(g,uid){const loot=g.pendingLoot?.find(entry=>entry.uid===uid);if(!loot)return false;g.pendingLoot.splice(g.pendingLoot.indexOf(loot),1);g.telemetry.items.lootLeft++;boardAudit(g,'TREASURE_ITEM_LEFT',{item:loot.item});note(g,`○ ${TREASURE_ITEMS[loot.item].name} lasciato nella stanza.`);finishLootDistribution(g);return true}
-function finishLootDistribution(g){if(g.pendingLoot?.length)return false;const resume=g.lootReturnState||'treasure';g.pendingLoot=null;g.pendingLootTier=null;g.lootAfterAmbush=false;g.lootReturnState=null;g.state=resume;boardAudit(g,'TREASURE_DISTRIBUTION_COMPLETED',{resume});return true}
+function finishLootDistribution(g){if(g.pendingLoot?.length)return false;const resume=g.lootReturnState||'treasure';g.pendingLoot=null;g.pendingLootTier=null;g.lootAfterAmbush=false;g.lootReturnState=null;g.chestReveal=null;g.state=resume;boardAudit(g,'TREASURE_DISTRIBUTION_COMPLETED',{resume});return true}
 const RECOVERY_ACTIONS=99;
 // BARRA HP JUICY: fill verde istantaneo + ghost rosso che insegue (eased via rAF, sopravvive al re-render distruttivo) + flash al colpo.
 const HP_DISP={},HP_LAST={};
@@ -221,7 +221,7 @@ const legacyStartEncounter=startEncounter;
 function forceTutorialCard(h,card){if(h.hand.includes(card))return;const source=[h.draw,h.discard].find(zone=>zone.includes(card)),swap=h.hand.findIndex(value=>value!==card);if(!source||swap<0)return;source.splice(source.indexOf(card),1);source.push(h.hand[swap]);h.hand[swap]=card;h.handSlots=null}
 startEncounter=function(g){g.fungiState=null;g.fungiCharge=0;if(g.tutorial&&g.encounter===1&&!(g.sequence[g.encounter]>=1))g.sequence[g.encounter]=1;if(g.tutorial&&g.encounter===2)g.sequence[g.encounter]=2;const held=g.playerBoardEnabled?g.party.map(h=>[h,[...h.hand]]):[];legacyStartEncounter(g);if(g.playerBoardEnabled){g.party.forEach(h=>{h.equipOpen=false;h.bagOpen=false;h.talentsOpen=false});for(const [h,hand]of held){const pool=[...h.hand,...h.draw,...h.discard];for(const card of hand)pool.splice(pool.indexOf(card),1);h.hand=hand;h.draw=shuffle(pool);h.discard=[];h.criticalArmed=false;h.warriorTechniqueArmed=null;h.warriorTechniqueIndex=null;h.rogueTechniqueArmed=null;h.rogueTechniqueIndex=null;refill(h,g)}applyPlayerBoardEnemyStats(g);initializeCommandEncounter(g);if(g.initiativePreparedForRoom)delete g.initiativePreparedForRoom;else if(g.initiativePristine)g.initiativePristine=false;else roomTransitionInitiative(g);startInitiativeRound(g);if(g.tutorial&&(g.encounter===1||g.encounter===2)){const setPos=(role,pos)=>{const h=g.party.find(x=>x.role===role);if(h&&h.board)h.board.position.card=pos};if(g.encounter===1){setPos('warrior','DEFENSIVE');setPos('rogue','FRONT');setPos('mage','FAR');setPos('healer','NEAR')}else{setPos('warrior','DEFENSIVE');setPos('healer','NEAR');for(const [role,card]of Object.entries({warrior:'parry',healer:'quick_heal',rogue:'kick',mage:'counterspell'})){const h=g.party.find(x=>x.role===role);if(h)forceTutorialCard(h,card)}const rogue=g.party.find(x=>x.role==='rogue');if(rogue)rogue.hp=Math.max(1,rogue.maxHp-2)}g._script=null;g._scriptPending=true;g._scriptDone=false}}};
 const startThreatAmbushWithoutEnemyTypes=startThreatAmbush;
-startThreatAmbush=function(g,room){const result=startThreatAmbushWithoutEnemyTypes(g,room);if(g.playerBoardEnabled){g.party.forEach(h=>{h.equipOpen=false;h.bagOpen=false;h.talentsOpen=false});const enemy=g.enemies[0],token=room.fighters[room.fighters.length-1],type={ENGINEER:'engineer',WARCHIEF:'warchief'}[token]||'goblin',cfg=PLAYER_BOARD_ENEMIES[type];Object.assign(enemy,{type,hp:cfg.hp,maxHp:cfg.hp,damage:cfg.damage});initializeCommandEncounter(g);startInitiativeRound(g)}return result};
+startThreatAmbush=function(g,room){const result=startThreatAmbushWithoutEnemyTypes(g,room);if(g.playerBoardEnabled){g.party.forEach(h=>{h.equipOpen=false;h.bagOpen=false;h.talentsOpen=false});const enemy=g.enemies[0],token=room.fighters[room.fighters.length-1],type={ENGINEER:'engineer',WARCHIEF:'warchief'}[token]||'goblin',cfg=PLAYER_BOARD_ENEMIES[type];Object.assign(enemy,{type,hp:cfg.hp,maxHp:cfg.hp,damage:cfg.damage});initializeCommandEncounter(g);g.ambushFirstTurnPending=true;g.activeRole=null}return result};
 const legacyCheckVictory=checkVictory;
 checkVictory=function(g){if(g.playerBoardEnabled&&g.state==='playing'&&!aliveEnemies(g).length){if(!aliveHeroes(g).length){g.state='lost';g.telemetry.defeatCause='party_wipe';g.currentEncounter.rounds=g.round;abandon(g);note(g,'✕ Eliminazione simultanea: nessun Eroe può rianimare il gruppo.');return}clearPriestRoomEffects(g)}return legacyCheckVictory(g)};
 function setPosition(g,h,card,targetId=null){h.board.position={card,targetId};boardAudit(g,card?'POSITION_SET':'POSITION_CLEARED',{hero:h.role,card,targetId});validateBoard(g)}
@@ -1345,7 +1345,7 @@ function aiNextStep(g){if(!g?.playerBoardEnabled||!g.controllers)return null;
     case'reward':{const first=g.pendingRewards?.[0];return first&&aiControls(g,first.hero.role)?()=>aiClaimFirstReward(g):null}
     case'exit_choice':return aliveAiHeroesOnly(g)?()=>aiExitStep(g):null;
     case'overlord_placement':return aiControls(g,'overlord')?()=>aiPlaceOverlord(g):null;
-    case'treasure':return aliveAiHeroesOnly(g)?()=>openExplorationChest(g):null;
+    case'treasure':return null;
     case'loot':return aliveAiHeroesOnly(g)?()=>aiLootStep(g):null;
     default:return null;
   }
@@ -1675,3 +1675,124 @@ render=function(){renderBeforeScript();if(!game||!game.tutorial||game._scriptDon
 
 const renderWithTempleCampaignMap=render;
 render=function(){renderWithTempleCampaignMap();renderTempleCampaignMap()};
+
+/* Il bottino vive sopra la plancia: apertura automatica, carte-oggetto e imboscata. */
+(()=>{
+  const CHEST_ART='assets/optimized/grumarat-treasure-chest.jpg',OPENING_MS=1800,AMBUSH_MS=2100;
+  let sequence=0;
+
+  function beginAmbushTurn(g){
+    if(!g.ambushFirstTurnPending||g.state!=='playing'||!aliveEnemies(g).length)return;
+    g.ambushFirstTurnPending=false;
+    if(!g.initiative)g.initiative=[...(g.selectedRoles||g.party.map(h=>h.role)),'overlord'];
+    g.initIndex=Math.max(0,g.initiative.indexOf('overlord'));
+    prepareManualOverlordTurn(g);
+  }
+  function beginChestOpening(g){
+    if(g.chestReveal)return;
+    const room=currentExplorationRoom(g.exploration);
+    if(!room?.unopenedTreasures)return;
+    const token=++sequence;
+    g.chestReveal={phase:'opening',token};
+    setTimeout(()=>{
+      if(game!==g||g.chestReveal?.token!==token||g.chestReveal.phase!=='opening')return;
+      openExplorationChest(g);
+      if(g.exploration?.activeAmbush){
+        const enemy=aliveEnemies(g)[0];
+        g.chestReveal={phase:'ambush',token,enemyId:enemy?.id};
+        render();
+        setTimeout(()=>{
+          if(game!==g||g.chestReveal?.token!==token||g.chestReveal.phase!=='ambush')return;
+          g.chestReveal=null;
+          beginAmbushTurn(g);
+          render();
+        },AMBUSH_MS);
+      }else{
+        g.chestReveal={phase:'loot',token};
+        render();
+      }
+    },OPENING_MS);
+  }
+  function itemKind(item){return item.kind==='equipment'?'Equipaggiamento':item.kind==='modifier'?'Modificatore':'Consumabile'}
+  function itemEligibility(g,item){
+    const roles=lootEligibleHeroes(g,item).map(h=>NAMES[h.role]);
+    return roles.length===g.party.length?'Qualsiasi Eroe':roles.join(' · ');
+  }
+  function lootCards(g){
+    const tier=g.pendingLootTier||'BRONZE';
+    return (g.pendingLoot||[]).map(entry=>{
+      const item=TREASURE_ITEMS[entry.item],eligible=lootEligibleHeroes(g,item),takers=eligible.filter(h=>canTakeBagItem(h,entry.item));
+      return `<article class="treasure-reveal-card ${tier.toLowerCase()}" data-bag-item="${entry.item}" data-loot-card="${entry.uid}">
+        <span class="treasure-card-tier">${lootTierLabel(tier)}</span>
+        <i class="treasure-card-icon" style="--loot-icon:url('assets/icons/${bagItemIconFile(entry.item)}')" aria-hidden="true"></i>
+        <h3>${item.name}</h3><p>${item.text}</p>
+        <div class="treasure-card-actions">${g.party.map(h=>`<button data-loot="${entry.uid}" data-loot-role="${h.role}" ${eligible.includes(h)&&canTakeBagItem(h,entry.item)?'':'disabled'}>${NAMES[h.role]}</button>`).join('')}<button class="treasure-roll" data-roll-loot="${entry.uid}" ${takers.length>=2?'':'disabled'}>🎲 Roll</button></div>
+        <small>Tieni premuto per i dettagli</small>
+      </article>`;
+    }).join('');
+  }
+  function openingHtml(){return `<div class="treasure-opening-card"><img src="${CHEST_ART}" alt="Forziere di Grum’Arat aperto"><div class="treasure-opening-copy"><span>TESORO</span><strong>Apertura del forziere</strong><small>Il contenuto sta per essere rivelato…</small></div></div>`}
+  function ambushHtml(g,reveal){
+    const enemy=g.enemies.find(e=>e.id===reveal.enemyId)||aliveEnemies(g)[0],art=imageAsset(enemy?.art||ENEMY_ART[enemy?.type]||ENEMY_ART.goblin);
+    const label=enemy?enemyLabel(enemy):'Nemico in agguato';
+    return `<div class="treasure-ambush"><span class="treasure-ambush-kicker">IMBOSCATA!</span><article><img src="${art}" alt="${label}"><div><h2>${label}</h2><p>Era nascosto nel forziere. Attacca per primo, fuori dall’ordine di iniziativa.</p><strong>Turno Overlord</strong></div></article></div>`;
+  }
+  function lootHtml(g){return `<section class="treasure-loot-reveal"><header><span>BOTTINO RIVELATO</span><h2>Scegli a chi assegnare gli oggetti</h2><p>Ogni carta scompare quando viene assegnata.</p></header><div class="treasure-reveal-cards">${lootCards(g)}</div></section>`}
+  function showItemInfo(overlay,card,g){
+    const item=TREASURE_ITEMS[card.dataset.bagItem];if(!item)return;
+    let panel=overlay.querySelector('.treasure-item-info');
+    if(!panel){panel=document.createElement('div');panel.className='treasure-item-info';overlay.append(panel)}
+    panel.innerHTML=`<article><button type="button" aria-label="Chiudi dettagli">×</button><i style="--loot-icon:url('assets/icons/${bagItemIconFile(card.dataset.bagItem)}')"></i><span>Dettagli oggetto</span><h2>${item.name}</h2><p>${item.text}</p><dl><div><dt>Categoria</dt><dd>${itemKind(item)}</dd></div><div><dt>Rarità</dt><dd>${lootTierLabel(item.tier)}</dd></div><div><dt>Può riceverlo</dt><dd>${itemEligibility(g,item)}</dd></div></dl></article>`;
+    panel.querySelector('button').onclick=()=>panel.remove();panel.onclick=event=>{if(event.target===panel)panel.remove()};
+  }
+  function bindLoot(overlay,g){
+    const claim=(button,action)=>{const card=button.closest('.treasure-reveal-card');if(!card||card.classList.contains('claimed'))return;card.classList.add('claimed');card.querySelectorAll('button').forEach(b=>b.disabled=true);setTimeout(()=>{if(game!==g)return;action();render()},300)};
+    overlay.querySelectorAll('[data-loot]').forEach(button=>button.onclick=()=>claim(button,()=>assignLoot(g,button.dataset.loot,button.dataset.lootRole)));
+    overlay.querySelectorAll('[data-roll-loot]').forEach(button=>button.onclick=()=>claim(button,()=>rollForLoot(g,button.dataset.rollLoot)));
+    let timer=null,pressed=null,startX=0,startY=0;
+    const clear=()=>{clearTimeout(timer);timer=null;pressed=null};
+    overlay.querySelectorAll('.treasure-reveal-card').forEach(card=>{
+      card.onpointerdown=event=>{if(event.button>0||event.target.closest('button'))return;clear();pressed=card;startX=event.clientX;startY=event.clientY;timer=setTimeout(()=>{if(pressed===card)showItemInfo(overlay,card,g)},580)};
+      card.onpointermove=event=>{if(pressed&&(Math.abs(event.clientX-startX)>12||Math.abs(event.clientY-startY)>12))clear()};
+      card.onpointerup=clear;card.onpointercancel=clear;
+      card.oncontextmenu=event=>{event.preventDefault();showItemInfo(overlay,card,g)};
+    });
+  }
+  function syncOverlay(g){
+    let overlay=document.getElementById('treasureRevealOverlay');
+    if(g?.playerBoardEnabled&&g.state==='treasure'&&!g.chestReveal)beginChestOpening(g);
+    const reveal=g?.chestReveal,show=!!(g?.playerBoardEnabled&&(reveal||g.state==='loot'&&g.pendingLoot?.length));
+    document.body.classList.toggle('treasure-reveal-active',show);
+    if(!show){overlay?.remove();return}
+    if(!overlay){overlay=document.createElement('div');overlay.id='treasureRevealOverlay';overlay.className='treasure-reveal-overlay';document.body.append(overlay)}
+    const phase=reveal?.phase==='opening'?'opening':reveal?.phase==='ambush'?'ambush':'loot';
+    overlay.className=`treasure-reveal-overlay phase-${phase}`;
+    overlay.innerHTML=phase==='opening'?openingHtml():phase==='ambush'?ambushHtml(g,reveal):lootHtml(g);
+    if(phase==='loot')bindLoot(overlay,g);
+  }
+
+  const style=document.createElement('style');style.textContent=`
+    body.treasure-reveal-active{overflow:hidden}.treasure-reveal-overlay{position:fixed;inset:0;z-index:2050;display:grid;place-items:center;padding:clamp(14px,3vw,42px);box-sizing:border-box;overflow:auto;background:radial-gradient(circle at 50% 38%,rgba(43,57,47,.9),rgba(3,6,5,.97) 68%);backdrop-filter:blur(8px);color:#f3e7bd}
+    .treasure-opening-card{position:relative;width:min(78vw,480px);aspect-ratio:848/1264;overflow:hidden;border:2px solid #d7b85d;border-radius:24px;box-shadow:0 0 0 6px #111a17,0 28px 80px #000,0 0 55px #8ab65a55;animation:treasureOpen 1.8s cubic-bezier(.16,.82,.28,1) both}
+    .treasure-opening-card img{width:100%;height:100%;object-fit:cover;display:block}
+    .treasure-opening-card:after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 48%,#101513ee 88%)}
+    .treasure-opening-copy{position:absolute;z-index:1;left:8%;right:8%;bottom:7%;display:grid;gap:5px;text-align:center;text-shadow:0 2px 4px #000}
+    .treasure-opening-copy span,.treasure-loot-reveal header span,.treasure-ambush-kicker{font-size:12px;font-weight:900;letter-spacing:.28em;color:#e4c663}
+    .treasure-opening-copy strong{font:800 clamp(25px,4vw,42px)/1.05 Georgia,serif}.treasure-opening-copy small{color:#d7d3c6;font-size:13px}
+    @keyframes treasureOpen{0%{opacity:0;transform:scale(.72);filter:blur(9px)}35%{opacity:1;transform:scale(1.03);filter:blur(0)}100%{opacity:1;transform:scale(1)}}
+    .treasure-loot-reveal{width:min(1100px,100%);display:grid;gap:20px;text-align:center}.treasure-loot-reveal header h2{margin:5px 0 4px;font:800 clamp(24px,4vw,40px)/1.1 Georgia,serif;color:#f5e7b0}.treasure-loot-reveal header p{margin:0;color:#bfc5b9}
+    .treasure-reveal-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(12px,2vw,24px);align-items:stretch}
+    .treasure-reveal-card{position:relative;display:flex;flex-direction:column;align-items:center;min-width:0;aspect-ratio:.72;padding:18px 14px 14px;box-sizing:border-box;overflow:hidden;border:2px solid #caa94d;border-radius:18px;background:linear-gradient(160deg,#263329,#101713 65%,#080c0a);box-shadow:inset 0 0 0 3px #070a08,0 18px 42px #000b;animation:lootCardIn .48s cubic-bezier(.2,.8,.24,1) both;touch-action:pan-y}
+    .treasure-reveal-card:nth-child(2){animation-delay:.09s}.treasure-reveal-card:nth-child(3){animation-delay:.18s}.treasure-reveal-card.silver{border-color:#bdced0}.treasure-reveal-card.gold,.treasure-reveal-card.gold2{border-color:#f0cd63;box-shadow:inset 0 0 0 3px #070a08,0 18px 42px #000b,0 0 24px #d0a53455}
+    @keyframes lootCardIn{from{opacity:0;transform:translateY(45px) rotateY(18deg) scale(.9)}to{opacity:1;transform:none}}.treasure-reveal-card.claimed{animation:lootClaim .3s ease-in forwards}@keyframes lootClaim{to{opacity:0;transform:translateY(-35px) scale(.72) rotate(5deg)}}
+    .treasure-card-tier{font-size:10px;font-weight:900;letter-spacing:.2em;color:#dabb5e}.treasure-card-icon{display:block;width:clamp(86px,10vw,132px);height:clamp(86px,10vw,132px);margin:10px auto 4px;background:var(--loot-icon) center/contain no-repeat;filter:drop-shadow(0 6px 7px #000)}
+    .treasure-reveal-card h3{margin:5px 0;font:800 clamp(18px,2vw,27px)/1.05 Georgia,serif;color:#f4e4a8}.treasure-reveal-card p{margin:4px 0 12px;line-height:1.35;color:#d8d7cc}.treasure-reveal-card>small{margin-top:8px;color:#858f85;font-size:10px}
+    .treasure-card-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;width:100%;margin-top:auto}.treasure-card-actions button{min-height:34px;padding:6px;border:1px solid #8f7a42;border-radius:8px;background:#233126;color:#efe2b2;font:inherit;font-size:11px;font-weight:800}.treasure-card-actions button:not(:disabled){cursor:pointer}.treasure-card-actions button:disabled{opacity:.28}.treasure-card-actions .treasure-roll{grid-column:1/-1;background:linear-gradient(#735c1d,#3c2f10);border-color:#e5c256}
+    .treasure-item-info{position:fixed;inset:0;z-index:2;display:grid;place-items:center;padding:20px;background:#020403c7;backdrop-filter:blur(8px)}.treasure-item-info article{position:relative;width:min(420px,100%);padding:28px;border:2px solid #d9bb60;border-radius:18px;background:linear-gradient(145deg,#26352b,#101713);box-shadow:0 25px 70px #000;text-align:center}.treasure-item-info button{position:absolute;right:12px;top:12px;width:38px;height:38px;padding:0;border-radius:50%;font-size:22px}.treasure-item-info i{display:block;width:110px;height:110px;margin:auto;background:var(--loot-icon) center/contain no-repeat}.treasure-item-info>article>span{font-size:10px;letter-spacing:.18em;color:#d9bb60;text-transform:uppercase}.treasure-item-info h2{margin:5px}.treasure-item-info dl{display:grid;gap:7px;margin:18px 0 0;text-align:left}.treasure-item-info dl div{display:flex;justify-content:space-between;gap:18px;border-top:1px solid #8c754044;padding-top:7px}.treasure-item-info dt{color:#9ca89f}.treasure-item-info dd{margin:0;text-align:right;color:#f0dda2}
+    .treasure-ambush{width:min(720px,100%);text-align:center;animation:ambushIn .55s cubic-bezier(.18,.86,.25,1) both}.treasure-ambush-kicker{display:block;margin-bottom:13px;color:#ff6b55;font-size:clamp(18px,4vw,36px);text-shadow:0 0 25px #ff2d00}.treasure-ambush article{display:grid;grid-template-columns:minmax(180px,42%) 1fr;overflow:hidden;border:3px solid #c94a37;border-radius:22px;background:#17100e;box-shadow:0 0 50px #d72c1966,0 30px 80px #000}.treasure-ambush img{width:100%;height:100%;min-height:360px;object-fit:cover}.treasure-ambush article div{display:flex;flex-direction:column;justify-content:center;padding:26px;text-align:left}.treasure-ambush h2{margin:0 0 12px;font:800 clamp(25px,4vw,42px)/1 Georgia,serif;color:#ffd2a4}.treasure-ambush p{line-height:1.5;color:#ddd0c7}.treasure-ambush article strong{color:#ff765d;text-transform:uppercase;letter-spacing:.14em}@keyframes ambushIn{from{opacity:0;transform:scale(.7) rotate(-3deg)}to{opacity:1;transform:none}}
+    @media(max-width:650px){.treasure-reveal-overlay{padding:12px;place-items:center start}.treasure-opening-card{width:min(88vw,390px);margin:auto}.treasure-loot-reveal{overflow:hidden}.treasure-loot-reveal header h2{font-size:22px}.treasure-reveal-cards{display:flex;overflow-x:auto;gap:12px;padding:4px 8vw 18px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}.treasure-reveal-card{flex:0 0 min(72vw,280px);scroll-snap-align:center;padding:15px 12px 12px}.treasure-card-icon{width:92px;height:92px}.treasure-ambush article{grid-template-columns:1fr}.treasure-ambush img{height:min(52vh,390px);min-height:0}.treasure-ambush article div{text-align:center;padding:18px}.treasure-ambush p{margin:5px 0 12px}}
+    @media(prefers-reduced-motion:reduce){.treasure-opening-card,.treasure-reveal-card,.treasure-ambush{animation:none}}
+  `;document.head.append(style);
+  const renderBeforeTreasureReveal=render;
+  render=function(){renderBeforeTreasureReveal();syncOverlay(game)};
+})();
