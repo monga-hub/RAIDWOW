@@ -3,6 +3,7 @@
   "short_name": "RAIDWOW",
   "start_url": "./",
   "display": "standalone",
+  "orientation": "landscape",
   "background_color": "#101a13",
   "theme_color": "#101a13",
   "icons": [
