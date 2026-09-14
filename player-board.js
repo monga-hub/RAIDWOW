@@ -1985,16 +1985,16 @@ render=function(){renderWithTempleCampaignMap();renderTempleCampaignMap()};
   const GRID_PATTERN_SELF=new Set(['shield','parry','critical','evasion','preparation','blink','frost_armor']);
   const GRID_PATTERN_PRIEST_SELF=new Set(['quick_heal','slow_heal','bandage','holy_shield']);
   const GRID_PATTERN_AOE=new Set(['cleave','whirlwind','fan_of_knives','holy_pulse','blizzard','cone_of_cold']);
-  const GRID_PATTERN_KEY='raidwow-combat-patterns-v2',GRID_PATTERN_RADIUS=3;
+  const GRID_PATTERN_KEY='raidwow-combat-patterns-v3',GRID_PATTERN_RADIUS=3;
   const gridBox=(rx,ry,edge=false)=>{const cells=[];for(let y=-ry;y<=ry;y++)for(let x=-rx;x<=rx;x++)if((x||y)&&(!edge||Math.abs(x)===rx||Math.abs(y)===ry))cells.push([x,y]);return cells};
-  const GRID_PATTERN_SHAPES={self:[[0,0]],orthogonal1:[[-1,0],[1,0],[0,-1],[0,1]],orthogonal2:[[-2,0],[-1,0],[1,0],[2,0],[0,-2],[0,-1],[0,1],[0,2]],diamond2:gridBox(2,2).filter(([x,y])=>Math.abs(x)+Math.abs(y)<=2),around:gridBox(1,1),box2:gridBox(2,2),ring2:gridBox(2,2,true),wide2:gridBox(2,1),wide3:gridBox(3,1),box3:gridBox(3,3),left:[[-1,-1],[-1,0],[-1,1]],right:[[1,-1],[1,0],[1,1]],empty:[]};
+  const GRID_PATTERN_SHAPES={self:[[0,0]],orthogonal1:[[-1,0],[1,0],[0,-1],[0,1]],orthogonal2:[[-2,0],[-1,0],[1,0],[2,0],[0,-2],[0,-1],[0,1],[0,2]],orthogonal3:[[-3,0],[-2,0],[-1,0],[1,0],[2,0],[3,0],[0,-3],[0,-2],[0,-1],[0,1],[0,2],[0,3]],diamond2:gridBox(2,2).filter(([x,y])=>Math.abs(x)+Math.abs(y)<=2),diamond3Flat:gridBox(3,3).filter(([x,y])=>Math.abs(x)+Math.abs(y)<=3&&Math.max(Math.abs(x),Math.abs(y))<3),diamond4:gridBox(3,3).filter(([x,y])=>Math.abs(x)+Math.abs(y)<=4),around:gridBox(1,1),box2:gridBox(2,2),ring2:gridBox(2,2,true),box3:gridBox(3,3),octagon3:gridBox(3,3).filter(([x,y])=>Math.abs(x)!==3||Math.abs(y)!==3),thickRing3:gridBox(3,3).filter(([x,y])=>Math.max(Math.abs(x),Math.abs(y))>=2),wide2:gridBox(2,1),wide3:gridBox(3,1),burst2:gridBox(2,2).filter(([x,y])=>Math.max(Math.abs(x),Math.abs(y))===1||Math.abs(x)===Math.abs(y)||!x||!y),left:[[-1,-1],[-1,0],[-1,1]],right:[[1,-1],[1,0],[1,1]],empty:[]};
   const GRID_IMPORTED_PATTERNS={
-    warrior:{movement:'orthogonal1',sword:'around',shield:'self',rend:'around',parry:'self',taunt:'around',cleave:'around',shield_slam:'around',whirlwind:'box2',sunder_armor:'around',critical:'self'},
-    healer:{movement:'around',quick_heal:'around',slow_heal:'ring2',bandage:'empty',holy_pulse:'box2',holy_shield:'box2',holy_fire:'ring2',divine_strike:'wide2',holy_strike:'wide2',wand:'box2',critical:'self'},
-    rogue:{movement:'diamond2',backstab:'left',eviscerate:'right',evasion:'self',kick:'around',preparation:'self',mutilate:'right',vile_poison:'around',garrote:'left',fan_of_knives:'box2',dagger:'around',critical:'self'},
-    mage:{movement:'orthogonal2',frostbolt:'wide3',blizzard:'box3',counterspell:'box2',fireball:'box3',blink:'self',frost_armor:'self',cone_of_cold:'box2',living_bomb:'box2',fire_piercing:'wide3',mage_wand:'wide3',critical:'self'}
+    warrior:{movement:'around',sword:'around',shield:'self',rend:'around',parry:'self',taunt:'box3',cleave:'around',shield_slam:'around',whirlwind:'box2',sunder_armor:'around',critical:'self'},
+    healer:{movement:'diamond2',quick_heal:'wide3',slow_heal:'octagon3',bandage:'empty',holy_pulse:'box3',holy_shield:'box2',holy_fire:'thickRing3',divine_strike:'diamond3Flat',holy_strike:'diamond3Flat',wand:'box3',critical:'self'},
+    rogue:{movement:'burst2',backstab:'left',eviscerate:'right',evasion:'self',kick:'around',preparation:'self',mutilate:'right',vile_poison:'around',garrote:'left',fan_of_knives:'box2',dagger:'around',critical:'self'},
+    mage:{movement:'burst2',frostbolt:'wide3',blizzard:'box3',counterspell:'box2',fireball:'box3',blink:'self',frost_armor:'self',cone_of_cold:'box2',living_bomb:'box2',fire_piercing:'wide3',mage_wand:'wide3',critical:'self'},
+    snake:{attack:'box3',tactic:'box3',special:'box3'},goblin:{attack:'around',tactic:'around',special:'around'},engineer:{attack:'around',tactic:'box3',special:'box3'},warchief:{attack:'around',tactic:'orthogonal3',special:'box3'},miniBoss:{attack:'around',tactic:'box2',special:'diamond4'},miniMob:{minion_attack:'around'}
   };
-  GRID_ENEMY_PATTERN_TYPES.forEach(type=>GRID_IMPORTED_PATTERNS[type]=type==='miniMob'?{minion_attack:'box3'}:{attack:'box3',tactic:'box3',special:'box3'});
   let gridPatternRole='warrior',gridPatternAction='sword',gridPatternConfig={};
   try{gridPatternConfig=JSON.parse(localStorage.getItem(GRID_PATTERN_KEY)||'{}')}catch(e){}
   const patternKey=(role=gridPatternRole,action=gridPatternAction)=>role+':'+action;
