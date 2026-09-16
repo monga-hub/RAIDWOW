@@ -4,7 +4,7 @@
    il DANNO per carta viene da una tabella EDITABILE (PARAMS). I TALENTI sono
    toggle: aggiungono le loro carte al mazzo e applicano i bonus. Isolato: game
    monoclasse propri, non tocca la partita globale.
-   DoT (Vile Poison, Garrote, Holy Fire, Living Bomb) modellati come danno-per-carta
+   DoT (Vile Poison, Garrote, Holy Fire, Ignite) modellati come danno-per-carta
    approssimato (valore editabile), non come tick nel turno Overlord. */
 (function(){
   const ROLES=['warrior','rogue','healer','mage'];
@@ -14,9 +14,9 @@
   // parametri danno editabili: [key,label,default]. Le carte da talento sono in coda.
   const PARAM_DEFS={
     warrior:[['sword_base','Spada (arma base)',1],['heroic_strike','Heroic Strike (+ arma)',2],['rend_bleed','Rend (+ arma)',1],['crit','Critico (+)',1],['cleave','Cleave (AOE) — talento',3]],
-    rogue:[['dagger_base','Pugnale (base)',1],['backstab','Backstab (+)',2],['eviscerate','Eviscerate (+)',1],['kick','Kick',1],['crit','Critico (+)',1],['mutilate','Mutilate — talento',3],['vile_poison','Vile Poison /carta — talento',2],['garrote','Garrote /carta — talento',3],['fan_of_knives','Fan of Knives (AOE) — talento',3]],
-    healer:[['holy_pulse','Impulso Sacro',1],['divine_strike','Colpo Divino (cast corto)',3],['wand','Bacchetta (FAR)',1],['crit','Critico (+)',1],['holy_fire','Holy Fire /carta — talento',3],['holy_strike','Holy Strike (completo) — talento',4]],
-    mage:[['frostbolt','Frostbolt',2],['fireball','Fireball (completo)',4],['blizzard','Blizzard',1],['counterspell','Counterspell',1],['wand','Bacchetta (FAR)',1],['crit','Critico (+)',1],['cone_of_cold','Cone of Cold (AOE) — talento',2],['living_bomb','Living Bomb (AOE/carta) — talento',4]]
+    rogue:[['dagger_base','Pugnale (base)',1],['backstab','Backstab (+)',1],['eviscerate','Eviscerate (Combo medio)',2],['kick','Kick',1],['crit','Critico (+)',1],['mutilate','Mutilate — talento',3],['cheap_shot','Cheap Shot — talento',1],['fan_of_knives','Fan of Knives (AOE) — talento',1]],
+    healer:[['smite','Smite',2],['mind_blast','Mind Blast',3],['shadow_word_pain','Shadow Word: Pain (totale)',2],['wand','Bacchetta',1],['holy_nova','Holy Nova (AOE) — talento',1],['penance','Penance offensiva — talento',3],['mind_flay','Mind Flay (completo) — talento',4],['silence','Silence — talento',1]],
+    mage:[['frostbolt','Frostbolt',2],['fireball','Fireball (completo)',4],['blizzard','Blizzard',1],['counterspell','Counterspell',1],['wand','Frost Wand',1],['crit','Critico (+)',1],['frost_nova','Frost Nova (AOE) — talento',2],['cone_of_cold','Cone of Cold (AOE) — talento',2],['fire_blast','Fire Blast — talento',3],['scorch','Scorch + 2 cariche — talento',5],['pyroblast','Pyroblast (completo) — talento',7]]
   };
   const PARAMS={};
   for(const r of ROLES){PARAMS[r]={};for(const [k,,d] of PARAM_DEFS[r])PARAMS[r][k]=d;}
@@ -32,27 +32,38 @@
       {id:'improved_critical',label:'Improved Critical · 1 step',kind:'count',val:1,card:'critical',hint:'carte'}
     ],
     rogue:[
-      {id:'improved_backstab',label:'Improved Backstab · 2 step',kind:'bonus',val:2,hint:'+ Backstab'},
-      {id:'evasion_tricky',label:'Evasion Tricky (flip gratis) · 1 step',kind:'flag'},
-      {id:'mutilate',label:'Mutilate · 1 step',kind:'count',val:2,card:'mutilate',hint:'carte'},
-      {id:'vile_poison',label:'Vile Poison · 1 step',kind:'count',val:2,card:'vile_poison',hint:'carte'},
-      {id:'garrote',label:'Garrote · 1 step',kind:'count',val:4,card:'garrote',hint:'carte'},
-      {id:'fan_of_knives',label:'Fan of Knives (AOE) · 1 step',kind:'count',val:2,card:'fan_of_knives',hint:'carte'},
-      {id:'improved_critical',label:'Improved Critical · 1 step',kind:'count',val:1,card:'critical',hint:'carte'}
+      {id:'improved_backstab',label:'Improved Backstab · 2 gradi',kind:'bonus',val:2,hint:'+ Backstab'},
+      {id:'opportunity',label:'Opportunity · 2 gradi',kind:'bonus',val:2,hint:'+ Backstab isolato'},
+      {id:'mutilate',label:'Mutilate · 1 grado',kind:'count',val:2,card:'mutilate',hint:'carte'},
+      {id:'improved_eviscerate',label:'Improved Eviscerate · 2 gradi',kind:'bonus',val:2,hint:'+ Eviscerate'},
+      {id:'cold_blood',label:'Cold Blood · 1 grado',kind:'count',val:1,card:'cold_blood',hint:'carta'},
+      {id:'cheap_shot',label:'Cheap Shot · 1 grado',kind:'count',val:2,card:'cheap_shot',hint:'carte'},
+      {id:'fan_of_knives',label:'Fan of Knives · 1 grado',kind:'count',val:2,card:'fan_of_knives',hint:'carte'},
+      {id:'improved_critical',label:'Improved Critical · 1 grado',kind:'count',val:1,card:'critical',hint:'carta'}
     ],
     healer:[
-      {id:'improved_spell_damage',label:'Improved Spell Damage · 2 step',kind:'bonus',val:2,hint:'+ spell'},
-      {id:'holy_fire',label:'Holy Fire · 1 step',kind:'count',val:3,card:'holy_fire',hint:'carte'},
-      {id:'holy_strike',label:'Holy Strike · 1 step',kind:'count',val:3,card:'holy_strike',hint:'carte'},
-      {id:'improved_critical',label:'Improved Critical · 1 step',kind:'count',val:1,card:'critical',hint:'carte'}
+      {id:'improved_mind_blast',label:'Improved Mind Blast · 2 gradi',kind:'bonus',val:2,hint:'+ Mind Blast'},
+      {id:'improved_shadow_word_pain',label:'Improved Shadow Word: Pain · 2 gradi',kind:'bonus',val:2,hint:'+ tick'},
+      {id:'holy_nova',label:'Holy Nova · 1 grado',kind:'count',val:2,card:'holy_nova',hint:'carte'},
+      {id:'penance',label:'Penance · 1 grado',kind:'count',val:2,card:'penance',hint:'carte'},
+      {id:'mind_flay',label:'Mind Flay · 1 grado',kind:'count',val:2,card:'mind_flay',hint:'carte'},
+      {id:'silence',label:'Silence · 1 grado',kind:'count',val:2,card:'silence',hint:'carte'},
+      {id:'shadowform',label:'Shadowform · 1 grado',kind:'flag'}
     ],
     mage:[
-      {id:'improved_frost',label:'Improved Frost · 1 step',kind:'bonus',val:1,hint:'+ Frost'},
-      {id:'improved_fire',label:'Improved Fire · 1 step',kind:'bonus',val:1,hint:'+ Fire'},
+      {id:'improved_frostbolt',label:'Improved Frostbolt · 2 gradi',kind:'bonus',val:2,hint:'+ Frostbolt'},
+      {id:'permafrost',label:'Permafrost · 2 gradi',kind:'flag'},
+      {id:'frost_nova',label:'Frost Nova · 1 grado',kind:'count',val:2,card:'frost_nova',hint:'carte'},
+      {id:'improved_blizzard',label:'Improved Blizzard · 2 gradi',kind:'bonus',val:2,hint:'+ Blizzard'},
       {id:'cone_of_cold',label:'Cone of Cold · 1 step',kind:'count',val:2,card:'cone_of_cold',hint:'carte'},
-      {id:'improved_cone_of_cold',label:'Improved Cone of Cold · 2 step',kind:'bonus',val:2,hint:'+ Cone'},
-      {id:'living_bomb',label:'Living Bomb · 1 step',kind:'count',val:2,card:'living_bomb',hint:'carte'},
-      {id:'improved_critical',label:'Improved Critical · 1 step',kind:'count',val:1,card:'critical',hint:'carte'}
+      {id:'shatter',label:'Shatter · +3 su Congelato',kind:'flag'},
+      {id:'improved_fireball',label:'Improved Fireball · 3 gradi',kind:'bonus',val:3,hint:'+ Fireball'},
+      {id:'ignite',label:'Ignite · 2 gradi',kind:'bonus',val:2,hint:'+ Fire diretto'},
+      {id:'fire_blast',label:'Fire Blast · 1 grado',kind:'count',val:2,card:'fire_blast',hint:'carte'},
+      {id:'scorch',label:'Scorch · 1 grado',kind:'count',val:2,card:'scorch',hint:'carte'},
+      {id:'pyroblast',label:'Pyroblast · 1 grado',kind:'count',val:2,card:'pyroblast',hint:'carte'},
+      {id:'molten_fury',label:'Molten Fury · 2 gradi',kind:'bonus',val:2,hint:'+ a ≤25% HP'},
+      {id:'combustion',label:'Combustion · 1 grado',kind:'flag'}
     ]
   };
   const ACTIVE={warrior:new Set(),rogue:new Set(),healer:new Set(),mage:new Set()};
@@ -65,10 +76,10 @@
 
 
   // carte ad area: il danno scala col numero di bersagli
-  const AOE=new Set(['cleave','holy_pulse','blizzard','cone_of_cold','fan_of_knives','living_bomb']);
+  const AOE=new Set(['cleave','holy_nova','blizzard','frost_nova','cone_of_cold','fan_of_knives']);
   // schools per moltiplicatori mago
-  const FROST=new Set(['frostbolt','blizzard','cone_of_cold']);
-  const FIRE=new Set(['fireball','living_bomb']);
+  const FROST=new Set(['frostbolt','blizzard','frost_nova','cone_of_cold']);
+  const FIRE=new Set(['fireball','fire_blast','scorch','pyroblast']);
 
   function hitDamage(role,card,crit,h){
     const d=hitPerTarget(role,card,crit,h);
@@ -85,30 +96,29 @@
     }
     if(role==='rogue'){
       let d;
-      if(card==='backstab')d=P.dagger_base+P.backstab+bonus('rogue','improved_backstab');
-      else if(card==='eviscerate')d=P.dagger_base+P.eviscerate;
+      if(card==='backstab')d=P.dagger_base+P.backstab+bonus('rogue','improved_backstab')+bonus('rogue','opportunity');
+      else if(card==='eviscerate')d=P.dagger_base+P.eviscerate+bonus('rogue','improved_eviscerate');
       else if(card==='mutilate')return P.mutilate+(crit?P.crit:0);
-      else if(card==='vile_poison')return P.vile_poison;
-      else if(card==='garrote')return P.garrote;
+      else if(card==='cheap_shot')return P.cheap_shot+(crit?P.crit:0);
       else if(card==='fan_of_knives')return P.fan_of_knives;
       else if(card==='kick')d=P.kick;
       else d=P.dagger_base;
       return d+(crit?P.crit:0);
     }
     if(role==='healer'){
-      const sd=bonus('healer','improved_spell_damage');
-      if(card==='holy_pulse')return P.holy_pulse+sd+(crit?P.crit:0);
-      if(card==='divine_strike')return P.divine_strike+sd;
-      if(card==='holy_strike')return P.holy_strike+sd;
-      if(card==='holy_fire')return P.holy_fire+sd;
-      if(card==='wand')return P.wand+sd;
-      return 0;
+      const shadowform=isOn('healer','shadowform'),ticks=2+bonus('healer','improved_shadow_word_pain');
+      if(card==='mind_blast')return P.mind_blast+bonus('healer','improved_mind_blast')+(shadowform?1:0);
+      if(card==='shadow_word_pain')return P.shadow_word_pain+bonus('healer','improved_shadow_word_pain')+(shadowform?ticks:0);
+      if(['mind_flay','silence'].includes(card))return P[card]+(shadowform?1:0);
+      return P[card]||0;
     }
     if(role==='mage'){
       let d=P[card]||0;
-      if(FROST.has(card))d+=bonus('mage','improved_frost');
-      if(card==='cone_of_cold')d+=bonus('mage','improved_cone_of_cold');
-      if(FIRE.has(card))d+=bonus('mage','improved_fire');
+      if(card==='frostbolt')d+=bonus('mage','improved_frostbolt');
+      if(card==='blizzard')d+=bonus('mage','improved_blizzard');
+      if(card==='fireball')d+=bonus('mage','improved_fireball');
+      if(FIRE.has(card))d+=bonus('mage','ignite');
+      if(FIRE.has(card)&&isOn('mage','combustion'))d+=1;
       return d+(crit?P.crit:0);
     }
     return 0;
@@ -117,31 +127,31 @@
   // metadati carte per il greedy value-based
   const CARD_STANCE={
     warrior:{sword:'AGGRESSIVE',cleave:'DEFENSIVE',rend:null,sunder_armor:'AGGRESSIVE',bare:null},
-    rogue:{backstab:'BEHIND',eviscerate:'FRONT',mutilate:'FRONT',vile_poison:null,garrote:null,kick:null,fan_of_knives:null,bare:null},
-    healer:{holy_pulse:null,divine_strike:'NEAR',holy_strike:'NEAR',holy_fire:'FAR',wand:'FAR'},
-    mage:{frostbolt:'NEAR',fireball:'FAR',blizzard:'FAR',cone_of_cold:'NEAR',living_bomb:'NEAR',counterspell:null,wand:'FAR'}
+    rogue:{backstab:null,eviscerate:null,mutilate:null,cheap_shot:null,kick:null,fan_of_knives:null,bare:null},
+    healer:{smite:null,mind_blast:null,shadow_word_pain:null,holy_nova:null,penance:null,mind_flay:null,silence:null,wand:null},
+    mage:{frostbolt:null,fireball:null,blizzard:null,frost_nova:null,cone_of_cold:null,fire_blast:null,scorch:null,pyroblast:null,counterspell:null,wand:null}
   };
   const DMG_CARDS={
     warrior:['cleave','sword','rend','sunder_armor','bare'],
-    rogue:['backstab','eviscerate','mutilate','vile_poison','garrote','fan_of_knives','kick','bare'],
-    healer:['holy_pulse','divine_strike','holy_strike','holy_fire','wand'],
-    mage:['frostbolt','fireball','blizzard','cone_of_cold','living_bomb','counterspell','wand']
+    rogue:['backstab','eviscerate','mutilate','cheap_shot','fan_of_knives','kick','bare'],
+    healer:['mind_flay','mind_blast','penance','shadow_word_pain','smite','holy_nova','silence','wand'],
+    mage:['pyroblast','fireball','scorch','fire_blast','frost_nova','cone_of_cold','frostbolt','blizzard','counterspell','wand']
   };
-  const DEAD_CARDS={warrior:['taunt','parry'],rogue:['evasion','preparation'],healer:['quick_heal','slow_heal'],mage:['blink']};
+  const DEAD_CARDS={warrior:['charge','taunt','shield_protection'],rogue:['kidney_shot','evasion','preparation','expose_armor','cold_blood','shadowstep','gouge','blind'],healer:['flash_heal','greater_heal','power_word_shield','purify'],mage:['blink','frost_armor','combustion']};
   const WEAPON=new Set(['bare','wand']);                 // colpo d'arma: non consuma carta dal mazzo
-  const CAST=new Set(['holy_strike','fireball']); // cast lungo: 2 azioni (Colpo Divino ora è cast corto)
+  const CAST=new Set(['mind_flay','fireball','pyroblast']);
   const critBoostable=(role,card)=>role==='warrior'?['sword','rend','cleave','sunder_armor','bare'].includes(card)
     :role==='rogue'?['backstab','eviscerate','mutilate','bare'].includes(card)
-    :role==='healer'?card==='holy_pulse'
-    :role==='mage'?['frostbolt','blizzard','counterspell','fireball','cone_of_cold'].includes(card):false;
+    :role==='healer'?false
+    :role==='mage'?['frostbolt','blizzard','frost_nova','counterspell','fireball','fire_blast','scorch','pyroblast','cone_of_cold'].includes(card):false;
   // ---- Simulatore astratto (niente motore): mazzo/pesca/stance/cast/carte morte, danno dai PARAMS ----
   const BASE_DECK={
-    warrior:['sword','sword','rend','rend','parry','parry','parry','taunt','taunt','critical'],
-    rogue:['backstab','backstab','backstab','eviscerate','eviscerate','eviscerate','evasion','kick','preparation','critical'],
-    healer:['quick_heal','quick_heal','slow_heal','slow_heal','slow_heal','divine_strike','divine_strike','holy_pulse','holy_pulse','critical'],
+    warrior:['charge','charge','sword','sword','sword','taunt','taunt','rend','rend','shield_protection'],
+    rogue:['backstab','backstab','backstab','eviscerate','eviscerate','kidney_shot','evasion','kick','preparation','critical'],
+    healer:['flash_heal','flash_heal','greater_heal','greater_heal','power_word_shield','power_word_shield','smite','mind_blast','shadow_word_pain','purify'],
     mage:['frostbolt','frostbolt','frostbolt','critical','blizzard','counterspell','fireball','fireball','fireball','blink']
   };
-  const START_STANCE={warrior:'AGGRESSIVE',rogue:'FRONT',healer:'FAR',mage:'FAR'};
+  const START_STANCE={warrior:'AGGRESSIVE',rogue:'FRONT',healer:null,mage:'FAR'};
   const HAND_LIMIT=5;
   let AI_MODE='greedy', ROLL_DEPTH=6, ROLL_COUNT=4;      // rollout Monte-Carlo
   function shuf(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
@@ -150,7 +160,7 @@
   function clone(s){return {role:s.role,deck:s.deck,draw:[...s.draw],discard:[...s.discard],hand:[...s.hand],stance:s.stance,casting:s.casting};}
   function candidates(s){
     const role=s.role, crit=s.hand.includes('critical'), out=[];
-    const flipFree=(role==='rogue'&&isOn('rogue','evasion_tricky'));
+    const flipFree=false;
     for(const card of DMG_CARDS[role]){
       if(!WEAPON.has(card)&&!s.hand.includes(card))continue;
       const st=CARD_STANCE[role][card], needFlip=st&&st!==s.stance, flipCost=needFlip?(flipFree?0:1):0;
@@ -270,6 +280,15 @@
       .dparam .trow label{font-size:12px;color:var(--ink);cursor:pointer;flex:1;min-width:0}
       .dparam .trow .tval{width:46px;padding:4px 5px;text-align:center;font:inherit;font-weight:700;color:var(--ink);background:#0f1712;border:1px solid #3a4a3d;border-radius:6px}
       .dparam .trow .thint{font-size:10px;color:#8a9287;width:56px}
+      #benchPage .mage-scenario-bench{margin-top:16px;padding:14px;border:1px solid var(--edge);border-radius:14px;background:#101a13}
+      #benchPage .mage-scenario-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+      #benchPage .mage-scenario-head h3{margin:0 0 4px}.mage-scenario-head p{margin:0}
+      #benchPage .mage-scenario-progress{display:block;width:100%;margin:10px 0}
+      #benchPage .mage-scenario-results{overflow:auto}
+      #benchPage .mage-scenario-results table{width:100%;border-collapse:collapse;font-size:11px}
+      #benchPage .mage-scenario-results th,#benchPage .mage-scenario-results td{padding:6px;border-bottom:1px solid #2c3a2f;text-align:right;white-space:nowrap}
+      #benchPage .mage-scenario-results th:first-child,#benchPage .mage-scenario-results td:first-child{text-align:left}
+      #benchPage .mage-spec-fire{color:#ff9a63}.mage-spec-frost{color:#77c9ff}.mage-spec-base{color:#c8cec7}
       #benchPage .dps-note{color:#8a9287;font-size:11px;margin-top:14px;line-height:1.5}`;
     document.head.append(style);
 
@@ -280,6 +299,7 @@
         <h2>DPS Bench — manichino</h2>
         <p class="muted">Le 4 classi ciclano il mazzo su un manichino a HP infiniti, giocando per il massimo danno. Valori di danno e talenti sono modificabili qui sotto: le curve si ricalcolano dal vivo.</p>
         <div class="dps-controls">
+          <button id="dps-back" class="secondary">← Editor</button>
           <button id="dps-run">▶ Run</button>
           <button id="dps-stop" class="secondary" disabled>■ Stop</button>
           <button id="dps-reset" class="secondary">↺ Reset</button>
@@ -313,6 +333,16 @@
               </table>
             </article>`).join('')}
         </div>
+        <section class="mage-scenario-bench">
+          <div class="mage-scenario-head"><div><h3>Scenari strategici Mago</h3><p class="muted">Party completo · Base, Fire e Frost · Normal LV9, Heroic LV12, Hardcore LV13 · stessi semi casuali.</p></div><button id="mage-scenario-run">Esegui matrice</button></div>
+          <progress class="mage-scenario-progress" id="mage-scenario-progress" max="1" value="0" hidden></progress>
+          <div class="mage-scenario-results" id="mage-scenario-results"><small>Boss singolo, orda da controllare e stanza mista. Il test usa il motore reale e non modifica il bilanciamento.</small></div>
+        </section>
+        <section class="mage-scenario-bench">
+          <div class="mage-scenario-head"><div><h3>Scenari strategici Rogue</h3><p class="muted">Party completo · Base, Assassination e Subtlety · Normal LV9, Heroic LV12, Hardcore LV13 · stessi semi casuali.</p></div><button id="rogue-scenario-run">Esegui matrice</button></div>
+          <progress class="mage-scenario-progress" id="rogue-scenario-progress" max="1" value="0" hidden></progress>
+          <div class="mage-scenario-results" id="rogue-scenario-results"><small>Misura burst, danno totale, Command rimosse e attivazioni negate nel motore reale.</small></div>
+        </section>
         <h3 style="margin:20px 0 0">Valori carte &amp; Talenti</h3>
         <div class="dps-params">
           ${ROLES.map(r=>`
@@ -326,7 +356,7 @@
                 <div class="trow"><input type="checkbox" id="t-${r}-${t.id}" data-trole="${r}" data-tid="${t.id}"><label for="t-${r}-${t.id}">${t.label}</label>${t.kind==='flag'?'':`<input class="tval" type="number" min="0" max="12" step="1" value="${t.val}" data-tvrole="${r}" data-tvid="${t.id}" title="${t.hint||''}"><span class="thint">${t.hint||''}</span>`}</div>`).join('')}
             </div>`).join('')}
         </div>
-        <p class="dps-note">Il simulatore gestisce mazzo, pesca, stance e cast lungo; il danno per colpo viene dai valori qui sopra. AI: <b>Greedy</b> = ogni azione sceglie il miglior danno/azione; <b>Rollout MC</b> = per ogni azione simula più giocate future casuali (profondità = d6) e sceglie la mossa col miglior esito medio (lookahead). I talenti aggiungono le loro carte al mazzo e applicano i bonus. Assunzioni: cambio stance = 1 azione (gratis per il Rogue con Evasion Tricky); carte non-danno = 0 danni; cast lungo (Fireball, Holy Strike) = 2 carte + 2 azioni (Colpo Divino è cast corto: 1 carta, 1 azione); i DoT (Vile Poison, Garrote, Holy Fire, Living Bomb) sono modellati come danno-per-carta approssimato, non come tick nel turno Overlord. Il bonus di squadra Guerriero + Rogue di Sunder Armor non è incluso nel banco monoclasse. Cambiare qualcosa azzera e ricalcola.</p>
+        <p class="dps-note">Il simulatore astratto gestisce mazzo, pesca, stance e cast lungo; il danno per colpo viene dai valori qui sopra. AI: <b>Greedy</b> = ogni azione sceglie il miglior danno/azione; <b>Rollout MC</b> = simula più giocate future. Le matrici strategiche usano invece il motore reale: Combo Point, controllo, griglia, party e Overlord sono risolti integralmente. Fireball e Pyroblast richiedono 2 carte + 2 azioni; il controllo non viene convertito in danno nel banco monoclasse.</p>
       </div>`;
     document.querySelector('main').append(page);
 
@@ -343,17 +373,16 @@
       };
     });
     function openBench(){
+      document.body.classList.add('player-board-active');
       const setup=document.getElementById('campaignSetup'); if(setup)setup.hidden=true;
+      const menu=document.getElementById('mainMenu');if(menu)menu.hidden=true;
       document.querySelectorAll('.page-tab').forEach(x=>x.classList.toggle('active',x===tab));
       pages().forEach(p=>p.hidden=(p.id!=='benchPage'));
     }
     (function addSetupEntry(tries){
-      const panel=document.querySelector('#campaignSetup .campaign-controls');
-      if(!panel){ if(tries<40)setTimeout(()=>addSetupEntry(tries+1),150); return; }
-      if(panel.querySelector('[data-dps-entry]'))return;
-      const entry=document.createElement('button');
-      entry.className='secondary'; entry.type='button'; entry.dataset.dpsEntry=''; entry.textContent='🎯 DPS Bench';
-      entry.onclick=openBench; panel.append(entry);
+      const panels=[document.querySelector('#campaignSetup .campaign-controls'),document.querySelector('#editorMenuPanel .menu-buttons')].filter(Boolean);
+      panels.forEach(panel=>{if(panel.querySelector('[data-dps-entry]'))return;const entry=document.createElement('button');entry.className='secondary';entry.type='button';entry.dataset.dpsEntry='';entry.textContent='🎯 DPS Bench';entry.onclick=openBench;panel.append(entry)});
+      if(panels.length<2&&tries<40)setTimeout(()=>addSetupEntry(tries+1),150);
     })(0);
 
     page.querySelectorAll('.dparam input[data-key]').forEach(inp=>{
@@ -378,11 +407,19 @@
     document.getElementById('dps-run').onclick=run;
     document.getElementById('dps-stop').onclick=stop;
     document.getElementById('dps-reset').onclick=reset;
+    document.getElementById('dps-back').onclick=()=>{stop();page.hidden=true;document.body.classList.remove('player-board-active');const menu=document.getElementById('mainMenu');if(menu?._showEditors)menu._showEditors();else if(menu)menu.hidden=false};
+    const scenarioRun=document.getElementById('mage-scenario-run'),scenarioProgress=document.getElementById('mage-scenario-progress'),scenarioResults=document.getElementById('mage-scenario-results');let scenarioFrame=null;
+    const scenarioMessage=event=>{if(!scenarioFrame||event.source!==scenarioFrame.contentWindow||event.origin!==location.origin)return;const data=event.data||{};if(data.type==='mage-benchmark-progress'){scenarioProgress.max=data.total;scenarioProgress.value=data.done;scenarioRun.textContent=`Test ${data.done}/${data.total}`;return}if(data.type==='mage-benchmark-error'){scenarioResults.innerHTML=`<strong>Test non completato</strong><pre>${String(data.message)}</pre>`;scenarioRun.disabled=false;scenarioRun.textContent='Riprova';scenarioFrame.remove();scenarioFrame=null;return}if(data.type!=='mage-benchmark-result')return;const spec={base:'Base',fire:'Fire',frost:'Frost'},rows=data.result.summary.map(row=>`<tr><td>${row.scenarioLabel}</td><td>${row.difficulty} · LV${row.level}</td><td class="mage-spec-${row.spec}">${spec[row.spec]}</td><td>${row.clearRate}%</td><td>${row.avgRounds}</td><td>${row.avgPartyHpPct}%</td><td>${row.avgDamageTaken}</td><td>${row.avgControlStops}</td><td>${row.avgConsumables}</td><td>${row.avgMageDamage}</td></tr>`).join('');scenarioResults.innerHTML=`<table><thead><tr><th>Scenario</th><th>Livello</th><th>Build</th><th>Vittorie</th><th>Round</th><th>HP party</th><th>Danni subiti</th><th>Turni negati</th><th>Consumabili</th><th>Danno Mago</th></tr></thead><tbody>${rows}</tbody></table><small>${data.result.samples} prove accoppiate per combinazione.</small>`;scenarioProgress.hidden=true;scenarioRun.disabled=false;scenarioRun.textContent='Esegui di nuovo';scenarioFrame.remove();scenarioFrame=null};
+    window.addEventListener('message',scenarioMessage);
+    scenarioRun.onclick=()=>{scenarioFrame?.remove();scenarioRun.disabled=true;scenarioRun.textContent='Avvio…';scenarioProgress.hidden=false;scenarioProgress.max=81;scenarioProgress.value=0;scenarioResults.innerHTML='<small>Simulazione in corso nel motore reale…</small>';scenarioFrame=document.createElement('iframe');scenarioFrame.hidden=true;scenarioFrame.src=`index.html?mage-benchmark-worker=1&samples=3&run=${Date.now()}`;document.body.append(scenarioFrame)};
+    const rogueRun=document.getElementById('rogue-scenario-run'),rogueProgress=document.getElementById('rogue-scenario-progress'),rogueResults=document.getElementById('rogue-scenario-results');let rogueFrame=null;
+    window.addEventListener('message',event=>{if(!rogueFrame||event.source!==rogueFrame.contentWindow||event.origin!==location.origin)return;const data=event.data||{};if(data.type==='rogue-benchmark-progress'){rogueProgress.max=data.total;rogueProgress.value=data.done;rogueRun.textContent=`Test ${data.done}/${data.total}`;return}if(data.type==='rogue-benchmark-error'){rogueResults.innerHTML=`<strong>Test non completato</strong><pre>${String(data.message)}</pre>`;rogueRun.disabled=false;rogueRun.textContent='Riprova';rogueFrame.remove();rogueFrame=null;return}if(data.type!=='rogue-benchmark-result')return;const spec={base:'Base',burst:'Assassination',control:'Subtlety'},rows=data.result.summary.map(row=>`<tr><td>${row.scenarioLabel}</td><td>${row.difficulty} · LV${row.level}</td><td class="mage-spec-${row.spec}">${spec[row.spec]}</td><td>${row.clearRate}%</td><td>${row.avgRounds}</td><td>${row.avgPartyHpPct}%</td><td>${row.avgDamageTaken}</td><td>${row.avgControlStops}</td><td>${row.avgCommandRemoved}</td><td>${row.avgRogueDamage}</td></tr>`).join('');rogueResults.innerHTML=`<table><thead><tr><th>Scenario</th><th>Livello</th><th>Build</th><th>Vittorie</th><th>Round</th><th>HP party</th><th>Danni subiti</th><th>Turni negati</th><th>Command −</th><th>Danno Rogue</th></tr></thead><tbody>${rows}</tbody></table><small>${data.result.samples} prove accoppiate per combinazione.</small>`;rogueProgress.hidden=true;rogueRun.disabled=false;rogueRun.textContent='Esegui di nuovo';rogueFrame.remove();rogueFrame=null});
+    rogueRun.onclick=()=>{rogueFrame?.remove();rogueRun.disabled=true;rogueRun.textContent='Avvio…';rogueProgress.hidden=false;rogueProgress.max=81;rogueProgress.value=0;rogueResults.innerHTML='<small>Simulazione in corso nel motore reale…</small>';rogueFrame=document.createElement('iframe');rogueFrame.hidden=true;rogueFrame.src=`index.html?rogue-benchmark-worker=1&samples=3&run=${Date.now()}`;document.body.append(rogueFrame)};
     resetSims();
   }
 
   function init(){
-    if(new URLSearchParams(location.search).get('legacy')!=='1')return;
+    const params=new URLSearchParams(location.search);if(params.has('mage-benchmark-worker')||params.has('rogue-benchmark-worker'))return;
     if(!document.querySelector('.page-tabs')||typeof startBoardCampaign!=='function'){setTimeout(init,150);return;}
     buildUI();
   }
