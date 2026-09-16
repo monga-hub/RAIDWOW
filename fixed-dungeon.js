@@ -8,7 +8,7 @@ const GRUMARAT_TEMPLE={
   art:'assets/optimized/dungeon-paludi-organic-master-v4.png',
   start:'gate',
   rooms:[
-    {id:'gate',number:1,name:'La Scalinata delle Tre Bocche',kind:'entrance',encounter:['GOBLIN','GOBLIN'],x:49.9,y:92.99,links:['vestibule'],closeup:'assets/optimized/dungeon-closeups/01-ingresso-tempio.webp?v=3'},
+    {id:'gate',number:1,name:'La Scalinata delle Tre Bocche',kind:'entrance',encounter:['GOBLIN','GOBLIN'],x:49.9,y:92.99,links:['vestibule'],closeup:'assets/ingresso.jpeg?v=1'},
     {id:'vestibule',number:2,name:'Il Vestibolo della Veglia',kind:'hall',encounter:['GOBLIN','GOBLIN'],x:49.68,y:78.5,links:['gate','cistern'],closeup:'assets/optimized/dungeon-closeups/02-vestibolo-veglia.webp?v=3'},
     {id:'cistern',number:3,name:'La Rotonda del Girino Sacro',kind:'crossroads',encounter:['GOBLIN','GOBLIN','ENGINEER'],x:49.77,y:62.54,links:['vestibule','ossuary','high-stairs','eye-well','tongue-pools','root-gallery'],closeup:'assets/optimized/dungeon-closeups/03-rotonda-girino-sacro.webp?v=3'},
     {id:'ossuary',number:4,name:'L’Ossario delle Ossa Fradice',kind:'chapel',encounter:['GOBLIN','GOBLIN','WARCHIEF'],x:18.42,y:68.71,links:['cistern','tongue-pools','high-stairs'],closeup:'assets/optimized/dungeon-closeups/04-ossario-ossa-fradice.webp?v=3'},
