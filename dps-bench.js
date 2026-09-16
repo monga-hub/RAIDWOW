@@ -1,6 +1,6 @@
 /* DPS Bench — banco di bilanciamento parametrico con talenti.
    4 classi ciclano il mazzo su un manichino a HP infiniti, gioco greedy.
-   Il MOTORE reale governa le meccaniche (mazzo, stance, cast lungo, carte morte);
+   Il MOTORE reale governa le meccaniche (mazzo, posizionamento, cast lungo, carte morte);
    il DANNO per carta viene da una tabella EDITABILE (PARAMS). I TALENTI sono
    toggle: aggiungono le loro carte al mazzo e applicano i bonus. Isolato: game
    monoclasse propri, non tocca la partita globale.
@@ -13,8 +13,8 @@
 
   // parametri danno editabili: [key,label,default]. Le carte da talento sono in coda.
   const PARAM_DEFS={
-    warrior:[['sword_base','Spada (arma base)',1],['heroic_strike','Heroic Strike (+ arma)',2],['rend_bleed','Rend (+ arma)',1],['crit','Critico (+)',1],['cleave','Cleave (AOE) — talento',3]],
-    rogue:[['dagger_base','Pugnale (base)',1],['backstab','Backstab (+)',1],['eviscerate','Eviscerate (Combo medio)',2],['kick','Kick',1],['crit','Critico (+)',1],['mutilate','Mutilate — talento',3],['cheap_shot','Cheap Shot — talento',1],['fan_of_knives','Fan of Knives (AOE) — talento',1]],
+    warrior:[['sword_base','Arma base',1],['heroic_strike','Heroic Strike (+ arma)',2],['rend_bleed','Rend (+ arma)',1],['crit','Critico (+)',1],['concussion_blow','Concussion Blow — talento',2],['shield_slam','Shield Slam — talento',3],['thunder_stomp','Thunder Stomp (+ arma) — talento',1],['execute','Execute (+ arma)',1],['sweeping_strikes','Sweeping Strikes (+ arma)',1],['whirlwind','Whirlwind (+ arma)',2]],
+    rogue:[['dagger_base','Pugnale (base)',1],['backstab','Backstab (+)',1],['eviscerate','Eviscerate (Combo medio)',2],['kick','Kick',2],['crit','Critico (+)',1],['mutilate','Mutilate — talento',3],['cheap_shot','Cheap Shot — talento',3],['fan_of_knives','Fan of Knives (AOE) — talento',1]],
     healer:[['smite','Smite',2],['mind_blast','Mind Blast',3],['shadow_word_pain','Shadow Word: Pain (totale)',2],['wand','Bacchetta',1],['holy_nova','Holy Nova (AOE) — talento',1],['penance','Penance offensiva — talento',3],['mind_flay','Mind Flay (completo) — talento',4],['silence','Silence — talento',1]],
     mage:[['frostbolt','Frostbolt',2],['fireball','Fireball (completo)',4],['blizzard','Blizzard',1],['counterspell','Counterspell',1],['wand','Frost Wand',1],['crit','Critico (+)',1],['frost_nova','Frost Nova (AOE) — talento',2],['cone_of_cold','Cone of Cold (AOE) — talento',2],['fire_blast','Fire Blast — talento',3],['scorch','Scorch + 2 cariche — talento',5],['pyroblast','Pyroblast (completo) — talento',7]]
   };
@@ -25,11 +25,15 @@
   // carta in `card`) | 'flag' (booleano, nessun valore).
   const TALENT_DEFS={
     warrior:[
-      {id:'heroic_mastery',label:'Heroic Mastery · 2 step',kind:'bonus',val:2,hint:'+ Spada'},
-      {id:'improved_rend',label:'Improved Rend · 1 step',kind:'bonus',val:1,hint:'+ Rend'},
+      {id:'heroic_mastery',label:'Heroic Strike Mastery · 3 gradi',kind:'bonus',val:3,hint:'+ Heroic'},
+      {id:'improved_rend',label:'Improved Rend · 2 gradi',kind:'bonus',val:2,hint:'+ Rend'},
       {id:'sunder_armor',label:'Sunder Armor · 1 step',kind:'count',val:2,card:'sunder_armor',hint:'carte'},
-      {id:'cleave',label:'Cleave · 1 step',kind:'count',val:2,card:'cleave',hint:'carte'},
-      {id:'improved_critical',label:'Improved Critical · 1 step',kind:'count',val:1,card:'critical',hint:'carte'}
+      {id:'concussion_blow',label:'Concussion Blow · 1 grado',kind:'count',val:2,card:'concussion_blow',hint:'carte'},
+      {id:'shield_slam',label:'Shield Slam · 1 grado',kind:'count',val:2,card:'shield_slam',hint:'carte'},
+      {id:'thunder_stomp',label:'Thunder Stomp · 2 gradi',kind:'count',val:2,card:'thunder_stomp',hint:'carte'},
+      {id:'execute',label:'Execute · 1 grado',kind:'count',val:2,card:'execute',hint:'carte'},
+      {id:'sweeping_strikes',label:'Sweeping Strikes · 1 grado',kind:'count',val:2,card:'sweeping_strikes',hint:'carte'},
+      {id:'whirlwind',label:'Whirlwind · 1 grado',kind:'count',val:1,card:'whirlwind',hint:'carta'}
     ],
     rogue:[
       {id:'improved_backstab',label:'Improved Backstab · 2 gradi',kind:'bonus',val:2,hint:'+ Backstab'},
@@ -37,6 +41,7 @@
       {id:'mutilate',label:'Mutilate · 1 grado',kind:'count',val:2,card:'mutilate',hint:'carte'},
       {id:'improved_eviscerate',label:'Improved Eviscerate · 2 gradi',kind:'bonus',val:2,hint:'+ Eviscerate'},
       {id:'cold_blood',label:'Cold Blood · 1 grado',kind:'count',val:1,card:'cold_blood',hint:'carta'},
+      {id:'dirty_tricks',label:'Dirty Tricks · 2 gradi',kind:'bonus',val:2,hint:'+ Kick'},
       {id:'cheap_shot',label:'Cheap Shot · 1 grado',kind:'count',val:2,card:'cheap_shot',hint:'carte'},
       {id:'fan_of_knives',label:'Fan of Knives · 1 grado',kind:'count',val:2,card:'fan_of_knives',hint:'carte'},
       {id:'improved_critical',label:'Improved Critical · 1 grado',kind:'count',val:1,card:'critical',hint:'carta'}
@@ -76,13 +81,14 @@
 
 
   // carte ad area: il danno scala col numero di bersagli
-  const AOE=new Set(['cleave','holy_nova','blizzard','frost_nova','cone_of_cold','fan_of_knives']);
+  const AOE=new Set(['thunder_stomp','whirlwind','holy_nova','blizzard','frost_nova','cone_of_cold','fan_of_knives']);
   // schools per moltiplicatori mago
   const FROST=new Set(['frostbolt','blizzard','frost_nova','cone_of_cold']);
   const FIRE=new Set(['fireball','fire_blast','scorch','pyroblast']);
 
   function hitDamage(role,card,crit,h){
     const d=hitPerTarget(role,card,crit,h);
+    if(card==='sweeping_strikes')return d*Math.min(TARGETS,2);
     return AOE.has(card)?d*TARGETS:d;                   // le carte ad area colpiscono tutti i manichini
   }
   function hitPerTarget(role,card,crit,h){
@@ -91,7 +97,8 @@
       let d=P.sword_base;
       if(card==='sword')d+=P.heroic_strike+bonus('warrior','heroic_mastery');
       else if(card==='rend')return d+P.rend_bleed+bonus('warrior','improved_rend')+(crit?P.crit:0);
-      else if(card==='cleave')return P.cleave+(crit?P.crit:0);
+      else if(card==='concussion_blow'||card==='shield_slam')return P[card]+(crit?P.crit:0);
+      else if(['thunder_stomp','execute','sweeping_strikes','whirlwind'].includes(card))return d+P[card]+(crit?P.crit:0);
       return d+(crit?P.crit:0);
     }
     if(role==='rogue'){
@@ -101,7 +108,7 @@
       else if(card==='mutilate')return P.mutilate+(crit?P.crit:0);
       else if(card==='cheap_shot')return P.cheap_shot+(crit?P.crit:0);
       else if(card==='fan_of_knives')return P.fan_of_knives;
-      else if(card==='kick')d=P.kick;
+      else if(card==='kick')d=P.kick+bonus('rogue','dirty_tricks');
       else d=P.dagger_base;
       return d+(crit?P.crit:0);
     }
@@ -117,6 +124,8 @@
       if(card==='frostbolt')d+=bonus('mage','improved_frostbolt');
       if(card==='blizzard')d+=bonus('mage','improved_blizzard');
       if(card==='fireball')d+=bonus('mage','improved_fireball');
+      if(FROST.has(card)&&AOE.has(card)&&TARGETS>1)d++;
+      if(FIRE.has(card)&&bonus('mage','improved_fireball')>=3&&TARGETS===1)d+=2;
       if(FIRE.has(card))d+=bonus('mage','ignite');
       if(FIRE.has(card)&&isOn('mage','combustion'))d+=1;
       return d+(crit?P.crit:0);
@@ -126,32 +135,32 @@
 
   // metadati carte per il greedy value-based
   const CARD_STANCE={
-    warrior:{sword:'AGGRESSIVE',cleave:'DEFENSIVE',rend:null,sunder_armor:'AGGRESSIVE',bare:null},
+    warrior:{sword:null,rend:null,sunder_armor:null,concussion_blow:null,shield_slam:null,thunder_stomp:null,execute:null,sweeping_strikes:null,whirlwind:null,bare:null},
     rogue:{backstab:null,eviscerate:null,mutilate:null,cheap_shot:null,kick:null,fan_of_knives:null,bare:null},
     healer:{smite:null,mind_blast:null,shadow_word_pain:null,holy_nova:null,penance:null,mind_flay:null,silence:null,wand:null},
     mage:{frostbolt:null,fireball:null,blizzard:null,frost_nova:null,cone_of_cold:null,fire_blast:null,scorch:null,pyroblast:null,counterspell:null,wand:null}
   };
   const DMG_CARDS={
-    warrior:['cleave','sword','rend','sunder_armor','bare'],
+    warrior:['whirlwind','sweeping_strikes','thunder_stomp','shield_slam','concussion_blow','execute','sword','rend','sunder_armor','charge','bare'],
     rogue:['backstab','eviscerate','mutilate','cheap_shot','fan_of_knives','kick','bare'],
     healer:['mind_flay','mind_blast','penance','shadow_word_pain','smite','holy_nova','silence','wand'],
     mage:['pyroblast','fireball','scorch','fire_blast','frost_nova','cone_of_cold','frostbolt','blizzard','counterspell','wand']
   };
-  const DEAD_CARDS={warrior:['charge','taunt','shield_protection'],rogue:['kidney_shot','evasion','preparation','expose_armor','cold_blood','shadowstep','gouge','blind'],healer:['flash_heal','greater_heal','power_word_shield','purify'],mage:['blink','frost_armor','combustion']};
+  const DEAD_CARDS={warrior:['taunt','shield_protection','battle_shout','last_stand'],rogue:['kidney_shot','evasion','preparation','expose_armor','cold_blood','shadowstep','gouge','blind'],healer:['flash_heal','greater_heal','power_word_shield','purify'],mage:['blink','frost_armor','combustion']};
   const WEAPON=new Set(['bare','wand']);                 // colpo d'arma: non consuma carta dal mazzo
   const CAST=new Set(['mind_flay','fireball','pyroblast']);
-  const critBoostable=(role,card)=>role==='warrior'?['sword','rend','cleave','sunder_armor','bare'].includes(card)
+  const critBoostable=(role,card)=>role==='warrior'?['charge','sword','rend','sunder_armor','concussion_blow','shield_slam','thunder_stomp','execute','sweeping_strikes','whirlwind','bare'].includes(card)
     :role==='rogue'?['backstab','eviscerate','mutilate','bare'].includes(card)
     :role==='healer'?false
     :role==='mage'?['frostbolt','blizzard','frost_nova','counterspell','fireball','fire_blast','scorch','pyroblast','cone_of_cold'].includes(card):false;
-  // ---- Simulatore astratto (niente motore): mazzo/pesca/stance/cast/carte morte, danno dai PARAMS ----
+  // ---- Simulatore astratto (niente motore): mazzo/pesca/posizione/cast/carte morte, danno dai PARAMS ----
   const BASE_DECK={
     warrior:['charge','charge','sword','sword','sword','taunt','taunt','rend','rend','shield_protection'],
     rogue:['backstab','backstab','backstab','eviscerate','eviscerate','kidney_shot','evasion','kick','preparation','critical'],
     healer:['flash_heal','flash_heal','greater_heal','greater_heal','power_word_shield','power_word_shield','smite','mind_blast','shadow_word_pain','purify'],
     mage:['frostbolt','frostbolt','frostbolt','critical','blizzard','counterspell','fireball','fireball','fireball','blink']
   };
-  const START_STANCE={warrior:'AGGRESSIVE',rogue:'FRONT',healer:null,mage:'FAR'};
+  const START_STANCE={warrior:null,rogue:'FRONT',healer:null,mage:'FAR'};
   const HAND_LIMIT=5;
   let AI_MODE='greedy', ROLL_DEPTH=6, ROLL_COUNT=4;      // rollout Monte-Carlo
   function shuf(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
@@ -356,7 +365,7 @@
                 <div class="trow"><input type="checkbox" id="t-${r}-${t.id}" data-trole="${r}" data-tid="${t.id}"><label for="t-${r}-${t.id}">${t.label}</label>${t.kind==='flag'?'':`<input class="tval" type="number" min="0" max="12" step="1" value="${t.val}" data-tvrole="${r}" data-tvid="${t.id}" title="${t.hint||''}"><span class="thint">${t.hint||''}</span>`}</div>`).join('')}
             </div>`).join('')}
         </div>
-        <p class="dps-note">Il simulatore astratto gestisce mazzo, pesca, stance e cast lungo; il danno per colpo viene dai valori qui sopra. AI: <b>Greedy</b> = ogni azione sceglie il miglior danno/azione; <b>Rollout MC</b> = simula più giocate future. Le matrici strategiche usano invece il motore reale: Combo Point, controllo, griglia, party e Overlord sono risolti integralmente. Fireball e Pyroblast richiedono 2 carte + 2 azioni; il controllo non viene convertito in danno nel banco monoclasse.</p>
+        <p class="dps-note">Il simulatore astratto gestisce mazzo, pesca, posizionamento e cast lungo; il danno per colpo viene dai valori qui sopra. Il Guerriero non usa stance. AI: <b>Greedy</b> = ogni azione sceglie il miglior danno/azione; <b>Rollout MC</b> = simula più giocate future. Le matrici strategiche usano invece il motore reale: Combo Point, controllo, griglia, party e Overlord sono risolti integralmente. Fireball e Pyroblast richiedono 2 carte + 2 azioni; il controllo non viene convertito in danno nel banco monoclasse.</p>
       </div>`;
     document.querySelector('main').append(page);
 

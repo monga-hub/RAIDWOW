@@ -97,8 +97,8 @@ function resetConnectedCampaignToEntrance(g){
   if(!g.exploration?.config.connectionPlacement)return g;
   g.exploration=createExplorationState(EXPLORATION_CONFIG_T7_B);
   const entrance=currentExplorationRoom(g.exploration);
-  entrance.fighters=['GOBLIN','GOBLIN'];entrance.treasures=[];entrance.state='READY';entrance.canExplore=false;entrance.composition={known:{FIGHTER:2,TREASURE:0},hidden:{FIGHTER:0,TREASURE:0},total:{FIGHTER:2,TREASURE:0}};
-  g.sequence=[2];g.enemies=[];g.encounter=0;g.round=1;g.currentEncounter=null;g.pendingRewards=[];g.pendingExitChoice=false;g.pendingOverlordPlacement=null;g.state='playing';g.logs=[];
+  entrance.fighters=['GOBLIN','GOBLIN'];entrance.treasures=[];entrance.state='READY';entrance.canExplore=false;entrance.composition={known:{FIGHTER:2,TREASURE:0},hidden:{FIGHTER:0,TREASURE:0},total:{FIGHTER:2,TREASURE:0}};if(typeof applyFixedTempleEncounter==='function')applyFixedTempleEncounter(g,entrance,'gate');
+  g.sequence=[entrance.fighters.length];g.enemies=[];g.encounter=0;g.round=1;g.currentEncounter=null;g.pendingRewards=[];g.pendingExitChoice=false;g.pendingOverlordPlacement=null;g.state='playing';g.logs=[];
   g.telemetry.encounterEntries=[];g.selectedTarget='ally:warrior:0';g.initiative=null;g.initiativePristine=true;g.initIndex=0;g.initiativeShift=null;g.initiativePreparedForRoom=false;delete g.combatGridEncounter;
   g.roomEntryAnnouncement=entrance;startEncounter(g);
   note(g,'⚔ Ingresso: due Razziatori sbarrano il cammino.');
@@ -119,9 +119,9 @@ function resolveConnectedPlacement(g,tileId,connectorId){
   if(!g.playerBoardEnabled||!x?.config.connectionPlacement||g.state!=='overlord_placement'||!pending)return false;
   const tile=x.overlordHand.find(item=>item.id===tileId),connector=roomTileConnectors(tile||{}).find(side=>side.id===connectorId);
   if(!tile||!connector||pending.forceMiniBoss&&tile.id!==MINI_BOSS_TILE_T2.id)return false;
-  const next=generateExplorationRoom(x,{tileId,connectorId});recordMiniBossMaterialization(x,next);if(!initial){roomTransitionInitiative(g);g.initiativePreparedForRoom=true}g.roomEntryAnnouncement=next;g.pendingOverlordPlacement=null;g.forceMiniBossPlacement=false;
+  const next=generateExplorationRoom(x,{tileId,connectorId});if(typeof applyFixedTempleEncounter==='function')applyFixedTempleEncounter(g,next);recordMiniBossMaterialization(x,next);if(!initial){roomTransitionInitiative(g);g.initiativePreparedForRoom=true}g.roomEntryAnnouncement=next;g.pendingOverlordPlacement=null;g.forceMiniBossPlacement=false;
   boardAudit(g,'OVERLORD_CONNECTION_SELECTED',{tileId,connectorId,connectorIcons:connector.icons,nextRoomId:next.id});
-  const continueToRoom=()=>{if(initial){g.sequence=[next.fighters.length];g.encounter=0;g.state='playing';startEncounter(g);note(g,`🧩 ${roomDisplayName(x,next)}: uscita Eroi + lato ${connectorId} dell’Overlord.`);render();return}g.sequence.push(next.fighters.length);g.encounter++;g.pendingRewards=advancementRewards(g);note(g,`🧩 L’Overlord collega ${roomDisplayName(x,next)} dal lato ${connectorId}.`);if(g.pendingRewards.length){g.state='reward';note(g,'★ Scegli DECK, TALENTO o RISERVA per ogni ricompensa di livello.')}else continueAfterRewards(g);render()};
+  const continueToRoom=()=>{if(initial){g.sequence=[next.fighters.length];g.encounter=0;g.state='playing';startEncounter(g);note(g,`🧩 ${roomDisplayName(x,next)}: uscita Eroi + lato ${connectorId} dell’Overlord.`);if(!g.benchmarkMode)render();return}g.sequence.push(next.fighters.length);g.encounter++;g.pendingRewards=advancementRewards(g);note(g,`🧩 L’Overlord collega ${roomDisplayName(x,next)} dal lato ${connectorId}.`);if(g.pendingRewards.length){g.state='reward';note(g,'★ Scegli DECK, TALENTO o RISERVA per ogni ricompensa di livello.')}else continueAfterRewards(g);if(!g.benchmarkMode)render()};
   if(window.COMBAT_GRID_INTEGRATED){continueToRoom();return true}
   g.state='map_reveal';g.mapConnectionReveal={fromRoomId:pending.roomId,toRoomId:next.id,exitId:pending.exitId,connectorId};
   setTimeout(()=>{if(g.mapConnectionReveal?.toRoomId!==next.id)return;delete g.mapConnectionReveal;continueToRoom()},1450);return true;
