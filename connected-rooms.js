@@ -110,7 +110,7 @@ function beginConnectedPlacement(g,exitId){
   if(!g.playerBoardEnabled||!x?.config.connectionPlacement||g.state!=='exit_choice'||!exit)return false;
   x.playerChosenExitId=exitId;offerMiniBossTile(x);g.pendingExitChoice=false;g.pendingOverlordPlacement={roomId:room.id,exitId,forceMiniBoss:!!g.forceMiniBossPlacement};g.state='overlord_placement';
   boardAudit(g,'HERO_EXIT_SELECTED',{roomId:room.id,exitId,icons:exit.icons});
-  note(g,g.forceMiniBossPlacement?`🧭 Gli Eroi scelgono ${exitId}. Ora l’Overlord collega il Trono Sommerso di Grum’Arat.`:`🧭 Gli Eroi scelgono ${exitId}. Ora l’Overlord sceglie tile e lato.`);
+  note(g,g.forceMiniBossPlacement?`🧭 Gli Eroi scelgono ${exitId}. Ora l’Overlord collega il Trono di Grum’Arat.`:`🧭 Gli Eroi scelgono ${exitId}. Ora l’Overlord sceglie tile e lato.`);
   return true;
 }
 
