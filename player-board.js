@@ -1984,7 +1984,7 @@ function aiLootStep(g){const loot=g.pendingLoot?.[0];if(!loot){finishLootDistrib
 
 function aiNextStep(g){if(!g?.playerBoardEnabled||!g.controllers)return null;
   switch(g.state){
-    case'playing':{if(!aliveEnemies(g).length)return()=>checkVictory(g);const role=g.activeRole;return aiControls(g,role)?()=>aiChooseAndApply(g):null}
+    case'playing':{if(!aliveEnemies(g).length)return g.gridTreasurePhase?null:()=>checkVictory(g);const role=g.activeRole;return aiControls(g,role)?()=>aiChooseAndApply(g):null}
     case'restoring':return aiControls(g,g.activeRole)?()=>aiRecoveryStep(g):null;
     case'reward':{const first=g.pendingRewards?.[0];if(first)return aiControls(g,first.hero.role)?()=>aiClaimFirstReward(g):null;return pendingSpecializationPrunes(g)&&aliveAiHeroesOnly(g)?()=>aiResolveSpecializationPrune(g):null}
     case'exit_choice':return aliveAiHeroesOnly(g)?()=>aiExitStep(g):null;
