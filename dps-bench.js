@@ -1,5 +1,5 @@
 /* DPS Bench — banco di bilanciamento parametrico con talenti.
-   4 classi ciclano il mazzo su un manichino a HP infiniti, gioco greedy.
+   Tutte le classi ciclano il mazzo su un manichino a HP infiniti, gioco greedy.
    Il MOTORE reale governa le meccaniche (mazzo, posizionamento, cast lungo, carte morte);
    il DANNO per carta viene da una tabella EDITABILE (PARAMS). I TALENTI sono
    toggle: aggiungono le loro carte al mazzo e applicano i bonus. Isolato: game
@@ -7,16 +7,20 @@
    DoT (Vile Poison, Garrote, Holy Fire, Ignite) modellati come danno-per-carta
    approssimato (valore editabile), non come tick nel turno Overlord. */
 (function(){
-  const ROLES=['warrior','rogue','healer','mage'];
-  const LABELS={warrior:'Guerriero',rogue:'Rogue',healer:'Prete',mage:'Mago'};
-  const COLORS={warrior:'#c98b4b',rogue:'#8c6fd0',healer:'#e7ca76',mage:'#5aa9e6'};
+  const ROLES=['warrior','rogue','healer','mage','paladin','warlock','shaman','hunter'];
+  const LABELS={warrior:'Guerriero',rogue:'Rogue',healer:'Prete',mage:'Mago',paladin:'Paladino',warlock:'Warlock',shaman:'Sciamano',hunter:'Hunter'};
+  const COLORS={warrior:'#c98b4b',rogue:'#8c6fd0',healer:'#e7ca76',mage:'#5aa9e6',paladin:'#e3c462',warlock:'#a56bd1',shaman:'#35a9d8',hunter:'#7fc451'};
 
   // parametri danno editabili: [key,label,default]. Le carte da talento sono in coda.
   const PARAM_DEFS={
     warrior:[['sword_base','Arma base',1],['heroic_strike','Heroic Strike (+ arma)',2],['rend_bleed','Rend (+ arma)',1],['crit','Critico (+)',1],['concussion_blow','Concussion Blow — talento',2],['shield_slam','Shield Slam — talento',3],['thunder_stomp','Thunder Stomp (+ arma) — talento',1],['execute','Execute (+ arma)',1],['sweeping_strikes','Sweeping Strikes (+ arma)',1],['whirlwind','Whirlwind (+ arma)',2]],
     rogue:[['dagger_base','Pugnale (base)',1],['backstab','Backstab (+)',1],['eviscerate','Eviscerate (Combo medio)',2],['kick','Kick',2],['crit','Critico (+)',1],['mutilate','Mutilate — talento',3],['cheap_shot','Cheap Shot — talento',3],['fan_of_knives','Fan of Knives (AOE) — talento',1]],
     healer:[['smite','Smite',2],['mind_blast','Mind Blast',3],['shadow_word_pain','Shadow Word: Pain (totale)',2],['wand','Bacchetta',1],['holy_nova','Holy Nova (AOE) — talento',1],['penance','Penance offensiva — talento',3],['mind_flay','Mind Flay (completo) — talento',4],['silence','Silence — talento',1]],
-    mage:[['frostbolt','Frostbolt',2],['fireball','Fireball (completo)',4],['blizzard','Blizzard',1],['counterspell','Counterspell',1],['wand','Frost Wand',1],['crit','Critico (+)',1],['frost_nova','Frost Nova (AOE) — talento',2],['cone_of_cold','Cone of Cold (AOE) — talento',2],['fire_blast','Fire Blast — talento',3],['scorch','Scorch + 2 cariche — talento',5],['pyroblast','Pyroblast (completo) — talento',7]]
+    mage:[['frostbolt','Frostbolt',2],['fireball','Fireball (completo)',4],['blizzard','Blizzard',1],['counterspell','Counterspell',1],['wand','Frost Wand',1],['crit','Critico (+)',1],['frost_nova','Frost Nova (AOE) — talento',2],['cone_of_cold','Cone of Cold (AOE) — talento',2],['fire_blast','Fire Blast — talento',3],['scorch','Scorch + 2 cariche — talento',5],['pyroblast','Pyroblast (completo) — talento',7]],
+    paladin:[['hammer','Martello base',1],['crusader_strike','Oathbound Blow (+ arma)',1],['consecration','Dawn Circle (AOE)',1],['judgment','Sun Verdict',2],['avengers_shield','Returning Aegis (AOE)',2],['hammer_justice','Lawbringer Strike',1],['holy_shock','Radiant Jolt',3]],
+    warlock:[['shadow_bolt','Void Needle',2],['corruption','Rot Seed (totale)',2],['immolate','Witchflame (totale)',3],['drain_life','Blood Tithe',2],['curse_agony','Torment Spiral (totale)',6],['siphon_life','Leeching Hex (totale)',3],['curse_exhaustion','Withering Chains',1],['wand','Wand',1]],
+    shaman:[['weapon','Ascia base',1],['storm_maul','Storm Maul (+ arma)',1],['sky_spark','Sky Spark',2],['thunder_rend','Thunder Rend',3],['forked_sky','Forked Sky (AOE)',2],['crash_wave','Crash Wave (AOE)',2]],
+    hunter:[['bow','Arco base',1],['quarry_mark','Quarry Mark',1],['piercing_shot','Piercing Shot',3],['fang_command','Fang Command',2],['pinning_shot','Pinning Shot',2],['scatter_volley','Scatter Volley (AOE)',1],['pounce_command','Pounce Command (AOE)',2],['snare_trap','Snare Trap (AOE)',1],['split_arrow','Split Arrow',2],['deep_pierce','Deep Pierce',3],['pack_finish','Pack Finish',3],['shock_trap','Shock Trap (AOE)',1],['sweeping_volley','Sweeping Volley (AOE)',2],['pack_pounce','Pack Pounce (AOE)',2],['predator_storm','Predator Storm (AOE)',3]]
   };
   const PARAMS={};
   for(const r of ROLES){PARAMS[r]={};for(const [k,,d] of PARAM_DEFS[r])PARAMS[r][k]=d;}
@@ -69,19 +73,58 @@
       {id:'pyroblast',label:'Pyroblast · 1 grado',kind:'count',val:2,card:'pyroblast',hint:'carte'},
       {id:'molten_fury',label:'Molten Fury · 2 gradi',kind:'bonus',val:2,hint:'+ a ≤25% HP'},
       {id:'combustion',label:'Combustion · 1 grado',kind:'flag'}
+    ],
+    paladin:[
+      {id:'improved_consecration',label:'Improved Consecration · 2 gradi',kind:'bonus',val:2,hint:'+ AOE'},
+      {id:'avengers_shield',label:"Avenger's Shield · 1 grado",kind:'count',val:2,card:'avengers_shield',hint:'carte'},
+      {id:'hammer_justice',label:'Hammer of Justice · 1 grado',kind:'count',val:2,card:'hammer_justice',hint:'carte'},
+      {id:'holy_shock',label:'Holy Shock · 1 grado',kind:'count',val:2,card:'holy_shock',hint:'carte'}
+    ],
+    warlock:[
+      {id:'improved_corruption',label:'Improved Corruption · 2 gradi',kind:'bonus',val:2,hint:'+ tick'},
+      {id:'improved_drain_life',label:'Improved Drain Life · 2 gradi',kind:'bonus',val:2,hint:'+ danno'},
+      {id:'curse_agony',label:'Curse of Agony · 1 grado',kind:'count',val:2,card:'curse_agony',hint:'carte'},
+      {id:'siphon_life',label:'Siphon Life · 1 grado',kind:'count',val:2,card:'siphon_life',hint:'carte'},
+      {id:'curse_exhaustion',label:'Curse of Exhaustion · 1 grado',kind:'count',val:2,card:'curse_exhaustion',hint:'carte'},
+      {id:'shadow_mastery',label:'Shadow Mastery · 1 grado',kind:'bonus',val:1,hint:'+ Shadow'}
+    ],
+    shaman:[
+      {id:'charged_edge',label:'Charged Edge · 2 gradi',kind:'bonus',val:2,hint:'+ Maul'},
+      {id:'storm_focus',label:'Storm Focus · 2 gradi',kind:'bonus',val:2,hint:'+ Spark'},
+      {id:'forked_sky',label:'Forked Sky · 1 grado',kind:'count',val:2,card:'forked_sky',hint:'carte'},
+      {id:'crash_wave',label:'Crash Wave · 1 grado',kind:'count',val:2,card:'crash_wave',hint:'carte'},
+      {id:'storm_avatar',label:'Storm Avatar · 1 grado',kind:'flag'}
+    ],
+    hunter:[
+      {id:'steady_hand',label:'Steady Hand · 2 gradi',kind:'bonus',val:2,hint:'+ Piercing'},
+      {id:'patient_hunt',label:'Patient Hunt · 2 gradi',kind:'bonus',val:2,hint:'+ Fang'},
+      {id:'split_arrow',label:'Split Arrow · 1 grado',kind:'count',val:2,card:'split_arrow',hint:'carte'},
+      {id:'deep_pierce',label:'Deep Pierce · 1 grado',kind:'count',val:2,card:'deep_pierce',hint:'carte'},
+      {id:'pack_finish',label:'Pack Finish · 1 grado',kind:'count',val:2,card:'pack_finish',hint:'carte'},
+      {id:'barbed_control',label:'Barbed Control · 2 gradi',kind:'bonus',val:2,hint:'+ Pinning'},
+      {id:'wide_scatter',label:'Wide Scatter · 2 gradi',kind:'bonus',val:2,hint:'+ Volley'},
+      {id:'shock_trap',label:'Shock Trap · 1 grado',kind:'count',val:2,card:'shock_trap',hint:'carte'},
+      {id:'sweeping_volley',label:'Sweeping Volley · 1 grado',kind:'count',val:2,card:'sweeping_volley',hint:'carte'},
+      {id:'pack_pounce',label:'Pack Pounce · 1 grado',kind:'count',val:2,card:'pack_pounce',hint:'carte'},
+      {id:'predator_storm',label:'Predator Storm · 1 grado',kind:'count',val:1,card:'predator_storm',hint:'carta'},
+      {id:'perfect_quarry',label:'Perfect Quarry · 1 grado',kind:'flag'}
     ]
   };
-  const ACTIVE={warrior:new Set(),rogue:new Set(),healer:new Set(),mage:new Set()};
+  const ACTIVE=Object.fromEntries(ROLES.map(role=>[role,new Set()]));
   const TALENT_VALS={};                                 // valori correnti (modificabili)
   for(const r of ROLES){TALENT_VALS[r]={};for(const t of TALENT_DEFS[r])if(t.kind!=='flag')TALENT_VALS[r][t.id]=t.val;}
   const isOn=(role,id)=>ACTIVE[role].has(id);
   const V=(role,id)=>TALENT_VALS[role][id]||0;          // valore del talento (se attivo)
   const bonus=(role,id)=>isOn(role,id)?V(role,id):0;    // bonus se il talento è attivo
+  const BENCH_BUILDS={
+    single:{warrior:['heroic_mastery','improved_rend','execute','sweeping_strikes'],rogue:['improved_backstab','opportunity','mutilate','improved_eviscerate','improved_critical'],healer:['improved_mind_blast','improved_shadow_word_pain','mind_flay','silence','shadowform'],mage:['improved_fireball','ignite','fire_blast','scorch','combustion'],paladin:['improved_consecration','avengers_shield','hammer_justice'],warlock:['improved_corruption','improved_drain_life','curse_agony','siphon_life','curse_exhaustion','shadow_mastery'],shaman:['charged_edge','storm_focus','forked_sky','crash_wave','storm_avatar'],hunter:['steady_hand','patient_hunt','split_arrow','deep_pierce','pack_finish','perfect_quarry']},
+    aoe:{warrior:['heroic_mastery','thunder_stomp','sweeping_strikes','whirlwind'],rogue:['dirty_tricks','cheap_shot','fan_of_knives'],healer:['holy_nova','penance'],mage:['improved_frostbolt','frost_nova','improved_blizzard','cone_of_cold','shatter'],paladin:['improved_consecration','avengers_shield','hammer_justice'],warlock:['improved_corruption','improved_drain_life','curse_agony','siphon_life','curse_exhaustion','shadow_mastery'],shaman:['charged_edge','storm_focus','forked_sky','crash_wave','storm_avatar'],hunter:['barbed_control','wide_scatter','shock_trap','sweeping_volley','pack_pounce','predator_storm']}
+  };
   let TARGETS=1;                                        // n. manichini (1-4)
 
 
   // carte ad area: il danno scala col numero di bersagli
-  const AOE=new Set(['thunder_stomp','whirlwind','holy_nova','blizzard','frost_nova','cone_of_cold','fan_of_knives']);
+  const AOE=new Set(['thunder_stomp','whirlwind','holy_nova','blizzard','frost_nova','cone_of_cold','fan_of_knives','consecration','avengers_shield','forked_sky','crash_wave','scatter_volley','pounce_command','snare_trap','shock_trap','sweeping_volley','pack_pounce','predator_storm']);
   // schools per moltiplicatori mago
   const FROST=new Set(['frostbolt','blizzard','frost_nova','cone_of_cold']);
   const FIRE=new Set(['fireball','fire_blast','scorch','pyroblast']);
@@ -89,6 +132,9 @@
   function hitDamage(role,card,crit,h){
     const d=hitPerTarget(role,card,crit,h);
     if(card==='sweeping_strikes')return d*Math.min(TARGETS,2);
+    if(card==='avengers_shield')return d*Math.min(TARGETS,3);
+    if(card==='forked_sky')return d*Math.min(TARGETS,2);
+    if(card==='split_arrow')return d+(TARGETS>1?1:0);
     return AOE.has(card)?d*TARGETS:d;                   // le carte ad area colpiscono tutti i manichini
   }
   function hitPerTarget(role,card,crit,h){
@@ -130,6 +176,36 @@
       if(FIRE.has(card)&&isOn('mage','combustion'))d+=1;
       return d+(crit?P.crit:0);
     }
+    if(role==='paladin'){
+      if(card==='bare')return P.hammer;
+      if(card==='crusader_strike')return P.hammer+P.crusader_strike;
+      if(card==='consecration')return P.consecration+bonus('paladin','improved_consecration');
+      return P[card]||0;
+    }
+    if(role==='warlock'){
+      let d=P[card]||0;
+      if(card==='corruption')d+=bonus('warlock','improved_corruption');
+      if(card==='drain_life')d+=bonus('warlock','improved_drain_life');
+      if(card!=='immolate'&&card!=='wand'&&card!=='bare')d+=bonus('warlock','shadow_mastery');
+      return d;
+    }
+    if(role==='shaman'){
+      let d=card==='bare'?P.weapon:card==='storm_maul'?P.weapon+P.storm_maul+bonus('shaman','charged_edge'):P[card]||0;
+      if(card==='sky_spark')d+=bonus('shaman','storm_focus');
+      if(isOn('shaman','storm_avatar'))d+=1;
+      return d;
+    }
+    if(role==='hunter'){
+      const marked=!!h?.marked;
+      if(card==='bare')return P.bow;
+      if(card==='quarry_mark')return P.quarry_mark+(isOn('hunter','perfect_quarry')?2:0);
+      if(card==='piercing_shot')return P.piercing_shot+(marked?2:0)+bonus('hunter','steady_hand')+(h?.perfectQuarryBonus||0);
+      if(card==='fang_command')return P.fang_command+(marked?2+bonus('hunter','patient_hunt'):0);
+      if(card==='pinning_shot')return P.pinning_shot+bonus('hunter','barbed_control');
+      if(card==='scatter_volley')return P.scatter_volley+bonus('hunter','wide_scatter');
+      if(card==='deep_pierce')return marked?5:P.deep_pierce;
+      return P[card]||0;
+    }
     return 0;
   }
 
@@ -138,15 +214,23 @@
     warrior:{sword:null,rend:null,sunder_armor:null,concussion_blow:null,shield_slam:null,thunder_stomp:null,execute:null,sweeping_strikes:null,whirlwind:null,bare:null},
     rogue:{backstab:null,eviscerate:null,mutilate:null,cheap_shot:null,kick:null,fan_of_knives:null,bare:null},
     healer:{smite:null,mind_blast:null,shadow_word_pain:null,holy_nova:null,penance:null,mind_flay:null,silence:null,wand:null},
-    mage:{frostbolt:null,fireball:null,blizzard:null,frost_nova:null,cone_of_cold:null,fire_blast:null,scorch:null,pyroblast:null,counterspell:null,wand:null}
+    mage:{frostbolt:null,fireball:null,blizzard:null,frost_nova:null,cone_of_cold:null,fire_blast:null,scorch:null,pyroblast:null,counterspell:null,wand:null},
+    paladin:{crusader_strike:null,consecration:null,judgment:null,avengers_shield:null,hammer_justice:null,holy_shock:null,bare:null},
+    warlock:{shadow_bolt:null,corruption:null,immolate:null,drain_life:null,curse_agony:null,siphon_life:null,curse_exhaustion:null,wand:null},
+    shaman:{storm_maul:null,sky_spark:null,thunder_rend:null,forked_sky:null,crash_wave:null,bare:null},
+    hunter:{quarry_mark:null,piercing_shot:null,fang_command:null,pinning_shot:null,scatter_volley:null,pounce_command:null,snare_trap:null,split_arrow:null,deep_pierce:null,pack_finish:null,shock_trap:null,sweeping_volley:null,pack_pounce:null,predator_storm:null,bare:null}
   };
   const DMG_CARDS={
     warrior:['whirlwind','sweeping_strikes','thunder_stomp','shield_slam','concussion_blow','execute','sword','rend','sunder_armor','charge','bare'],
     rogue:['backstab','eviscerate','mutilate','cheap_shot','fan_of_knives','kick','bare'],
     healer:['mind_flay','mind_blast','penance','shadow_word_pain','smite','holy_nova','silence','wand'],
-    mage:['pyroblast','fireball','scorch','fire_blast','frost_nova','cone_of_cold','frostbolt','blizzard','counterspell','wand']
+    mage:['pyroblast','fireball','scorch','fire_blast','frost_nova','cone_of_cold','frostbolt','blizzard','counterspell','wand'],
+    paladin:['holy_shock','avengers_shield','judgment','crusader_strike','consecration','hammer_justice','bare'],
+    warlock:['curse_agony','siphon_life','immolate','drain_life','shadow_bolt','corruption','curse_exhaustion','wand'],
+    shaman:['forked_sky','crash_wave','thunder_rend','sky_spark','storm_maul','bare'],
+    hunter:['predator_storm','deep_pierce','pack_finish','piercing_shot','fang_command','split_arrow','pounce_command','pack_pounce','sweeping_volley','pinning_shot','scatter_volley','snare_trap','shock_trap','quarry_mark','bare']
   };
-  const DEAD_CARDS={warrior:['taunt','shield_protection','battle_shout','last_stand'],rogue:['kidney_shot','evasion','preparation','expose_armor','cold_blood','shadowstep','gouge','blind'],healer:['flash_heal','greater_heal','power_word_shield','purify'],mage:['blink','frost_armor','combustion']};
+  const DEAD_CARDS={warrior:['taunt','shield_protection','battle_shout','last_stand'],rogue:['kidney_shot','evasion','preparation','expose_armor','cold_blood','shadowstep','gouge','blind'],healer:['flash_heal','greater_heal','power_word_shield','purify'],mage:['blink','frost_armor','combustion'],paladin:['holy_light','righteous_defense','blessing_protection','cleanse','blessing_sanctuary','paladin_holy_shield','flash_of_light','beacon_of_light','divine_favor','lay_on_hands'],warlock:['fear','summon_imp','healthstone','summon_voidwalker','soul_link','fel_domination'],shaman:['gale_totem','primal_mend','flowing_chain','cleansing_rain','spring_totem','tempest_stride','raging_totem','storm_avatar','living_current','ancestral_well','purifying_totem','swift_current','tide_rebirth'],hunter:['stillness','retreat_roll']};
   const WEAPON=new Set(['bare','wand']);                 // colpo d'arma: non consuma carta dal mazzo
   const CAST=new Set(['mind_flay','fireball','pyroblast']);
   const critBoostable=(role,card)=>role==='warrior'?['charge','sword','rend','sunder_armor','concussion_blow','shield_slam','thunder_stomp','execute','sweeping_strikes','whirlwind','bare'].includes(card)
@@ -158,24 +242,29 @@
     warrior:['charge','charge','sword','sword','sword','taunt','taunt','rend','rend','shield_protection'],
     rogue:['backstab','backstab','backstab','eviscerate','eviscerate','kidney_shot','evasion','kick','preparation','critical'],
     healer:['flash_heal','flash_heal','greater_heal','greater_heal','power_word_shield','power_word_shield','smite','mind_blast','shadow_word_pain','purify'],
-    mage:['frostbolt','frostbolt','frostbolt','critical','blizzard','counterspell','fireball','fireball','fireball','blink']
+    mage:['frostbolt','frostbolt','frostbolt','critical','blizzard','counterspell','fireball','fireball','fireball','blink'],
+    paladin:['crusader_strike','crusader_strike','holy_light','holy_light','righteous_defense','righteous_defense','blessing_protection','consecration','cleanse','judgment'],
+    warlock:['shadow_bolt','shadow_bolt','corruption','corruption','immolate','immolate','drain_life','drain_life','fear','summon_imp'],
+    shaman:['storm_maul','storm_maul','sky_spark','thunder_rend','gale_totem','primal_mend','primal_mend','flowing_chain','cleansing_rain','spring_totem'],
+    hunter:['quarry_mark','quarry_mark','piercing_shot','piercing_shot','fang_command','pinning_shot','pinning_shot','scatter_volley','pounce_command','snare_trap']
   };
-  const START_STANCE={warrior:null,rogue:'FRONT',healer:null,mage:'FAR'};
+  const START_STANCE=Object.fromEntries(ROLES.map(role=>[role,role==='rogue'?'FRONT':role==='mage'?'FAR':null]));
   const HAND_LIMIT=5;
   let AI_MODE='greedy', ROLL_DEPTH=6, ROLL_COUNT=4;      // rollout Monte-Carlo
   function shuf(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
   function dump(s,c){const i=s.hand.indexOf(c);if(i>=0){s.hand.splice(i,1);s.discard.push(c);}}
   function refillS(s){while(s.hand.length<HAND_LIMIT){if(!s.draw.length){if(!s.discard.length)break;s.draw=shuf(s.discard);s.discard=[];}s.hand.push(s.draw.pop());}}
-  function clone(s){return {role:s.role,deck:s.deck,draw:[...s.draw],discard:[...s.discard],hand:[...s.hand],stance:s.stance,casting:s.casting};}
+  function clone(s){return {role:s.role,deck:s.deck,draw:[...s.draw],discard:[...s.discard],hand:[...s.hand],stance:s.stance,casting:s.casting,marked:s.marked,perfectQuarryBonus:s.perfectQuarryBonus};}
   function candidates(s){
     const role=s.role, crit=s.hand.includes('critical'), out=[];
     const flipFree=false;
     for(const card of DMG_CARDS[role]){
       if(!WEAPON.has(card)&&!s.hand.includes(card))continue;
+      if(role==='hunter'&&['split_arrow','predator_storm'].includes(card)&&!s.marked)continue;
       const st=CARD_STANCE[role][card], needFlip=st&&st!==s.stance, flipCost=needFlip?(flipFree?0:1):0;
       const cast=CAST.has(card)&&s.casting!==card;
       const boost=crit&&critBoostable(role,card);
-      const dmg=hitDamage(role,card,boost,null);
+      const dmg=hitDamage(role,card,boost,s);
       out.push({card,st,needFlip,flipCost,cast,crit:boost,dmg,val:dmg/((cast?2:1)+flipCost)});
     }
     return out;
@@ -186,7 +275,7 @@
     if(s.casting&&s.hand.includes(s.casting)){          // completa cast lungo
       const card=s.casting, st=CARD_STANCE[role][card];
       if(st&&st!==s.stance){s.stance=st;return 0;}
-      dump(s,card); s.casting=null; return hitDamage(role,card,false,null);
+      dump(s,card); s.casting=null; return hitDamage(role,card,false,s);
     }
     const cands=candidates(s);
     if(!cands.length)return 0;
@@ -203,6 +292,8 @@
     if(pick.crit)dump(s,'critical');
     if(pick.cast){dump(s,pick.card);s.casting=pick.card;return 0;}  // carica
     if(!WEAPON.has(pick.card))dump(s,pick.card);
+    if(role==='hunter'&&pick.card==='quarry_mark'){s.marked=true;s.perfectQuarryBonus=isOn('hunter','perfect_quarry')?2:0;}
+    if(role==='hunter'&&pick.card==='piercing_shot')s.perfectQuarryBonus=0;
     return pick.dmg;
   }
   const greedy=(cands)=>cands.reduce((a,b)=>b.val>a.val?b:a);
@@ -223,17 +314,19 @@
   }
   function newSim(role){
     const deck=[...BASE_DECK[role]];
-    for(const tal of TALENT_DEFS[role]) if(tal.kind==='count'&&isOn(role,tal.id)) for(let i=0;i<V(role,tal.id);i++) deck.push(tal.card);
-    return {role, deck, draw:shuf(deck), discard:[], hand:[], stance:START_STANCE[role], casting:null, damage:0, actions:0, wasted:0, rounds:0};
+    const additions=TALENT_DEFS[role].flatMap(tal=>tal.kind==='count'&&isOn(role,tal.id)?Array(V(role,tal.id)).fill(tal.card):[]);
+    for(const card of additions){let index=deck.findIndex(value=>DEAD_CARDS[role].includes(value));if(index<0)index=deck.map((value,i)=>({i,value:DMG_CARDS[role].includes(value)?hitDamage(role,value,false,{marked:true}):0})).filter(entry=>!(role==='hunter'&&entry.value==='quarry_mark')).sort((a,b)=>a.value-b.value)[0]?.i??-1;if(index>=0)deck[index]=card;}
+    return {role, deck, draw:shuf(deck), discard:[], hand:[], stance:START_STANCE[role], casting:null,marked:false,perfectQuarryBonus:0,damage:0,actions:0,wasted:0,rounds:0,peakRound:0};
   }
   function advance(sim, rounds){
     const choose=AI_MODE==='rollout'?rolloutChoose:greedy;
     for(let r=0;r<rounds;r++){
-      sim.rounds++; refillS(sim);
+      sim.rounds++; refillS(sim);let roundDamage=0;
       for(let a=0;a<3;a++){
         const dmg=actOne(sim,choose);
-        sim.actions++; sim.damage+=(dmg>0?dmg:0); if(dmg<=0)sim.wasted++;
+        sim.actions++;sim.damage+=(dmg>0?dmg:0);roundDamage+=Math.max(0,dmg);if(dmg<=0)sim.wasted++;
       }
+      sim.peakRound=Math.max(sim.peakRound,roundDamage);
     }
   }
 
@@ -247,6 +340,7 @@
       c.querySelector('.dpsc-total').textContent=Math.round(s.damage);
       c.querySelector('.dpsc-dpa').textContent=fmt(dpa);
       c.querySelector('.dpsc-dpr').textContent=fmt(dpr);
+      c.querySelector('.dpsc-peak').textContent=fmt(s.peakRound);
       c.querySelector('.dpsc-acts').textContent=s.actions;
       c.querySelector('.dpsc-rounds').textContent=s.rounds;
       c.querySelector('.dpsc-wasted').textContent=`${s.wasted} (${wpct.toFixed(0)}%)`;
@@ -269,7 +363,7 @@
       #benchPage .dps-tgt{min-width:34px;padding:6px 9px}
       #benchPage .dps-tgt.active,#benchPage .dps-ai.active{background:var(--gold);color:#19150b;border-color:#e7ca76}
       #benchPage .dps-ai{padding:6px 9px}
-      #benchPage .dps-cards,#benchPage .dps-params{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+      #benchPage .dps-cards,#benchPage .dps-params{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
       #benchPage .dps-params{margin-top:14px;align-items:start}
       @media(max-width:900px){#benchPage .dps-cards,#benchPage .dps-params{grid-template-columns:1fr 1fr}}
       .dpsc{background:#18281d;border:1px solid var(--edge);border-radius:14px;padding:14px}
@@ -306,7 +400,7 @@
     page.innerHTML=`
       <div class="card">
         <h2>DPS Bench — manichino</h2>
-        <p class="muted">Le 4 classi ciclano il mazzo su un manichino a HP infiniti, giocando per il massimo danno. Valori di danno e talenti sono modificabili qui sotto: le curve si ricalcolano dal vivo.</p>
+        <p class="muted">Tutte le classi ciclano il mazzo su manichini a HP infiniti, giocando per il massimo danno. Valori e talenti sono modificabili: oltre alla media viene registrato il miglior round da 3 azioni per individuare i picchi.</p>
         <div class="dps-controls">
           <button id="dps-back" class="secondary">← Editor</button>
           <button id="dps-run">▶ Run</button>
@@ -336,6 +430,7 @@
                 <tr><td>Danno totale</td><td class="v dpsc-total">0</td></tr>
                 <tr><td>Danno / azione</td><td class="v dpsc-dpa">0</td></tr>
                 <tr><td>Danno / round</td><td class="v dpsc-dpr">0</td></tr>
+                <tr><td>Picco in 1 round</td><td class="v dpsc-peak">0</td></tr>
                 <tr><td>Azioni</td><td class="v dpsc-acts">0</td></tr>
                 <tr><td>Round</td><td class="v dpsc-rounds">0</td></tr>
                 <tr><td>Azioni sprecate</td><td class="v dpsc-wasted">0</td></tr>
@@ -371,7 +466,8 @@
 
     const tab=document.createElement('button');
     tab.className='page-tab'; tab.dataset.page='benchPage'; tab.textContent='DPS Bench';
-    document.querySelector('.page-tabs').append(tab);
+    const pageTabs=document.querySelector('.page-tabs');
+    if(pageTabs)pageTabs.append(tab);
     const pages=()=>[...document.querySelectorAll('.app-page')];
     document.querySelectorAll('.page-tab').forEach(btn=>{
       if(!btn.dataset.page)return;
@@ -427,9 +523,15 @@
     resetSims();
   }
 
+  function runWorker(params){
+    TARGETS=Math.max(1,Math.min(4,+params.get('targets')||1));const requestedBuild=params.get('build'),build=requestedBuild==='base'?'base':requestedBuild==='aoe'?'aoe':'single',rounds=Math.max(50,Math.min(2000,+params.get('rounds')||600)),originalRandom=Math.random;let seed=90210+TARGETS*100+(build==='aoe'?1:build==='single'?2:0);Math.random=()=>((seed=Math.imul(seed,1664525)+1013904223>>>0)/4294967296);
+    for(const role of ROLES){ACTIVE[role].clear();for(const talent of BENCH_BUILDS[build]?.[role]||[])ACTIVE[role].add(talent)}
+    sims=ROLES.map(newSim);for(const sim of sims)advance(sim,rounds);Math.random=originalRandom;
+    const result={build,targets:TARGETS,rounds,results:sims.map(sim=>({role:sim.role,label:LABELS[sim.role],damage:sim.damage,dpa:+(sim.damage/sim.actions).toFixed(3),dpr:+(sim.damage/sim.rounds).toFixed(3),peakRound:sim.peakRound,wastedPct:+(100*sim.wasted/sim.actions).toFixed(1)})).sort((a,b)=>b.dpr-a.dpr)};document.body.textContent=JSON.stringify(result,null,2);
+  }
   function init(){
-    const params=new URLSearchParams(location.search);if(params.has('mage-benchmark-worker')||params.has('rogue-benchmark-worker'))return;
-    if(!document.querySelector('.page-tabs')||typeof startBoardCampaign!=='function'){setTimeout(init,150);return;}
+    const params=new URLSearchParams(location.search);if(params.has('dps-benchmark-worker')){runWorker(params);return}if(params.has('mage-benchmark-worker')||params.has('rogue-benchmark-worker'))return;
+    if(!document.querySelector('main')||typeof startBoardCampaign!=='function'){setTimeout(init,150);return;}
     buildUI();
   }
   if(document.readyState==='complete'||document.readyState==='interactive')init();
