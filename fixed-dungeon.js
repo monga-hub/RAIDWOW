@@ -8,7 +8,7 @@ const GRUMARAT_TEMPLE={
   start:'gate',
   rooms:[
     {id:'gate',number:1,name:'Ingresso del Dungeon',kind:'entrance',encounter:['GOBLIN','GOBLIN'],links:['high-stairs','tongue-pools'],closeup:'assets/ingresso.jpeg?v=1',terrain:'assets/terrain-start-v1.jpg?v=1',terrainLayout:{rows:4,cols:6,passages:{west:[2,3],east:[2,3]},obstacles:[]}},
-    {id:'vestibule',number:2,name:'Il Crocevia delle Lucciole',kind:'hall',encounter:['GOBLIN','GOBLIN'],links:['gate','cistern'],closeup:'assets/stanza-e2-01.jpeg?v=1',terrain:'assets/terrain-e2-01-v1.jpg?v=1',terrainLayout:{rows:4,cols:6,passages:{west:[2,3],east:[2,3]},obstacles:[]}},
+    {id:'vestibule',number:2,name:'Il Crocevia delle Lucciole',kind:'hall',encounter:['GOBLIN','GOBLIN'],objective:{type:'defense',title:'Difesa della Luce',name:'Lanterna delle Lucciole',hp:12,rounds:4,breachCol:3,damagePerEnemy:1,position:{row:2,col:1},waves:[['GOBLIN','GOBLIN'],['GOBLIN'],['GOBLIN','ENGINEER'],['WARCHIEF']]},links:['gate','cistern'],closeup:'assets/stanza-e2-01.jpeg?v=1',terrain:'assets/terrain-e2-01-v1.jpg?v=1',terrainLayout:{rows:4,cols:6,passages:{west:[2,3],east:[2,3]},obstacles:[]}},
     {id:'cistern',number:3,name:'La Gola del Fango Silente',kind:'crossroads',encounter:['GOBLIN','GOBLIN','ENGINEER'],links:['vestibule','ossuary','high-stairs','eye-well','tongue-pools','root-gallery'],closeup:'assets/stanza-e2-02.jpeg?v=1',terrain:'assets/terrain-e2-02-v1.jpg?v=1',terrainLayout:{rows:4,cols:6,passages:{west:[2,3],east:[2,3]},obstacles:[]}},
     {id:'ossuary',number:4,name:'La Cripta delle Spore Dorate',kind:'chapel',encounter:['GOBLIN','GOBLIN','WARCHIEF'],links:['cistern','tongue-pools','high-stairs'],closeup:'assets/stanza-e2-06.jpeg?v=1',terrain:'assets/terrain-e2-06-v1.jpg?v=1',terrainLayout:{rows:4,cols:6,passages:{west:[2,3],east:[2,3]},obstacles:[]}},
     {id:'tongue-pools',number:5,name:'Le Pozze delle Lingue in Agguato',kind:'pools',encounter:['GOBLIN','WARCHIEF','ENGINEER'],links:['gate','ossuary','high-stairs','four-eyes-chapel','cistern'],closeup:'assets/stanza-e2-08.jpeg?v=1',terrain:'assets/terrain-e2-08-v1.jpg?v=1',terrainLayout:{rows:4,cols:6,passages:{west:[2,3],east:[2,3]},obstacles:[]},key:'Chiave Enrage I'},
@@ -24,7 +24,7 @@ const GRUMARAT_TEMPLE={
 function fixedTempleRoom(id){return GRUMARAT_TEMPLE.rooms.find(room=>room.id===id)}
 function applyFixedTempleEncounter(g,room,templeId=g?.temple?.pendingId||g?.temple?.currentId){
   const plan=fixedTempleRoom(templeId);if(!plan||!room||!Array.isArray(plan.encounter))return room;
-  room.fighters=[...plan.encounter];room.fightersAlive=room.fighters.length;room.fixedEncounter=true;
+  room.fighters=[...plan.encounter];room.fightersAlive=room.fighters.length;room.fixedEncounter=true;room.objective=plan.objective?structuredClone(plan.objective):null;
   room.composition??={known:{},hidden:{},total:{}};
   room.composition.known={...room.composition.known,FIGHTER:room.fighters.length};
   room.composition.hidden={...room.composition.hidden,FIGHTER:0};
