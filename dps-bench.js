@@ -10,16 +10,17 @@
   const ROLES=['warrior','rogue','healer','mage','paladin','warlock','shaman','hunter'];
   const LABELS={warrior:'Guerriero',rogue:'Rogue',healer:'Prete',mage:'Mago',paladin:'Paladino',warlock:'Warlock',shaman:'Sciamano',hunter:'Hunter'};
   const COLORS={warrior:'#c98b4b',rogue:'#8c6fd0',healer:'#e7ca76',mage:'#5aa9e6',paladin:'#e3c462',warlock:'#a56bd1',shaman:'#35a9d8',hunter:'#7fc451'};
+  const GAME_DATA=window.RAIDWOW_BENCH_DATA||{talents:{},talentCards:{},cardNames:{},cardAffinities:{}};
 
   // parametri danno editabili: [key,label,default]. Le carte da talento sono in coda.
   const PARAM_DEFS={
     warrior:[['sword_base','Arma base',1],['heroic_strike','Heroic Strike (+ arma)',2],['rend_bleed','Rend (+ arma)',1],['crit','Critico (+)',1],['concussion_blow','Concussion Blow — talento',2],['shield_slam','Shield Slam — talento',3],['thunder_stomp','Thunder Stomp (+ arma) — talento',1],['execute','Execute (+ arma)',1],['sweeping_strikes','Sweeping Strikes (+ arma)',1],['whirlwind','Whirlwind (+ arma)',2]],
-    rogue:[['dagger_base','Pugnale (base)',1],['backstab','Backstab (+)',1],['eviscerate','Eviscerate (Combo medio)',2],['kick','Kick',2],['crit','Critico (+)',1],['mutilate','Mutilate — talento',3],['cheap_shot','Cheap Shot — talento',3],['fan_of_knives','Fan of Knives (AOE) — talento',1]],
-    healer:[['smite','Smite',2],['mind_blast','Mind Blast',3],['shadow_word_pain','Shadow Word: Pain (totale)',2],['wand','Bacchetta',1],['holy_nova','Holy Nova (AOE) — talento',1],['penance','Penance offensiva — talento',3],['mind_flay','Mind Flay (completo) — talento',4],['silence','Silence — talento',1]],
+    rogue:[['dagger_base','Pugnale (base)',1],['backstab','Backstab (+)',1],['eviscerate','Eviscerate (Combo medio)',2],['kick','Kick',2],['crit','Critico (+)',1],['mutilate','Mutilate — talento',3],['cheap_shot','Cheap Shot — talento',3],['fan_of_knives','Fan of Knives (AOE) — talento',3]],
+    healer:[['smite','Smite',2],['mind_blast','Mind Blast',4],['shadow_word_pain','Shadow Word: Pain (totale)',4],['wand','Bacchetta',1],['holy_nova','Holy Nova (AOE) — talento',1],['penance','Penance offensiva — talento',3],['mind_flay','Mind Flay (completo) — talento',9],['silence','Silence — talento',3]],
     mage:[['frostbolt','Frostbolt',2],['fireball','Fireball (completo)',4],['blizzard','Blizzard',1],['counterspell','Counterspell',1],['wand','Frost Wand',1],['crit','Critico (+)',1],['frost_nova','Frost Nova (AOE) — talento',2],['cone_of_cold','Cone of Cold (AOE) — talento',2],['fire_blast','Fire Blast — talento',3],['scorch','Scorch + 2 cariche — talento',5],['pyroblast','Pyroblast (completo) — talento',7]],
     paladin:[['hammer','Martello base',1],['crusader_strike','Oathbound Blow (+ arma)',1],['consecration','Dawn Circle (AOE)',1],['judgment','Sun Verdict',2],['avengers_shield','Returning Aegis (AOE)',2],['hammer_justice','Lawbringer Strike',1],['holy_shock','Radiant Jolt',3]],
     warlock:[['shadow_bolt','Void Needle',2],['corruption','Rot Seed (totale)',2],['immolate','Witchflame (totale)',3],['drain_life','Blood Tithe',2],['curse_agony','Torment Spiral (totale)',6],['siphon_life','Leeching Hex (totale)',3],['curse_exhaustion','Withering Chains',1],['wand','Wand',1]],
-    shaman:[['weapon','Ascia base',1],['storm_maul','Storm Maul (+ arma)',1],['sky_spark','Sky Spark',2],['thunder_rend','Thunder Rend',3],['forked_sky','Forked Sky (AOE)',2],['crash_wave','Crash Wave (AOE)',2]],
+    shaman:[['weapon','Ascia base',1],['storm_maul','Storm Maul (+ arma)',4],['sky_spark','Sky Spark',3],['thunder_rend','Thunder Rend',4],['forked_sky','Forked Sky (AOE)',2],['crash_wave','Crash Wave (AOE)',2],['raging_totem','Raging Totem (2 cariche melee)',2]],
     hunter:[['bow','Arco base',1],['quarry_mark','Quarry Mark',1],['piercing_shot','Piercing Shot',3],['fang_command','Fang Command',2],['pinning_shot','Pinning Shot',2],['scatter_volley','Scatter Volley (AOE)',1],['pounce_command','Pounce Command (AOE)',2],['snare_trap','Snare Trap (AOE)',1],['split_arrow','Split Arrow',2],['deep_pierce','Deep Pierce',3],['pack_finish','Pack Finish',3],['shock_trap','Shock Trap (AOE)',1],['sweeping_volley','Sweeping Volley (AOE)',2],['pack_pounce','Pack Pounce (AOE)',2],['predator_storm','Predator Storm (AOE)',3]]
   };
   const PARAMS={};
@@ -120,6 +121,8 @@
     single:{warrior:['heroic_mastery','improved_rend','execute','sweeping_strikes'],rogue:['improved_backstab','opportunity','mutilate','improved_eviscerate','improved_critical'],healer:['improved_mind_blast','improved_shadow_word_pain','mind_flay','silence','shadowform'],mage:['improved_fireball','ignite','fire_blast','scorch','combustion'],paladin:['improved_consecration','avengers_shield','hammer_justice'],warlock:['improved_corruption','improved_drain_life','curse_agony','siphon_life','curse_exhaustion','shadow_mastery'],shaman:['charged_edge','storm_focus','forked_sky','crash_wave','storm_avatar'],hunter:['steady_hand','patient_hunt','split_arrow','deep_pierce','pack_finish','perfect_quarry']},
     aoe:{warrior:['heroic_mastery','thunder_stomp','sweeping_strikes','whirlwind'],rogue:['dirty_tricks','cheap_shot','fan_of_knives'],healer:['holy_nova','penance'],mage:['improved_frostbolt','frost_nova','improved_blizzard','cone_of_cold','shatter'],paladin:['improved_consecration','avengers_shield','hammer_justice'],warlock:['improved_corruption','improved_drain_life','curse_agony','siphon_life','curse_exhaustion','shadow_mastery'],shaman:['charged_edge','storm_focus','forked_sky','crash_wave','storm_avatar'],hunter:['barbed_control','wide_scatter','shock_trap','sweeping_volley','pack_pounce','predator_storm']}
   };
+  const BRANCH_LABELS={warrior:{protection:'Ironwall',arms:'Bloodstorm'},healer:{holy:'Dawn Covenant',shadow:'Umbral Rite'},rogue:{assassination:'Crimson Art',subtlety:'Smoke Craft'},mage:{frost:'Rimecraft',fire:'Embercraft'},paladin:{protection:'Protection',holy:'Holy'},warlock:{affliction:'Blightweaving',demonology:'Pactcraft'},shaman:{stormclaw:'Stormclaw',tidebinding:'Tidebinding'},hunter:{deadeye:'Deadeye',wildsnare:'Wildsnare'}};
+  const branchLabel=(role,branch)=>BRANCH_LABELS[role]?.[branch]||branch;
   let TARGETS=1;                                        // n. manichini (1-4)
 
 
@@ -161,7 +164,7 @@
     if(role==='healer'){
       const shadowform=isOn('healer','shadowform'),ticks=2+bonus('healer','improved_shadow_word_pain');
       if(card==='mind_blast')return P.mind_blast+bonus('healer','improved_mind_blast')+(shadowform?1:0);
-      if(card==='shadow_word_pain')return P.shadow_word_pain+bonus('healer','improved_shadow_word_pain')+(shadowform?ticks:0);
+      if(card==='shadow_word_pain')return P.shadow_word_pain+2*bonus('healer','improved_shadow_word_pain')+(shadowform?ticks:0);
       if(['mind_flay','silence'].includes(card))return P[card]+(shadowform?1:0);
       return P[card]||0;
     }
@@ -170,10 +173,8 @@
       if(card==='frostbolt')d+=bonus('mage','improved_frostbolt');
       if(card==='blizzard')d+=bonus('mage','improved_blizzard');
       if(card==='fireball')d+=bonus('mage','improved_fireball');
-      if(FROST.has(card)&&AOE.has(card)&&TARGETS>1)d++;
-      if(FIRE.has(card)&&bonus('mage','improved_fireball')>=3&&TARGETS===1)d+=2;
+      if(card==='blizzard'&&TARGETS>1)d++;
       if(FIRE.has(card))d+=bonus('mage','ignite');
-      if(FIRE.has(card)&&isOn('mage','combustion'))d+=1;
       return d+(crit?P.crit:0);
     }
     if(role==='paladin'){
@@ -192,7 +193,6 @@
     if(role==='shaman'){
       let d=card==='bare'?P.weapon:card==='storm_maul'?P.weapon+P.storm_maul+bonus('shaman','charged_edge'):P[card]||0;
       if(card==='sky_spark')d+=bonus('shaman','storm_focus');
-      if(isOn('shaman','storm_avatar'))d+=1;
       return d;
     }
     if(role==='hunter'){
@@ -217,7 +217,7 @@
     mage:{frostbolt:null,fireball:null,blizzard:null,frost_nova:null,cone_of_cold:null,fire_blast:null,scorch:null,pyroblast:null,counterspell:null,wand:null},
     paladin:{crusader_strike:null,consecration:null,judgment:null,avengers_shield:null,hammer_justice:null,holy_shock:null,bare:null},
     warlock:{shadow_bolt:null,corruption:null,immolate:null,drain_life:null,curse_agony:null,siphon_life:null,curse_exhaustion:null,wand:null},
-    shaman:{storm_maul:null,sky_spark:null,thunder_rend:null,forked_sky:null,crash_wave:null,bare:null},
+    shaman:{storm_maul:null,sky_spark:null,thunder_rend:null,forked_sky:null,crash_wave:null,raging_totem:null,bare:null},
     hunter:{quarry_mark:null,piercing_shot:null,fang_command:null,pinning_shot:null,scatter_volley:null,pounce_command:null,snare_trap:null,split_arrow:null,deep_pierce:null,pack_finish:null,shock_trap:null,sweeping_volley:null,pack_pounce:null,predator_storm:null,bare:null}
   };
   const DMG_CARDS={
@@ -227,12 +227,13 @@
     mage:['pyroblast','fireball','scorch','fire_blast','frost_nova','cone_of_cold','frostbolt','blizzard','counterspell','wand'],
     paladin:['holy_shock','avengers_shield','judgment','crusader_strike','consecration','hammer_justice','bare'],
     warlock:['curse_agony','siphon_life','immolate','drain_life','shadow_bolt','corruption','curse_exhaustion','wand'],
-    shaman:['forked_sky','crash_wave','thunder_rend','sky_spark','storm_maul','bare'],
+    shaman:['forked_sky','crash_wave','thunder_rend','sky_spark','storm_maul','raging_totem','bare'],
     hunter:['predator_storm','deep_pierce','pack_finish','piercing_shot','fang_command','split_arrow','pounce_command','pack_pounce','sweeping_volley','pinning_shot','scatter_volley','snare_trap','shock_trap','quarry_mark','bare']
   };
-  const DEAD_CARDS={warrior:['taunt','shield_protection','battle_shout','last_stand'],rogue:['kidney_shot','evasion','preparation','expose_armor','cold_blood','shadowstep','gouge','blind'],healer:['flash_heal','greater_heal','power_word_shield','purify'],mage:['blink','frost_armor','combustion'],paladin:['holy_light','righteous_defense','blessing_protection','cleanse','blessing_sanctuary','paladin_holy_shield','flash_of_light','beacon_of_light','divine_favor','lay_on_hands'],warlock:['fear','summon_imp','healthstone','summon_voidwalker','soul_link','fel_domination'],shaman:['gale_totem','primal_mend','flowing_chain','cleansing_rain','spring_totem','tempest_stride','raging_totem','storm_avatar','living_current','ancestral_well','purifying_totem','swift_current','tide_rebirth'],hunter:['stillness','retreat_roll']};
+  const DEAD_CARDS={warrior:['taunt','shield_protection','battle_shout','last_stand'],rogue:['kidney_shot','evasion','preparation','expose_armor','cold_blood','shadowstep','gouge','blind'],healer:['flash_heal','greater_heal','power_word_shield','purify'],mage:['blink','frost_armor','combustion'],paladin:['holy_light','righteous_defense','blessing_protection','cleanse','blessing_sanctuary','paladin_holy_shield','flash_of_light','beacon_of_light','divine_favor','lay_on_hands'],warlock:['fear','summon_imp','healthstone','summon_voidwalker','soul_link','fel_domination'],shaman:['gale_totem','primal_mend','flowing_chain','cleansing_rain','spring_totem','tempest_stride','storm_avatar','living_current','ancestral_well','purifying_totem','swift_current','tide_rebirth'],hunter:['stillness','retreat_roll']};
   const WEAPON=new Set(['bare','wand']);                 // colpo d'arma: non consuma carta dal mazzo
   const CAST=new Set(['mind_flay','fireball','pyroblast']);
+  const FREE_CARDS=new Set(['last_stand','cold_blood','shadowstep','blink','combustion','power_infusion','divine_favor','fel_domination','tempest_stride','storm_avatar','swift_current','stillness','retreat_roll']);
   const critBoostable=(role,card)=>role==='warrior'?['charge','sword','rend','sunder_armor','concussion_blow','shield_slam','thunder_stomp','execute','sweeping_strikes','whirlwind','bare'].includes(card)
     :role==='rogue'?['backstab','eviscerate','mutilate','bare'].includes(card)
     :role==='healer'?false
@@ -248,13 +249,35 @@
     shaman:['storm_maul','storm_maul','sky_spark','thunder_rend','gale_totem','primal_mend','primal_mend','flowing_chain','cleansing_rain','spring_totem'],
     hunter:['quarry_mark','quarry_mark','piercing_shot','piercing_shot','fang_command','pinning_shot','pinning_shot','scatter_volley','pounce_command','snare_trap']
   };
+  const BENCH_DECK_SIZE=10;
+  const branchCardKey=(role,branch)=>role==='warrior'?(branch==='protection'?'shield':'sword'):branch;
+  function inferredBranch(role){const totals={};for(const id of ACTIVE[role]){const branch=GAME_DATA.talents[role]?.[id]?.branch;if(branch)totals[branch]=(totals[branch]||0)+1}return Object.entries(totals).sort((a,b)=>b[1]-a[1])[0]?.[0]||null}
+  function buildBranchDeck(role,branch,activeIds=ACTIVE[role]){
+    const deck=[...BASE_DECK[role]],wanted=branchCardKey(role,branch),affinities=GAME_DATA.cardAffinities[role]||{};
+    for(const id of activeIds){
+      const editable=TALENT_DEFS[role].find(talent=>talent.id===id&&talent.kind==='count'),cards=editable?Array(V(role,id)).fill(editable.card):GAME_DATA.talentCards[role]?.[id]||[],protectedSlots=new Set();
+      for(const card of cards){
+        const candidates=deck.map((value,index)=>({value,index,affinity:affinities[value]||[]})).filter(entry=>!protectedSlots.has(entry.index));
+        let pick=candidates.find(entry=>entry.affinity.length===1&&!entry.affinity.includes(wanted));
+        if(!pick)pick=candidates.find(entry=>DEAD_CARDS[role].includes(entry.value));
+        if(!pick)pick=candidates.sort((a,b)=>(DMG_CARDS[role].includes(a.value)?hitDamage(role,a.value,false,{marked:true}):0)-(DMG_CARDS[role].includes(b.value)?hitDamage(role,b.value,false,{marked:true}):0))[0];
+        if(pick){deck[pick.index]=card;protectedSlots.add(pick.index)}
+      }
+    }
+    return deck.slice(0,BENCH_DECK_SIZE);
+  }
   const START_STANCE=Object.fromEntries(ROLES.map(role=>[role,role==='rogue'?'FRONT':role==='mage'?'FAR':null]));
   const HAND_LIMIT=5;
   let AI_MODE='greedy', ROLL_DEPTH=6, ROLL_COUNT=4;      // rollout Monte-Carlo
   function shuf(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
   function dump(s,c){const i=s.hand.indexOf(c);if(i>=0){s.hand.splice(i,1);s.discard.push(c);}}
   function refillS(s){while(s.hand.length<HAND_LIMIT){if(!s.draw.length){if(!s.discard.length)break;s.draw=shuf(s.discard);s.discard=[];}s.hand.push(s.draw.pop());}}
-  function clone(s){return {role:s.role,deck:s.deck,draw:[...s.draw],discard:[...s.discard],hand:[...s.hand],stance:s.stance,casting:s.casting,marked:s.marked,perfectQuarryBonus:s.perfectQuarryBonus};}
+  function playFreeCards(s){for(const card of [...s.hand]){if(!FREE_CARDS.has(card))continue;dump(s,card);if(card==='cold_blood')s.coldBlood=1;if(card==='combustion')s.combustion=2;if(card==='power_infusion')s.powerInfusion=2;if(card==='tempest_stride')s.tempestStride=1;if(card==='storm_avatar')s.stormAvatar=2;if(card==='stillness')s.stillness=1}}
+  function clone(s){return {role:s.role,deck:s.deck,draw:[...s.draw],discard:[...s.discard],hand:[...s.hand],stance:s.stance,casting:s.casting,marked:s.marked,perfectQuarryBonus:s.perfectQuarryBonus,coldBlood:s.coldBlood,combustion:s.combustion,powerInfusion:s.powerInfusion,tempestStride:s.tempestStride,stormAvatar:s.stormAvatar,stillness:s.stillness};}
+  const HUNTER_RANGED=new Set(['quarry_mark','piercing_shot','pinning_shot','scatter_volley','snare_trap','split_arrow','deep_pierce','shock_trap','sweeping_volley']);
+  function procTargets(card){if(card==='avengers_shield')return Math.min(TARGETS,3);if(card==='forked_sky'||card==='sweeping_strikes')return Math.min(TARGETS,2);return AOE.has(card)?TARGETS:1}
+  function armedBonus(s,card){if(s.role==='rogue'&&s.coldBlood&&['eviscerate','mutilate'].includes(card))return 2;if(s.role==='mage'&&s.combustion&&FIRE.has(card))return 1;if(s.role==='healer'&&s.powerInfusion&&DMG_CARDS.healer.includes(card))return 1;if(s.role==='shaman')return(s.stormAvatar?3:0)+(s.tempestStride&&card==='storm_maul'?1:0);if(s.role==='hunter'&&s.stillness&&HUNTER_RANGED.has(card))return 2;return 0}
+  function consumeArmedBonus(s,card){if(s.role==='rogue'&&s.coldBlood&&['eviscerate','mutilate'].includes(card))s.coldBlood=0;if(s.role==='mage'&&s.combustion&&FIRE.has(card))s.combustion--;if(s.role==='healer'&&s.powerInfusion&&DMG_CARDS.healer.includes(card))s.powerInfusion--;if(s.role==='shaman'){if(s.stormAvatar)s.stormAvatar--;if(s.tempestStride&&card==='storm_maul')s.tempestStride=0}if(s.role==='hunter'&&s.stillness&&HUNTER_RANGED.has(card))s.stillness=0}
   function candidates(s){
     const role=s.role, crit=s.hand.includes('critical'), out=[];
     const flipFree=false;
@@ -264,7 +287,7 @@
       const st=CARD_STANCE[role][card], needFlip=st&&st!==s.stance, flipCost=needFlip?(flipFree?0:1):0;
       const cast=CAST.has(card)&&s.casting!==card;
       const boost=crit&&critBoostable(role,card);
-      const dmg=hitDamage(role,card,boost,s);
+      const dmg=hitDamage(role,card,boost,s)+armedBonus(s,card)*procTargets(card);
       out.push({card,st,needFlip,flipCost,cast,crit:boost,dmg,val:dmg/((cast?2:1)+flipCost)});
     }
     return out;
@@ -275,7 +298,7 @@
     if(s.casting&&s.hand.includes(s.casting)){          // completa cast lungo
       const card=s.casting, st=CARD_STANCE[role][card];
       if(st&&st!==s.stance){s.stance=st;return 0;}
-      dump(s,card); s.casting=null; return hitDamage(role,card,false,s);
+      dump(s,card);s.casting=null;const dmg=hitDamage(role,card,false,s)+armedBonus(s,card)*procTargets(card);consumeArmedBonus(s,card);return dmg;
     }
     const cands=candidates(s);
     if(!cands.length)return 0;
@@ -285,7 +308,7 @@
   function applyPick(s,pick){
     const role=s.role;
     if(WEAPON.has(pick.card)){                            // colpo d'arma: se ci sono carte morte, ciclane una
-      const dead=DEAD_CARDS[role].find(c=>s.hand.includes(c));
+      const dead=s.hand.find(card=>!DMG_CARDS[role].includes(card)&&card!=='critical');
       if(dead){dump(s,dead);return 0;}
     }
     if(pick.needFlip){s.stance=pick.st; if(pick.flipCost)return 0;} // flip a pagamento = questa azione
@@ -294,6 +317,7 @@
     if(!WEAPON.has(pick.card))dump(s,pick.card);
     if(role==='hunter'&&pick.card==='quarry_mark'){s.marked=true;s.perfectQuarryBonus=isOn('hunter','perfect_quarry')?2:0;}
     if(role==='hunter'&&pick.card==='piercing_shot')s.perfectQuarryBonus=0;
+    consumeArmedBonus(s,pick.card);
     return pick.dmg;
   }
   const greedy=(cands)=>cands.reduce((a,b)=>b.val>a.val?b:a);
@@ -305,29 +329,45 @@
       for(let i=0;i<ROLL_COUNT;i++){
         const cl=clone(s);
         tot+=applyPick(cl,c);
-        for(let k=1;k<ROLL_DEPTH;k++){ if(cl.hand.length<2)refillS(cl); tot+=actOne(cl,rnd); }
+        for(let k=1;k<ROLL_DEPTH;k++){if(cl.hand.length<2){refillS(cl);playFreeCards(cl)}tot+=actOne(cl,rnd)}
       }
       const avg=tot/ROLL_COUNT;
       if(!best||avg>best.avg)best={c,avg};
     }
     return best.c;
   }
-  function newSim(role){
-    const deck=[...BASE_DECK[role]];
-    const additions=TALENT_DEFS[role].flatMap(tal=>tal.kind==='count'&&isOn(role,tal.id)?Array(V(role,tal.id)).fill(tal.card):[]);
-    for(const card of additions){let index=deck.findIndex(value=>DEAD_CARDS[role].includes(value));if(index<0)index=deck.map((value,i)=>({i,value:DMG_CARDS[role].includes(value)?hitDamage(role,value,false,{marked:true}):0})).filter(entry=>!(role==='hunter'&&entry.value==='quarry_mark')).sort((a,b)=>a.value-b.value)[0]?.i??-1;if(index>=0)deck[index]=card;}
-    return {role, deck, draw:shuf(deck), discard:[], hand:[], stance:START_STANCE[role], casting:null,marked:false,perfectQuarryBonus:0,damage:0,actions:0,wasted:0,rounds:0,peakRound:0};
+  function newSim(role,deckOverride=null,branch=inferredBranch(role)){
+    const deck=deckOverride?[...deckOverride]:branch?buildBranchDeck(role,branch):[...BASE_DECK[role]];
+    return {role, deck, draw:shuf(deck), discard:[], hand:[], stance:START_STANCE[role], casting:null,marked:false,perfectQuarryBonus:0,coldBlood:0,combustion:0,powerInfusion:0,tempestStride:0,stormAvatar:0,stillness:0,damage:0,actions:0,wasted:0,rounds:0,peakRound:0};
   }
   function advance(sim, rounds){
     const choose=AI_MODE==='rollout'?rolloutChoose:greedy;
     for(let r=0;r<rounds;r++){
-      sim.rounds++; refillS(sim);let roundDamage=0;
+      sim.rounds++;refillS(sim);playFreeCards(sim);let roundDamage=0;
       for(let a=0;a<3;a++){
         const dmg=actOne(sim,choose);
         sim.actions++;sim.damage+=(dmg>0?dmg:0);roundDamage+=Math.max(0,dmg);if(dmg<=0)sim.wasted++;
       }
       sim.peakRound=Math.max(sim.peakRound,roundDamage);
     }
+  }
+  const seededRandom=seed=>()=>((seed=Math.imul(seed,1664525)+1013904223>>>0)/4294967296);
+  function progressionMetric(role,branch,deck,rounds,targets,seed){const previousTargets=TARGETS,previousRandom=Math.random;TARGETS=targets;Math.random=seededRandom(seed);const sim=newSim(role,deck,branch);advance(sim,rounds);Math.random=previousRandom;TARGETS=previousTargets;return{dpr:+(sim.damage/sim.rounds).toFixed(3),peak:+sim.peakRound.toFixed(1),wastedPct:+(100*sim.wasted/sim.actions).toFixed(1)}}
+  function progressionReport(rounds=600){
+    const saved=Object.fromEntries(ROLES.map(role=>[role,[...ACTIVE[role]]])),savedTargets=TARGETS,rows=[];
+    for(const role of ROLES){
+      const talents=GAME_DATA.talents[role]||{},branches=[...new Set(Object.values(talents).map(talent=>talent.branch))];
+      for(const branch of branches){
+        ACTIVE[role].clear();let points=0,lastRecorded=null,previousSingle=0,previousArea=0;
+        const record=(talentId,label,cards=[])=>{TARGETS=1;const deck=buildBranchDeck(role,branch),seed=90210+ROLES.indexOf(role)*1000,one=progressionMetric(role,branch,deck,rounds,1,seed),area=progressionMetric(role,branch,deck,rounds,4,seed+41),row={role,label:LABELS[role],branch,branchLabel:branchLabel(role,branch),points,talentId,talent:label,cards:[...cards],deck:[...deck],single:one,area,deltaSingle:+(one.dpr-previousSingle).toFixed(3),deltaArea:+(area.dpr-previousArea).toFixed(3)};rows.push(row);previousSingle=one.dpr;previousArea=area.dpr;lastRecorded=talentId};
+        record(null,'Base');
+        for(const [id,talent] of Object.entries(talents).filter(([,talent])=>talent.branch===branch)){ACTIVE[role].add(id);points+=talent.cost||1;const cards=GAME_DATA.talentCards[role]?.[id]||[];if(cards.length)record(id,talent.name,cards)}
+        const finalTalent=Object.entries(talents).filter(([,talent])=>talent.branch===branch).at(-1);if(finalTalent&&lastRecorded!==finalTalent[0])record(finalTalent[0],`${branchLabel(role,branch)} completo`);
+      }
+    }
+    for(const role of ROLES){ACTIVE[role].clear();for(const id of saved[role])ACTIVE[role].add(id)}TARGETS=savedTargets;
+    if(rows.some(row=>row.deck.length!==BENCH_DECK_SIZE))throw new Error('Progression bench: deck non valido');
+    return{rounds,deckSize:BENCH_DECK_SIZE,rows};
   }
 
   let sims=[], timer=null;
@@ -348,7 +388,7 @@
       bar.style.width=(100*dpa/maxDpa).toFixed(1)+'%'; bar.textContent=fmt(dpa);
     }
   }
-  function resetSims(){sims=ROLES.map(newSim);refreshCards();}
+  function resetSims(){sims=ROLES.map(role=>newSim(role));refreshCards();}
   function tick(){const n=AI_MODE==='rollout'?3:12;for(const s of sims)advance(s,n);refreshCards();}
   function run(){if(timer)return;if(!sims.length)resetSims();timer=setInterval(tick,60);setBtns(true);}
   function stop(){clearInterval(timer);timer=null;setBtns(false);}
@@ -391,6 +431,9 @@
       #benchPage .mage-scenario-results table{width:100%;border-collapse:collapse;font-size:11px}
       #benchPage .mage-scenario-results th,#benchPage .mage-scenario-results td{padding:6px;border-bottom:1px solid #2c3a2f;text-align:right;white-space:nowrap}
       #benchPage .mage-scenario-results th:first-child,#benchPage .mage-scenario-results td:first-child{text-align:left}
+      #benchPage .progression-results td.deck{max-width:360px;white-space:normal;text-align:left;color:#aeb8ae}
+      #benchPage .progression-results tr.branch-start td{border-top:2px solid #6c5b31}
+      #benchPage .progression-results .spike{color:#ffb36b;font-weight:900}
       #benchPage .mage-spec-fire{color:#ff9a63}.mage-spec-frost{color:#77c9ff}.mage-spec-base{color:#c8cec7}
       #benchPage .dps-note{color:#8a9287;font-size:11px;margin-top:14px;line-height:1.5}`;
     document.head.append(style);
@@ -437,6 +480,10 @@
               </table>
             </article>`).join('')}
         </div>
+        <section class="mage-scenario-bench">
+          <div class="mage-scenario-head"><div><h3>Sviluppo dei mazzi per ramo</h3><p class="muted">Tutte le classi · mazzo coerente di 10 carte · snapshot dopo ogni talento che aggiunge carte · confronto su 1 e 4 bersagli.</p></div><button id="dps-progression-run">Esegui progressione</button></div>
+          <div class="mage-scenario-results progression-results" id="dps-progression-results"><small>Le nuove carte sostituiscono prima le carte esclusive dell’altro ramo. I valori arancioni segnalano una variazione di almeno 2 danni per round.</small></div>
+        </section>
         <section class="mage-scenario-bench">
           <div class="mage-scenario-head"><div><h3>Scenari strategici Mago</h3><p class="muted">Party completo · Base, Fire e Frost · Normal LV9, Heroic LV12, Hardcore LV13 · stessi semi casuali.</p></div><button id="mage-scenario-run">Esegui matrice</button></div>
           <progress class="mage-scenario-progress" id="mage-scenario-progress" max="1" value="0" hidden></progress>
@@ -513,6 +560,8 @@
     document.getElementById('dps-stop').onclick=stop;
     document.getElementById('dps-reset').onclick=reset;
     document.getElementById('dps-back').onclick=()=>{stop();page.hidden=true;document.body.classList.remove('player-board-active');const menu=document.getElementById('mainMenu');if(menu?._showEditors)menu._showEditors();else if(menu)menu.hidden=false};
+    const progressionRun=document.getElementById('dps-progression-run'),progressionResults=document.getElementById('dps-progression-results');
+    progressionRun.onclick=()=>{progressionRun.disabled=true;progressionRun.textContent='Calcolo…';setTimeout(()=>{const report=progressionReport(300),cardLabel=card=>GAME_DATA.cardNames[card]||card,deckLabel=deck=>Object.entries(deck.reduce((counts,card)=>(counts[card]=(counts[card]||0)+1,counts),{})).map(([card,count])=>`${count>1?count+'× ':''}${cardLabel(card)}`).join(' · '),delta=value=>`${value>0?'+':''}${value.toFixed(2)}`,rows=report.rows.map(row=>`<tr class="${row.talentId===null?'branch-start':''}"><td>${row.label}</td><td>${row.branchLabel}</td><td>${row.points}</td><td>${row.talent}</td><td>${row.cards.length?row.cards.map(cardLabel).join(', '):'—'}</td><td class="deck">${deckLabel(row.deck)}</td><td>${row.single.dpr}</td><td class="${Math.abs(row.deltaSingle)>=2&&row.talentId!==null?'spike':''}">${row.talentId===null?'—':delta(row.deltaSingle)}</td><td>${row.area.dpr}</td><td class="${Math.abs(row.deltaArea)>=2&&row.talentId!==null?'spike':''}">${row.talentId===null?'—':delta(row.deltaArea)}</td><td>${row.single.peak} / ${row.area.peak}</td></tr>`).join('');progressionResults.innerHTML=`<table><thead><tr><th>Classe</th><th>Ramo</th><th>Punti</th><th>Snapshot</th><th>Carte introdotte</th><th>Mazzo da 10</th><th>DPR ×1</th><th>Δ</th><th>DPR ×4</th><th>Δ</th><th>Picco ×1/×4</th></tr></thead><tbody>${rows}</tbody></table><small>${report.rounds} round per snapshot. Arancione: variazione assoluta ≥2 DPR rispetto allo snapshot precedente dello stesso ramo.</small>`;progressionRun.disabled=false;progressionRun.textContent='Esegui di nuovo'},0)};
     const scenarioRun=document.getElementById('mage-scenario-run'),scenarioProgress=document.getElementById('mage-scenario-progress'),scenarioResults=document.getElementById('mage-scenario-results');let scenarioFrame=null;
     const scenarioMessage=event=>{if(!scenarioFrame||event.source!==scenarioFrame.contentWindow||event.origin!==location.origin)return;const data=event.data||{};if(data.type==='mage-benchmark-progress'){scenarioProgress.max=data.total;scenarioProgress.value=data.done;scenarioRun.textContent=`Test ${data.done}/${data.total}`;return}if(data.type==='mage-benchmark-error'){scenarioResults.innerHTML=`<strong>Test non completato</strong><pre>${String(data.message)}</pre>`;scenarioRun.disabled=false;scenarioRun.textContent='Riprova';scenarioFrame.remove();scenarioFrame=null;return}if(data.type!=='mage-benchmark-result')return;const spec={base:'Base',fire:'Fire',frost:'Frost'},rows=data.result.summary.map(row=>`<tr><td>${row.scenarioLabel}</td><td>${row.difficulty} · LV${row.level}</td><td class="mage-spec-${row.spec}">${spec[row.spec]}</td><td>${row.clearRate}%</td><td>${row.avgRounds}</td><td>${row.avgPartyHpPct}%</td><td>${row.avgDamageTaken}</td><td>${row.avgControlStops}</td><td>${row.avgConsumables}</td><td>${row.avgMageDamage}</td></tr>`).join('');scenarioResults.innerHTML=`<table><thead><tr><th>Scenario</th><th>Livello</th><th>Build</th><th>Vittorie</th><th>Round</th><th>HP party</th><th>Danni subiti</th><th>Turni negati</th><th>Consumabili</th><th>Danno Mago</th></tr></thead><tbody>${rows}</tbody></table><small>${data.result.samples} prove accoppiate per combinazione.</small>`;scenarioProgress.hidden=true;scenarioRun.disabled=false;scenarioRun.textContent='Esegui di nuovo';scenarioFrame.remove();scenarioFrame=null};
     window.addEventListener('message',scenarioMessage);
@@ -526,11 +575,12 @@
   function runWorker(params){
     TARGETS=Math.max(1,Math.min(4,+params.get('targets')||1));const requestedBuild=params.get('build'),build=requestedBuild==='base'?'base':requestedBuild==='aoe'?'aoe':'single',rounds=Math.max(50,Math.min(2000,+params.get('rounds')||600)),originalRandom=Math.random;let seed=90210+TARGETS*100+(build==='aoe'?1:build==='single'?2:0);Math.random=()=>((seed=Math.imul(seed,1664525)+1013904223>>>0)/4294967296);
     for(const role of ROLES){ACTIVE[role].clear();for(const talent of BENCH_BUILDS[build]?.[role]||[])ACTIVE[role].add(talent)}
-    sims=ROLES.map(newSim);for(const sim of sims)advance(sim,rounds);Math.random=originalRandom;
-    const result={build,targets:TARGETS,rounds,results:sims.map(sim=>({role:sim.role,label:LABELS[sim.role],damage:sim.damage,dpa:+(sim.damage/sim.actions).toFixed(3),dpr:+(sim.damage/sim.rounds).toFixed(3),peakRound:sim.peakRound,wastedPct:+(100*sim.wasted/sim.actions).toFixed(1)})).sort((a,b)=>b.dpr-a.dpr)};document.body.textContent=JSON.stringify(result,null,2);
+    sims=ROLES.map(role=>newSim(role));for(const sim of sims)advance(sim,rounds);Math.random=originalRandom;
+    const result={build,targets:TARGETS,rounds,results:sims.map(sim=>({role:sim.role,label:LABELS[sim.role],deckSize:sim.deck.length,damage:+sim.damage.toFixed(1),dpa:+(sim.damage/sim.actions).toFixed(3),dpr:+(sim.damage/sim.rounds).toFixed(3),peakRound:+sim.peakRound.toFixed(1),wastedPct:+(100*sim.wasted/sim.actions).toFixed(1)})).sort((a,b)=>b.dpr-a.dpr)};document.body.textContent=JSON.stringify(result,null,2);
   }
+  function runProgressionWorker(params){const rounds=Math.max(100,Math.min(2000,+params.get('rounds')||600));document.body.textContent=JSON.stringify(progressionReport(rounds),null,2)}
   function init(){
-    const params=new URLSearchParams(location.search);if(params.has('dps-benchmark-worker')){runWorker(params);return}if(params.has('mage-benchmark-worker')||params.has('rogue-benchmark-worker'))return;
+    const params=new URLSearchParams(location.search);if(params.has('dps-progression-worker')){runProgressionWorker(params);return}if(params.has('dps-benchmark-worker')){runWorker(params);return}if(params.has('mage-benchmark-worker')||params.has('rogue-benchmark-worker'))return;
     if(!document.querySelector('main')||typeof startBoardCampaign!=='function'){setTimeout(init,150);return;}
     buildUI();
   }
