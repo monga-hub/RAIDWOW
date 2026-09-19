@@ -52,6 +52,9 @@ assert.equal(career.completions.heroic,1);assert.equal(career.lastRun.result,'lo
 const backup=JSON.parse(JSON.stringify({type:'raidwow-profile-backup',profile:RaidProfile.load(activeStorage)}));
 assert.equal(RaidProfile.normalize(backup.profile).stats.runs,2,'Un profilo esportato deve poter essere validato prima dell’importazione');
 assert.equal(RaidProfile.normalize({version:99}),null,'Un file di una versione sconosciuta non deve sostituire il profilo');
+assert.deepEqual(RaidProfile.milestone({heroes:{}}),{rank:'Adunata',current:0,total:4,label:'0/4 eroi sviluppati'});
+const fourHeroes={heroes:Object.fromEntries(RaidProfile.ROLES.slice(0,4).map(role=>[role,{heroLevel:7}]))};assert.equal(RaidProfile.milestone(fourHeroes).label,'4/8 eroi sviluppati');
+const fullRoster={heroes:Object.fromEntries(RaidProfile.ROLES.map((role,index)=>[role,{heroLevel:index?8:7}]))};assert.deepEqual(RaidProfile.milestone(fullRoster),{rank:'Compagnia completa',current:7,total:8,label:'7/8 eroi al LV 8'});
 
 assert.equal(RaidProfile.clearJourney(storage),true);
 assert.equal(storage.getItem(RaidProfile.LEGACY_JOURNEY_KEY),null);

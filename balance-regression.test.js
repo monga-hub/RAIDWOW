@@ -78,8 +78,10 @@ assert.match(board,/selected=new Set\(\(account\?\.selectedRoles\|\|\[\]\)\.filt
 assert.match(board,/profile\.selectedRoles=\[\.\.\.roles\];RaidProfile\.write\(localStorage,profile\)/,'Avviare una campagna deve salvare la formazione scelta');
 assert.doesNotMatch(profile,/function clearProfileJourney\([^\n]+selectedRoles=\[\]/,'Terminare la spedizione non deve cancellare la formazione preferita');
 assert.match(board,/function profileSummaryData\(profile\)/,'La home deve ricavare il riepilogo dal profilo persistente');
+assert.match(board,/RaidProfile\?\.milestone\(profile\)[\s\S]*goal\.rank[\s\S]*goal\.label/,'La home deve mostrare il prossimo obiettivo della compagnia');
 assert.match(board,/recordAccountRun\('win',g\)/,'Una vittoria deve aggiornare la carriera della compagnia');
 assert.match(board,/stats\?\.heroes\?\.\[role\]/,'La Scuderia deve mostrare quante spedizioni ha giocato ogni eroe');
+assert.match(board,/data-stable-hero-name[\s\S]*draft\.playerName=event\.target\.value\.trimStart\(\)\.slice\(0,24\)/,'La Scuderia deve permettere di rinominare un eroe sviluppato');
 assert.match(board,/data-menu-profile[\s\S]*PROFILO COMPAGNIA/,'La home deve mostrare il riepilogo della compagnia');
 assert.match(board,/data-stable-company-save[\s\S]*profile\.company=name;[\s\S]*RaidProfile\?\.write\(localStorage,profile\)/,'La Scuderia deve permettere di salvare il nome della compagnia');
 assert.match(board,/new MutationObserver\(\(\)=>\{if\(!menu\.hidden\)syncProfile\(\)\}\)/,'Il riepilogo deve aggiornarsi quando si torna alla home');
