@@ -61,7 +61,7 @@ assert.match(board,/roles\.map\(role=>accountHeroes\[role\]\)\.filter\(Boolean\)
 assert.match(board,/account\?\.unlocks\?\.raidDifficultyIndex\|\|0/,'Le difficoltà sbloccate devono appartenere al profilo e non alla singola spedizione');
 assert.match(board,/Livelli, talenti, mazzi ed equipaggiamenti resteranno nella Scuderia/,'Cambiare compagnia deve dichiarare che la progressione non viene cancellata');
 assert.match(board,/function recoveredAccountBuild\(h\)[^\n]+build\.hp=build\.maxHp[^\n]+filter\(card=>card!=='wound'\)/,'Dopo una sconfitta la Scuderia deve conservare la build ma ripristinare vita e Ferite');
-assert.match(board,/function persistAccountOnLoss\(g\)[^\n]+saveAccountHeroes\(roster,g\.companyName\|\|''\);clearJourney\(\)/,'La sconfitta deve aggiornare la Scuderia e chiudere la spedizione fallita');
+assert.match(board,/function persistAccountOnLoss\(g\)[^\n]+saveAccountHeroes\(roster,g\.companyName\|\|''\);recordAccountRun\('loss',g\);clearJourney\(\)/,'La sconfitta deve aggiornare la carriera, la Scuderia e chiudere la spedizione fallita');
 assert.match(board,/game\.state==='lost'&&!game\.__accountLossSaved&&!game\.tutorial&&!game\.benchmarkMode&&!game\.combatGridScenario/,'Il salvataggio della sconfitta deve avvenire una sola volta e non contaminare tutorial o simulatori');
 assert.match(board,/Progressi salvati nella Scuderia/,'La vittoria deve confermare il salvataggio nel riepilogo');
 assert.match(board,/function stableDeckChange\(build,card,delta\)/,'La Scuderia deve consentire gli scambi del mazzo fuori dalla spedizione');
@@ -78,6 +78,8 @@ assert.match(board,/selected=new Set\(\(account\?\.selectedRoles\|\|\[\]\)\.filt
 assert.match(board,/profile\.selectedRoles=\[\.\.\.roles\];RaidProfile\.write\(localStorage,profile\)/,'Avviare una campagna deve salvare la formazione scelta');
 assert.doesNotMatch(profile,/function clearProfileJourney\([^\n]+selectedRoles=\[\]/,'Terminare la spedizione non deve cancellare la formazione preferita');
 assert.match(board,/function profileSummaryData\(profile\)/,'La home deve ricavare il riepilogo dal profilo persistente');
+assert.match(board,/recordAccountRun\('win',g\)/,'Una vittoria deve aggiornare la carriera della compagnia');
+assert.match(board,/stats\?\.heroes\?\.\[role\]/,'La Scuderia deve mostrare quante spedizioni ha giocato ogni eroe');
 assert.match(board,/data-menu-profile[\s\S]*PROFILO COMPAGNIA/,'La home deve mostrare il riepilogo della compagnia');
 assert.match(board,/data-stable-company-save[\s\S]*profile\.company=name;[\s\S]*RaidProfile\?\.write\(localStorage,profile\)/,'La Scuderia deve permettere di salvare il nome della compagnia');
 assert.match(board,/new MutationObserver\(\(\)=>\{if\(!menu\.hidden\)syncProfile\(\)\}\)/,'Il riepilogo deve aggiornarsi quando si torna alla home');
@@ -88,6 +90,8 @@ assert.match(board,/\.main-menu\{overflow:hidden\}/,'Anche la home deve essere u
 assert.match(board,/\.stable-overlay\{[^}]*overflow:hidden/,'La Scuderia deve restare dentro il viewport');
 assert.match(board,/data-stable-tab="hero"[\s\S]*data-stable-tab="equipment"[\s\S]*data-stable-tab="deck"/,'La scheda eroe deve usare sezioni invece dello scorrimento');
 assert.match(board,/const pager=\(page,pages\)/,'Liste lunghe di Bag, deposito e mazzo devono usare pagine');
+assert.match(board,/data-stable-export>Esporta profilo[\s\S]*data-stable-import>Importa profilo/,'La Scuderia deve poter esportare e importare il profilo');
+assert.match(board,/RaidProfile\?\.normalize\(parsed\?\.profile\|\|parsed\)[\s\S]*confirm\(`/,'Un backup deve essere validato e confermato prima di sostituire il profilo');
 
 const inventoryNames=['stableItemFitsRole','stableEnsureBag','stableStoreItem','stableDepositItem','stableWithdrawItem','stableBagCanTake','stableEquipFromBag'];
 const inventorySource=inventoryNames.map(name=>board.match(new RegExp(`function ${name}\\([^\\n]+`))?.[0]).join('\n');

@@ -20,6 +20,7 @@ assert.equal(migrated.heroes.mage,null);
 assert.equal(migrated.unlocks.raidDifficultyIndex,2);
 assert.deepEqual(migrated.unlocks.cleared,{normale:true,heroic:true});
 assert.equal(migrated.stash.length,0);
+assert.deepEqual({runs:migrated.stats.runs,wins:migrated.stats.wins,losses:migrated.stats.losses},{runs:0,wins:0,losses:0});
 assert.deepEqual(JSON.parse(storage.raw(RaidProfile.LEGACY_JOURNEY_KEY)),legacyJourney,'La migrazione non deve modificare il vecchio salvataggio');
 assert.equal(RaidProfile.load(storage).createdAt,migrated.createdAt,'La migrazione deve essere idempotente');
 
@@ -42,6 +43,15 @@ assert.equal(RaidProfile.write(activeStorage,stableProfile),true);
 assert.equal(RaidProfile.load(activeStorage).company,'Custodi della Luna','Il nome della compagnia deve persistere nel profilo');
 assert.deepEqual(RaidProfile.load(activeStorage).stash,[{item:'silver_bomb',count:2}],'Il deposito condiviso deve persistere nel profilo');
 assert.deepEqual(RaidProfile.load(activeStorage).heroes.warrior.bag,[{item:'bronze_bandage',count:1}],'La Bag modificata in Scuderia deve persistere con l’eroe');
+assert.equal(RaidProfile.recordRun(activeStorage,'win',['warrior','hunter'],'heroic','temple','2026-09-19T12:00:00.000Z'),true);
+assert.equal(RaidProfile.recordRun(activeStorage,'loss',['warrior','shaman'],'normale','temple','2026-09-19T13:00:00.000Z'),true);
+const career=RaidProfile.load(activeStorage).stats;
+assert.deepEqual({runs:career.runs,wins:career.wins,losses:career.losses},{runs:2,wins:1,losses:1});
+assert.equal(career.heroes.warrior,2);assert.equal(career.heroes.hunter,1);assert.equal(career.heroes.shaman,1);
+assert.equal(career.completions.heroic,1);assert.equal(career.lastRun.result,'loss');
+const backup=JSON.parse(JSON.stringify({type:'raidwow-profile-backup',profile:RaidProfile.load(activeStorage)}));
+assert.equal(RaidProfile.normalize(backup.profile).stats.runs,2,'Un profilo esportato deve poter essere validato prima dell’importazione');
+assert.equal(RaidProfile.normalize({version:99}),null,'Un file di una versione sconosciuta non deve sostituire il profilo');
 
 assert.equal(RaidProfile.clearJourney(storage),true);
 assert.equal(storage.getItem(RaidProfile.LEGACY_JOURNEY_KEY),null);
