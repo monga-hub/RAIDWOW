@@ -5,6 +5,7 @@ const board=fs.readFileSync('player-board.js','utf8');
 const bench=fs.readFileSync('dps-bench.js','utf8');
 const dungeon=fs.readFileSync('fixed-dungeon.js','utf8');
 const connected=fs.readFileSync('connected-rooms.js','utf8');
+const profile=fs.readFileSync('profile-storage.js','utf8');
 
 assert.match(board,/warlockShadowPower\(h,3,card\)/,'Void Needle deve partire da 3');
 assert.match(board,/corruption'\)\{dealt=warlockDotHit/,'Rot Seed deve colpire subito');
@@ -51,7 +52,7 @@ assert.match(board,/if\(target\.boss\)forceTempleBossTile/,'Qualsiasi finale dic
 assert.match(board,/if\(g\.campaignWing==='deep'\)j\.deepWingCleared=true/,'La vittoria nell’ala non deve alterare lo sblocco delle difficoltà del Tempio');
 assert.match(board,/id="menuStable">Scuderia/,'Il menu deve aprire la Scuderia');
 assert.match(board,/function createStable\(menu\)/,'La Scuderia deve avere una vista dedicata');
-assert.match(board,/HERO_CLASSES\.map\(hero=>stableHeroCard\(hero,heroes\)\)/,'La Scuderia deve mostrare tutte le otto classi disponibili');
+assert.match(board,/HERO_CLASSES\.map\(hero=>stableHeroCard\(hero,heroes,selectedRoles\)\)/,'La Scuderia deve mostrare tutte le otto classi e la formazione salvata');
 assert.match(board,/window\.RaidProfile\?\.load\(localStorage\)/,'La Scuderia deve leggere il profilo persistente');
 assert.match(board,/build\?\.heroLevel[\s\S]*build\?\.xp[\s\S]*build\?\.deck[\s\S]*build\?\.collection/,'Le schede devono mostrare progressione e stato del mazzo reali');
 assert.match(board,/specialization=developed\?stableSpecialization\(role,build\)[\s\S]*equipment=developed\?stableEscape\(stableEquipment\(build\)\)/,'Le schede devono mostrare specializzazione ed equipaggiamento reali');
@@ -65,7 +66,35 @@ assert.match(board,/game\.state==='lost'&&!game\.__accountLossSaved&&!game\.tuto
 assert.match(board,/Progressi salvati nella Scuderia/,'La vittoria deve confermare il salvataggio nel riepilogo');
 assert.match(board,/function stableDeckChange\(build,card,delta\)/,'La Scuderia deve consentire gli scambi del mazzo fuori dalla spedizione');
 assert.match(board,/cleanSize>=DECK_CAP\|\|\(used\[card\]\|\|0\)>=DECK_COPY_MAX\|\|!\(available\[card\]>0\)/,'Gli scambi devono rispettare capienza, copie massime e carte possedute');
-assert.match(board,/profile\?\.activeJourney[\s\S]*puoi consultare la scheda, ma il mazzo si modifica al ritorno/,'Una spedizione attiva deve bloccare le modifiche concorrenti al mazzo');
-assert.match(board,/RaidProfile\?\.saveHeroes\(localStorage,\[draft\]/,'Il mazzo confermato deve essere salvato nel profilo senza toccare gli altri eroi');
+assert.match(board,/locked=!!profile\?\.activeJourney[\s\S]*Spedizione in corso: la scheda è in sola lettura/,'Una spedizione attiva deve bloccare le modifiche concorrenti della Scuderia');
+assert.match(board,/RaidProfile\?\.write\(localStorage,profile\)/,'Le modifiche confermate devono essere salvate nel profilo senza toccare gli altri eroi');
+assert.match(board,/function stableDepositItem\(build,stash,index\)/,'La Scuderia deve poter spostare oggetti dalla Bag al deposito comune');
+assert.match(board,/function stableWithdrawItem\(build,stash,index\)/,'La Scuderia deve poter assegnare gli oggetti del deposito a un eroe compatibile');
+assert.match(board,/function stableEquipFromBag\(build,stash,index,hand='left'\)/,'La Scuderia deve poter cambiare Equipment e conservare l’oggetto sostituito');
+assert.match(board,/profile\.heroes\[currentRole\]=JSON\.parse\(JSON\.stringify\(draft\)\);profile\.stash=JSON\.parse\(JSON\.stringify\(stashDraft\)\)/,'Bag, Equipment e deposito devono essere salvati insieme nel profilo');
+assert.match(board,/if\(locked&&draft\)\{renderDraft\(profile\);return\}/,'La spedizione attiva deve bloccare anche le modifiche all’inventario');
+assert.match(board,/data-stable-roster=/,'La scheda eroe deve permettere di aggiungere o rimuovere l’eroe dalla formazione');
+assert.match(board,/selected=new Set\(\(account\?\.selectedRoles\|\|\[\]\)\.filter/,'La nuova campagna deve proporre la formazione salvata');
+assert.match(board,/profile\.selectedRoles=\[\.\.\.roles\];RaidProfile\.write\(localStorage,profile\)/,'Avviare una campagna deve salvare la formazione scelta');
+assert.doesNotMatch(profile,/function clearProfileJourney\([^\n]+selectedRoles=\[\]/,'Terminare la spedizione non deve cancellare la formazione preferita');
+assert.match(board,/function profileSummaryData\(profile\)/,'La home deve ricavare il riepilogo dal profilo persistente');
+assert.match(board,/data-menu-profile[\s\S]*PROFILO COMPAGNIA/,'La home deve mostrare il riepilogo della compagnia');
+assert.match(board,/data-stable-company-save[\s\S]*profile\.company=name;[\s\S]*RaidProfile\?\.write\(localStorage,profile\)/,'La Scuderia deve permettere di salvare il nome della compagnia');
+assert.match(board,/new MutationObserver\(\(\)=>\{if\(!menu\.hidden\)syncProfile\(\)\}\)/,'Il riepilogo deve aggiornarsi quando si torna alla home');
+assert.match(board,/\.hero-select-setup\{overflow:hidden/,'La selezione della spedizione non deve scorrere come una pagina HTML');
+assert.match(board,/\.setup-page\[hidden\]\{display:none\}/,'Compagnia e spedizione non devono occupare insieme lo stesso viewport');
+assert.match(board,/data-setup-party[\s\S]*data-setup-level hidden/,'Compagnia e spedizione devono vivere in due viste fisse');
+assert.match(board,/\.main-menu\{overflow:hidden\}/,'Anche la home deve essere una schermata fissa senza scorrimento');
+assert.match(board,/\.stable-overlay\{[^}]*overflow:hidden/,'La Scuderia deve restare dentro il viewport');
+assert.match(board,/data-stable-tab="hero"[\s\S]*data-stable-tab="equipment"[\s\S]*data-stable-tab="deck"/,'La scheda eroe deve usare sezioni invece dello scorrimento');
+assert.match(board,/const pager=\(page,pages\)/,'Liste lunghe di Bag, deposito e mazzo devono usare pagine');
+
+const inventoryNames=['stableItemFitsRole','stableEnsureBag','stableStoreItem','stableDepositItem','stableWithdrawItem','stableBagCanTake','stableEquipFromBag'];
+const inventorySource=inventoryNames.map(name=>board.match(new RegExp(`function ${name}\\([^\\n]+`))?.[0]).join('\n');
+const inventory=new Function('HERO_BAG_SLOTS','bagStackable','TREASURE_ITEMS','equipmentFromItem',`${inventorySource};return{stableDepositItem,stableWithdrawItem,stableEquipFromBag}`)(9,id=>id==='potion',{potion:{kind:'consumable'},old_sword:{name:'Sword',kind:'equipment',role:'warrior',slot:'weapon'},great_axe:{name:'Greataxe',kind:'equipment',role:'warrior',slot:'weapon',twoHanded:true},shield:{name:'Shield',kind:'equipment',role:'warrior',slot:'offhand'},bow:{name:'Bow',kind:'equipment',role:'hunter',slot:'weapon'}},(id,diff)=>({itemId:id,name:id,twoHanded:id==='great_axe',acqDiff:diff||null}));
+const inventoryBuild={role:'warrior',weapon:{itemId:'old_sword'},offhand:{itemId:'shield'},twoHanded:false,bag:[{item:'great_axe',count:1},{item:'potion',count:2}]},inventoryStash=[];
+assert.equal(inventory.stableEquipFromBag(inventoryBuild,inventoryStash,0),true);assert.equal(inventoryBuild.weapon.itemId,'great_axe');assert.equal(inventoryBuild.offhand,null);assert.deepEqual(inventoryStash.map(slot=>slot.item),['old_sword','shield'],'Equipaggiare una due mani deve conservare entrambi gli oggetti sostituiti');
+assert.equal(inventory.stableDepositItem(inventoryBuild,inventoryStash,1),true);assert.equal(inventoryStash.at(-1).count,2);assert.equal(inventory.stableWithdrawItem(inventoryBuild,inventoryStash,inventoryStash.length-1),true);assert.equal(inventoryBuild.bag[0].item,'potion','Un consumabile deve completare il tragitto Bag → deposito → Bag');
+inventoryStash.push({item:'bow',count:1});assert.equal(inventory.stableWithdrawItem(inventoryBuild,inventoryStash,inventoryStash.length-1),false,'Un eroe non deve ritirare Equipment incompatibile');
 
 console.log('Balance regression checks passed.');

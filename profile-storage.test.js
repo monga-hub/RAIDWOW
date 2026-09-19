@@ -37,10 +37,16 @@ const activeStorage=memoryStorage({[RaidProfile.LEGACY_JOURNEY_KEY]:JSON.stringi
 RaidProfile.load(activeStorage);
 assert.equal(RaidProfile.saveHeroes(activeStorage,[{role:'warrior',heroLevel:13,deck:['sword']}]),true);
 assert.deepEqual(RaidProfile.load(activeStorage).activeJourney,legacyJourney,'Modificare la Scuderia non deve alterare la spedizione attiva');
+const stableProfile=RaidProfile.load(activeStorage);stableProfile.company='Custodi della Luna';stableProfile.stash=[{item:'silver_bomb',count:2}];stableProfile.heroes.warrior.bag=[{item:'bronze_bandage',count:1}];
+assert.equal(RaidProfile.write(activeStorage,stableProfile),true);
+assert.equal(RaidProfile.load(activeStorage).company,'Custodi della Luna','Il nome della compagnia deve persistere nel profilo');
+assert.deepEqual(RaidProfile.load(activeStorage).stash,[{item:'silver_bomb',count:2}],'Il deposito condiviso deve persistere nel profilo');
+assert.deepEqual(RaidProfile.load(activeStorage).heroes.warrior.bag,[{item:'bronze_bandage',count:1}],'La Bag modificata in Scuderia deve persistere con l’eroe');
 
 assert.equal(RaidProfile.clearJourney(storage),true);
 assert.equal(storage.getItem(RaidProfile.LEGACY_JOURNEY_KEY),null);
 assert.equal(RaidProfile.load(storage).activeJourney,null);
+assert.deepEqual(RaidProfile.load(storage).selectedRoles,nextJourney.roles,'Terminare la spedizione deve conservare la formazione preferita');
 assert.equal(RaidProfile.load(storage).heroes.warrior.heroLevel,12,'Nuova run non deve cancellare la scuderia del profilo');
 
 assert.equal(RaidProfile.saveHeroes(storage,[{role:'hunter',heroLevel:9,xp:2,deck:['quarry_mark']}],'Radici Erranti'),true);
