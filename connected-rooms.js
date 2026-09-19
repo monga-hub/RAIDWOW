@@ -96,12 +96,12 @@ generateExplorationRoom=function(x,placement={}){
 function resetConnectedCampaignToEntrance(g){
   if(!g.exploration?.config.connectionPlacement)return g;
   g.exploration=createExplorationState(EXPLORATION_CONFIG_T7_B);
-  const entrance=currentExplorationRoom(g.exploration);
-  entrance.fighters=['GOBLIN','GOBLIN'];entrance.treasures=[];entrance.state='READY';entrance.canExplore=false;entrance.composition={known:{FIGHTER:2,TREASURE:0},hidden:{FIGHTER:0,TREASURE:0},total:{FIGHTER:2,TREASURE:0}};if(typeof applyFixedTempleEncounter==='function')applyFixedTempleEncounter(g,entrance,'gate');
+  const entrance=currentExplorationRoom(g.exploration),entranceId=g.campaignWing==='deep'?'deep-gate':'gate',plan=typeof fixedTempleRoom==='function'?fixedTempleRoom(entranceId):null,count=plan?.encounter?.length||2;
+  entrance.fighters=plan?.encounter?[...plan.encounter]:['GOBLIN','GOBLIN'];entrance.treasures=[];entrance.state='READY';entrance.canExplore=false;entrance.templeId=entranceId;entrance.name=plan?.name||'Ingresso del Dungeon';entrance.templeArt=plan?.closeup;entrance.composition={known:{FIGHTER:count,TREASURE:0},hidden:{FIGHTER:0,TREASURE:0},total:{FIGHTER:count,TREASURE:0}};if(typeof applyFixedTempleEncounter==='function')applyFixedTempleEncounter(g,entrance,entranceId);if(typeof applyFixedTempleLayout==='function')applyFixedTempleLayout(g,plan);
   g.sequence=[entrance.fighters.length];g.enemies=[];g.encounter=0;g.round=1;g.currentEncounter=null;g.pendingRewards=[];g.pendingExitChoice=false;g.pendingOverlordPlacement=null;g.state='playing';g.logs=[];
   g.telemetry.encounterEntries=[];g.selectedTarget='ally:warrior:0';g.initiative=null;g.initiativePristine=true;g.initIndex=0;g.initiativeShift=null;g.initiativePreparedForRoom=false;delete g.combatGridEncounter;
   g.roomEntryAnnouncement=entrance;startEncounter(g);
-  note(g,'⚔ Ingresso: due Razziatori sbarrano il cammino.');
+  note(g,g.campaignWing==='deep'?'⚔ La Soglia del Sangue Nero: l’ala profonda reagisce al vostro ingresso.':'⚔ Ingresso: due Razziatori sbarrano il cammino.');
   return g;
 }
 
@@ -110,7 +110,8 @@ function beginConnectedPlacement(g,exitId){
   if(!g.playerBoardEnabled||!x?.config.connectionPlacement||g.state!=='exit_choice'||!exit)return false;
   x.playerChosenExitId=exitId;offerMiniBossTile(x);g.pendingExitChoice=false;g.pendingOverlordPlacement={roomId:room.id,exitId,forceMiniBoss:!!g.forceMiniBossPlacement};g.state='overlord_placement';
   boardAudit(g,'HERO_EXIT_SELECTED',{roomId:room.id,exitId,icons:exit.icons});
-  note(g,g.forceMiniBossPlacement?`🧭 Gli Eroi scelgono ${exitId}. Ora l’Overlord collega il Trono di Grum’Arat.`:`🧭 Gli Eroi scelgono ${exitId}. Ora l’Overlord sceglie tile e lato.`);
+  const bossRoom=g.forceMiniBossPlacement&&typeof fixedTempleRoom==='function'?fixedTempleRoom(g.temple?.pendingId):null;
+  note(g,g.forceMiniBossPlacement?`🧭 Gli Eroi scelgono ${exitId}. Ora l’Overlord collega ${bossRoom?.name||'il Trono di Grum’Arat'}.`:`🧭 Gli Eroi scelgono ${exitId}. Ora l’Overlord sceglie tile e lato.`);
   return true;
 }
 
@@ -130,5 +131,6 @@ function resolveConnectedPlacement(g,tileId,connectorId){
 function connectedPlacementPanel(g){
   const x=g.exploration,room=currentExplorationRoom(x),exit=room.exits.find(side=>side.id===g.pendingOverlordPlacement?.exitId);
   const forced=!!g.pendingOverlordPlacement?.forceMiniBoss,tiles=forced?x.overlordHand.filter(tile=>tile.id===MINI_BOSS_TILE_T2.id):x.overlordHand;
-  return`<section class="hero connection-placement"><h2>${forced?'Stanza 11 — collega il Trono di Grum’Arat':'Turno Overlord — collega la Room Tile'}</h2><p>Uscita scelta dagli Eroi: <strong>${exit?.id||'—'}</strong> ${iconSummary(exit?.icons)}</p><div class="connection-tiles">${tiles.map(tile=>`<article class="connection-tile"><h3>${tile.name||tile.id}</h3><small>${tile.id} · scegli il lato da collegare</small>${roomTileConnectors(tile).map(side=>`<button data-connect-tile="${tile.id}" data-connect-side="${side.id}"><b>Lato ${side.id}</b>${iconSummary(side.icons)}<small>Restano ${roomTileConnectors(tile).length-1} uscite</small></button>`).join('')}</article>`).join('')}</div></section>`;
+  const bossRoom=forced&&typeof fixedTempleRoom==='function'?fixedTempleRoom(g.temple?.pendingId):null;
+  return`<section class="hero connection-placement"><h2>${forced?`Collega ${bossRoom?.name||'il Trono di Grum’Arat'}`:'Turno Overlord — collega la Room Tile'}</h2><p>Uscita scelta dagli Eroi: <strong>${exit?.id||'—'}</strong> ${iconSummary(exit?.icons)}</p><div class="connection-tiles">${tiles.map(tile=>`<article class="connection-tile"><h3>${bossRoom?.name||tile.name||tile.id}</h3><small>${tile.id} · scegli il lato da collegare</small>${roomTileConnectors(tile).map(side=>`<button data-connect-tile="${tile.id}" data-connect-side="${side.id}"><b>Lato ${side.id}</b>${iconSummary(side.icons)}<small>Restano ${roomTileConnectors(tile).length-1} uscite</small></button>`).join('')}</article>`).join('')}</div></section>`;
 }

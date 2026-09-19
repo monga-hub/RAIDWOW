@@ -17,11 +17,18 @@ const GRUMARAT_TEMPLE={
     {id:'high-stairs',number:8,name:'La Breccia del Miasma',kind:'stairs',encounter:['GOBLIN','GOBLIN','ENGINEER','WARCHIEF'],links:['gate','cistern','tongue-pools','root-gallery','skull-sanctum','four-eyes-chapel','throne','ossuary','eye-well'],closeup:'assets/stanza-e2-09.jpeg?v=1',terrain:'assets/terrain-e2-09-v1.jpg?v=1',terrainLayout:{rows:4,cols:6,passages:{west:[2,3],east:[2,3]},obstacles:[]}},
     {id:'skull-sanctum',number:9,name:'Il Bivio dei Teschi Sommersi',kind:'sanctuary',encounter:['ENGINEER','WARCHIEF','WARCHIEF'],links:['high-stairs','root-gallery'],closeup:'assets/stanza-e2-03.jpeg?v=1',terrain:'assets/terrain-e2-03-v1.jpg?v=1',terrainLayout:{rows:4,cols:6,passages:{west:[2,3],east:[2,3]},obstacles:[]}},
     {id:'throne',number:10,name:'Il Trono di Grum’Arat',kind:'finale',encounter:[],boss:'miniBoss',links:['high-stairs'],closeup:'assets/trono-grumara.jpeg?v=1',terrain:'assets/terrain-special-mini-boss-v1.jpg?v=1',terrainLayout:{rows:4,cols:6,passages:{west:[2,3],east:[2,3]},obstacles:[]}},
-    {id:'four-eyes-chapel',number:11,name:'L’Altare delle Monete Marce',kind:'chapel',encounter:['GOBLIN','GOBLIN','ENGINEER','ENGINEER'],links:['high-stairs','tongue-pools'],closeup:'assets/stanza-e2-10.jpeg?v=1',terrain:'assets/terrain-e2-10-v1.jpg?v=1',terrainLayout:{rows:4,cols:6,passages:{west:[2,3],east:[2,3]},obstacles:[]}}
+    {id:'four-eyes-chapel',number:11,name:'L’Altare delle Monete Marce',kind:'chapel',encounter:['GOBLIN','GOBLIN','ENGINEER','ENGINEER'],links:['high-stairs','tongue-pools'],closeup:'assets/stanza-e2-10.jpeg?v=1',terrain:'assets/terrain-e2-10-v1.jpg?v=1',terrainLayout:{rows:4,cols:6,passages:{west:[2,3],east:[2,3]},obstacles:[]}},
+    {id:'deep-gate',number:12,name:'La Soglia del Sangue Nero',kind:'deep-entrance',wing:'deep',encounter:['GOBLIN','GOBLIN','ENGINEER','WARCHIEF'],links:['deep-defense'],closeup:'assets/stanza-e2-07.jpeg?v=1',terrain:'assets/terrain-e2-07-v1.jpg?v=1',terrainLayout:{rows:5,cols:5,passages:{west:[2,3,4],east:[2,3,4]},obstacles:[]}},
+    {id:'deep-defense',number:13,name:'Il Bastione della Linfa Nera',kind:'deep-defense',wing:'deep',encounter:['GOBLIN','WARCHIEF'],objective:{type:'defense',title:'Assedio delle Radici',name:'Sigillo di Linfa',hp:15,rounds:4,breachCol:2,damagePerEnemy:1,position:{row:3,col:1},waves:[['GOBLIN','WARCHIEF'],['GOBLIN','ENGINEER'],['WARCHIEF','ENGINEER'],['GOBLIN','WARCHIEF','WARCHIEF']]},links:['deep-heart'],closeup:'assets/stanza-e2-05.jpeg?v=1',terrain:'assets/terrain-e2-05-v1.jpg?v=1',terrainLayout:{rows:6,cols:6,passages:{west:[2,3,4,5],east:[2,3,4,5]},obstacles:[]}},
+    {id:'deep-heart',number:14,name:'Il Cuore Sepolto',kind:'deep-finale',wing:'deep',encounter:[],boss:'miniBoss',bossName:'Custode del Cuore Sepolto',links:[],closeup:'assets/trono-grumara.jpeg?v=1',terrain:'assets/terrain-special-mini-boss-v1.jpg?v=1',terrainLayout:{rows:6,cols:6,passages:{west:[2,3,4,5],east:[2,3,4,5]},obstacles:[]}}
   ]
 };
 
 function fixedTempleRoom(id){return GRUMARAT_TEMPLE.rooms.find(room=>room.id===id)}
+function applyFixedTempleLayout(g,plan){
+  if(!g||!plan?.terrainLayout)return false;
+  g.combatGridRows=plan.terrainLayout.rows;g.combatGridCols=plan.terrainLayout.cols;delete g.combatGridEncounter;return true;
+}
 function applyFixedTempleEncounter(g,room,templeId=g?.temple?.pendingId||g?.temple?.currentId){
   const plan=fixedTempleRoom(templeId);if(!plan||!room||!Array.isArray(plan.encounter))return room;
   room.fighters=[...plan.encounter];room.fightersAlive=room.fighters.length;room.fixedEncounter=true;room.objective=plan.objective?structuredClone(plan.objective):null;
@@ -33,7 +40,7 @@ function applyFixedTempleEncounter(g,room,templeId=g?.temple?.pendingId||g?.temp
 }
 function validateFixedTemple(){
   const rooms=GRUMARAT_TEMPLE.rooms,ids=new Set(rooms.map(room=>room.id)),tokens=new Set(['GOBLIN','ENGINEER','WARCHIEF']);
-  return rooms.length===11&&ids.size===11&&rooms.every(room=>room.links.every(link=>ids.has(link))&&room.encounter.every(token=>tokens.has(token)))&&!!fixedTempleRoom(GRUMARAT_TEMPLE.start);
+  return rooms.length===14&&ids.size===14&&rooms.every(room=>room.links.every(link=>ids.has(link))&&room.encounter.every(token=>tokens.has(token)))&&!!fixedTempleRoom(GRUMARAT_TEMPLE.start)&&!!fixedTempleRoom('deep-gate');
 }
 
 if(!validateFixedTemple())throw new Error('Mappa fissa del Tempio non valida');

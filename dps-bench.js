@@ -19,7 +19,7 @@
     healer:[['smite','Smite',2],['mind_blast','Mind Blast',4],['shadow_word_pain','Shadow Word: Pain (totale)',4],['wand','Bacchetta',1],['holy_nova','Holy Nova (AOE) — talento',1],['penance','Penance offensiva — talento',3],['mind_flay','Mind Flay (completo) — talento',9],['silence','Silence — talento',3]],
     mage:[['frostbolt','Frostbolt',2],['fireball','Fireball (completo)',4],['blizzard','Blizzard',1],['counterspell','Counterspell',1],['wand','Frost Wand',1],['crit','Critico (+)',1],['frost_nova','Frost Nova (AOE) — talento',2],['cone_of_cold','Cone of Cold (AOE) — talento',2],['fire_blast','Fire Blast — talento',3],['scorch','Scorch + 2 cariche — talento',5],['pyroblast','Pyroblast (completo) — talento',7]],
     paladin:[['hammer','Martello base',1],['crusader_strike','Oathbound Blow (+ arma)',1],['consecration','Dawn Circle (AOE)',1],['judgment','Sun Verdict',2],['avengers_shield','Returning Aegis (AOE)',2],['hammer_justice','Lawbringer Strike',1],['holy_shock','Radiant Jolt',3]],
-    warlock:[['shadow_bolt','Void Needle',2],['corruption','Rot Seed (totale)',2],['immolate','Witchflame (totale)',3],['drain_life','Blood Tithe',2],['curse_agony','Torment Spiral (totale)',6],['siphon_life','Leeching Hex (totale)',3],['curse_exhaustion','Withering Chains',1],['wand','Wand',1]],
+    warlock:[['shadow_bolt','Void Needle',3],['corruption','Rot Seed (totale)',3],['immolate','Witchflame (totale)',3],['drain_life','Blood Tithe',2],['curse_agony','Torment Spiral (totale)',6],['siphon_life','Leeching Hex (totale)',3],['curse_exhaustion','Withering Chains',1],['wand','Wand',1]],
     shaman:[['weapon','Ascia base',1],['storm_maul','Storm Maul (+ arma)',4],['sky_spark','Sky Spark',3],['thunder_rend','Thunder Rend',4],['forked_sky','Forked Sky (AOE)',2],['crash_wave','Crash Wave (AOE)',2],['raging_totem','Raging Totem (2 cariche melee)',2]],
     hunter:[['bow','Arco base',1],['quarry_mark','Quarry Mark',1],['piercing_shot','Piercing Shot',3],['fang_command','Fang Command',2],['pinning_shot','Pinning Shot',2],['scatter_volley','Scatter Volley (AOE)',1],['pounce_command','Pounce Command (AOE)',2],['snare_trap','Snare Trap (AOE)',1],['split_arrow','Split Arrow',2],['deep_pierce','Deep Pierce',3],['pack_finish','Pack Finish',3],['shock_trap','Shock Trap (AOE)',1],['sweeping_volley','Sweeping Volley (AOE)',2],['pack_pounce','Pack Pounce (AOE)',2],['predator_storm','Predator Storm (AOE)',3]]
   };
@@ -187,7 +187,10 @@
       let d=P[card]||0;
       if(card==='corruption')d+=bonus('warlock','improved_corruption');
       if(card==='drain_life')d+=bonus('warlock','improved_drain_life');
-      if(card!=='immolate'&&card!=='wand'&&card!=='bare')d+=bonus('warlock','shadow_mastery');
+      if(card!=='immolate'&&card!=='wand'&&card!=='bare'){
+        const ticks=card==='corruption'?3+bonus('warlock','improved_corruption'):['curse_agony','siphon_life'].includes(card)?3:1;
+        d+=bonus('warlock','shadow_mastery')*ticks;
+      }
       return d;
     }
     if(role==='shaman'){
@@ -199,8 +202,8 @@
       const marked=!!h?.marked;
       if(card==='bare')return P.bow;
       if(card==='quarry_mark')return P.quarry_mark+(isOn('hunter','perfect_quarry')?2:0);
-      if(card==='piercing_shot')return P.piercing_shot+(marked?2:0)+bonus('hunter','steady_hand')+(h?.perfectQuarryBonus||0);
-      if(card==='fang_command')return P.fang_command+(marked?2+bonus('hunter','patient_hunt'):0);
+      if(card==='piercing_shot')return P.piercing_shot+(marked?1:0)+bonus('hunter','steady_hand')+(h?.perfectQuarryBonus||0);
+      if(card==='fang_command')return P.fang_command+(marked?1+bonus('hunter','patient_hunt'):0);
       if(card==='pinning_shot')return P.pinning_shot+bonus('hunter','barbed_control');
       if(card==='scatter_volley')return P.scatter_volley+bonus('hunter','wide_scatter');
       if(card==='deep_pierce')return marked?5:P.deep_pierce;
@@ -245,7 +248,7 @@
     healer:['flash_heal','flash_heal','greater_heal','greater_heal','power_word_shield','power_word_shield','smite','mind_blast','shadow_word_pain','purify'],
     mage:['frostbolt','frostbolt','frostbolt','critical','blizzard','counterspell','fireball','fireball','fireball','blink'],
     paladin:['crusader_strike','crusader_strike','holy_light','holy_light','righteous_defense','righteous_defense','blessing_protection','consecration','cleanse','judgment'],
-    warlock:['shadow_bolt','shadow_bolt','corruption','corruption','immolate','immolate','drain_life','drain_life','fear','summon_imp'],
+    warlock:['shadow_bolt','shadow_bolt','shadow_bolt','corruption','corruption','immolate','immolate','drain_life','fear','summon_imp'],
     shaman:['storm_maul','storm_maul','sky_spark','thunder_rend','gale_totem','primal_mend','primal_mend','flowing_chain','cleansing_rain','spring_totem'],
     hunter:['quarry_mark','quarry_mark','piercing_shot','piercing_shot','fang_command','pinning_shot','pinning_shot','scatter_volley','pounce_command','snare_trap']
   };
@@ -588,7 +591,7 @@
   }
   function runProgressionWorker(params){const rounds=Math.max(100,Math.min(2000,+params.get('rounds')||600));document.body.textContent=JSON.stringify(progressionReport(rounds),null,2)}
   function init(){
-    const params=new URLSearchParams(location.search);if(params.has('dps-progression-worker')){runProgressionWorker(params);return}if(params.has('dps-benchmark-worker')){runWorker(params);return}if(params.has('mage-benchmark-worker')||params.has('rogue-benchmark-worker')||params.has('party-benchmark-worker')||params.has('talent-ablation-worker')||params.has('temple-route-benchmark-worker'))return;
+    const params=new URLSearchParams(location.search);if(params.has('dps-progression-worker')){runProgressionWorker(params);return}if(params.has('dps-benchmark-worker')){runWorker(params);return}if(params.has('mage-benchmark-worker')||params.has('rogue-benchmark-worker')||params.has('party-benchmark-worker')||params.has('enemy-action-benchmark-worker')||params.has('talent-ablation-worker')||params.has('temple-route-benchmark-worker'))return;
     if(!document.querySelector('main')||typeof startBoardCampaign!=='function'){setTimeout(init,150);return;}
     buildUI();
   }
