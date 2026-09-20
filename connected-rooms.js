@@ -96,12 +96,12 @@ generateExplorationRoom=function(x,placement={}){
 function resetConnectedCampaignToEntrance(g){
   if(!g.exploration?.config.connectionPlacement)return g;
   g.exploration=createExplorationState(EXPLORATION_CONFIG_T7_B);
-  const entrance=currentExplorationRoom(g.exploration),entranceId=g.campaignWing==='deep'?'deep-gate':'gate',plan=typeof fixedTempleRoom==='function'?fixedTempleRoom(entranceId):null,count=plan?.encounter?.length||2;
+  const entrance=currentExplorationRoom(g.exploration),entranceId=typeof fixedCampaignEntranceId==='function'?fixedCampaignEntranceId(g.campaignWing):'gate',plan=typeof fixedTempleRoom==='function'?fixedTempleRoom(entranceId):null,count=plan?.encounter?.length||2;
   entrance.fighters=plan?.encounter?[...plan.encounter]:['GOBLIN','GOBLIN'];entrance.treasures=[];entrance.state='READY';entrance.canExplore=false;entrance.templeId=entranceId;entrance.name=plan?.name||'Ingresso del Dungeon';entrance.templeArt=plan?.closeup;entrance.composition={known:{FIGHTER:count,TREASURE:0},hidden:{FIGHTER:0,TREASURE:0},total:{FIGHTER:count,TREASURE:0}};if(typeof applyFixedTempleEncounter==='function')applyFixedTempleEncounter(g,entrance,entranceId);if(typeof applyFixedTempleLayout==='function')applyFixedTempleLayout(g,plan);
   g.sequence=[entrance.fighters.length];g.enemies=[];g.encounter=0;g.round=1;g.currentEncounter=null;g.pendingRewards=[];g.pendingExitChoice=false;g.pendingOverlordPlacement=null;g.state='playing';g.logs=[];
   g.telemetry.encounterEntries=[];g.selectedTarget='ally:warrior:0';g.initiative=null;g.initiativePristine=true;g.initIndex=0;g.initiativeShift=null;g.initiativePreparedForRoom=false;delete g.combatGridEncounter;
   g.roomEntryAnnouncement=entrance;startEncounter(g);
-  note(g,g.campaignWing==='deep'?'⚔ La Soglia del Sangue Nero: l’ala profonda reagisce al vostro ingresso.':'⚔ Ingresso: due Razziatori sbarrano il cammino.');
+  note(g,typeof isSiegeWing==='function'&&isSiegeWing(g.campaignWing)?`⚔ ${plan.name}: i Ranidi avanzano dagli ingressi.`:'⚔ Ingresso: due Razziatori sbarrano il cammino.');
   return g;
 }
 
