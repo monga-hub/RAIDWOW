@@ -38,11 +38,12 @@ const activeStorage=memoryStorage({[RaidProfile.LEGACY_JOURNEY_KEY]:JSON.stringi
 RaidProfile.load(activeStorage);
 assert.equal(RaidProfile.saveHeroes(activeStorage,[{role:'warrior',heroLevel:13,deck:['sword']}]),true);
 assert.deepEqual(RaidProfile.load(activeStorage).activeJourney,legacyJourney,'Modificare la Scuderia non deve alterare la spedizione attiva');
-const stableProfile=RaidProfile.load(activeStorage);stableProfile.company='Custodi della Luna';stableProfile.stash=[{item:'silver_bomb',count:2}];stableProfile.heroes.warrior.bag=[{item:'bronze_bandage',count:1}];
+const stableProfile=RaidProfile.load(activeStorage);stableProfile.company='Custodi della Luna';stableProfile.stash=[{item:'silver_bomb',count:2}];stableProfile.heroes.warrior.bag=[{item:'bronze_bandage',count:1}];stableProfile.heroes.warrior.armor={itemId:'gold_warrior_armor',name:'Warlord Plate',hpBonus:2,armorType:'plate'};
 assert.equal(RaidProfile.write(activeStorage,stableProfile),true);
 assert.equal(RaidProfile.load(activeStorage).company,'Custodi della Luna','Il nome della compagnia deve persistere nel profilo');
 assert.deepEqual(RaidProfile.load(activeStorage).stash,[{item:'silver_bomb',count:2}],'Il deposito condiviso deve persistere nel profilo');
 assert.deepEqual(RaidProfile.load(activeStorage).heroes.warrior.bag,[{item:'bronze_bandage',count:1}],'La Bag modificata in Scuderia deve persistere con l’eroe');
+assert.equal(RaidProfile.load(activeStorage).heroes.warrior.armor.itemId,'gold_warrior_armor','Un profilo nuovo deve conservare l’armatura senza rendere incompatibili i profili precedenti');
 assert.equal(RaidProfile.recordRun(activeStorage,'win',['warrior','hunter'],'heroic','temple','2026-09-19T12:00:00.000Z'),true);
 assert.equal(RaidProfile.recordRun(activeStorage,'loss',['warrior','shaman'],'normale','temple','2026-09-19T13:00:00.000Z'),true);
 const career=RaidProfile.load(activeStorage).stats;
