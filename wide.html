@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#020403">
+  <title>Le Paludi della Luna Avvelenata</title>
+  <style>
+    *{box-sizing:border-box}
+    html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#020403}
+    iframe{position:fixed;top:0;left:0;width:100vh;width:100dvh;height:100vw;height:100dvw;border:0;transform:rotate(90deg) translateY(-100%);transform-origin:top left}
+  </style>
+</head>
+<body>
+  <iframe id="game" title="Le Paludi della Luna Avvelenata" allow="autoplay; fullscreen"></iframe>
+  <script>
+    const portrait=matchMedia('(orientation:portrait) and (hover:none) and (pointer:coarse)');
+    const gameUrl=new URL('index.html',location.href);
+    gameUrl.search=location.search;
+    gameUrl.searchParams.set('wide','1');
+    gameUrl.hash=location.hash;
+    document.getElementById('game').src=gameUrl;
+    portrait.addEventListener('change',()=>{if(!portrait.matches){gameUrl.searchParams.delete('wide');location.replace(gameUrl)}});
+    if(!portrait.matches){gameUrl.searchParams.delete('wide');location.replace(gameUrl)}
+  </script>
+</body>
+</html>

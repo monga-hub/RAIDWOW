@@ -8,6 +8,7 @@ const connected=fs.readFileSync('connected-rooms.js','utf8');
 const exploration=fs.readFileSync('exploration.js','utf8');
 const profile=fs.readFileSync('profile-storage.js','utf8');
 const html=fs.readFileSync('index.html','utf8');
+const wide=fs.readFileSync('wide.html','utf8');
 
 assert.match(board,/warlockShadowPower\(h,3,card\)/,'Void Needle deve partire da 3');
 assert.match(board,/corruption'\)\{dealt=warlockDotHit/,'Rot Seed deve colpire subito');
@@ -246,7 +247,10 @@ assert.match(board,/data-setup-party[\s\S]*data-setup-level hidden/,'Compagnia e
 assert.match(board,/\.main-menu\{overflow:hidden\}/,'Anche la home deve essere una schermata fissa senza scorrimento');
 assert.match(html,/<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">/,'Il viewport mobile deve mantenere testo e comandi a dimensione leggibile');
 assert.doesNotMatch(html,/Ruota il dispositivo|si gioca in orizzontale|body>\*\{visibility:hidden!important\}/,'Il dispositivo verticale non deve nascondere il gioco dietro un avviso');
-assert.match(html,/\@media \(orientation:portrait\) and \(hover:none\) and \(pointer:coarse\)\{html\{[^}]*overflow:hidden[^}]*\}body\{[^}]*width:100vh[^}]*width:100dvh[^}]*height:100vw[^}]*height:100dvw[^}]*transform:rotate\(90deg\) translateY\(-100%\)/,'Il telefono verticale deve mostrare il canvas Wide ruotato, senza rimpicciolirlo');
+assert.match(html,/window===top[^\n]+wide\.html[^\n]+location\.replace\(shell\)/,'Il telefono verticale deve aprire il contenitore Wide prima di renderizzare il gioco');
+assert.doesNotMatch(html,/body\{[^}]*transform:rotate\(90deg\) translateY\(-100%\)/,'La pagina di gioco non deve essere ruotata conservando i breakpoint Portrait');
+assert.match(wide,/iframe\{[^}]*width:100dvh[^}]*height:100dvw[^}]*transform:rotate\(90deg\) translateY\(-100%\)/,'Il contenitore deve dare al gioco una vera viewport Wide ruotata');
+assert.match(wide,/searchParams\.set\('wide','1'\)/,'Il gioco incorporato non deve riaprire ricorsivamente il contenitore Wide');
 assert.doesNotMatch(board,/\@media\(orientation:portrait\)/,'Selezione eroi e Scuderia devono conservare il layout Wide in verticale');
 assert.match(board,/g\.gridTreasurePhase=true;g\.roomClearTurnPending=true;note\(g,'🎁 Combattimento concluso: completate i turni rimanenti/,'La fase tesoro deve conservare il turno e l’iniziativa correnti');
 assert.doesNotMatch(board,/g\.gridTreasurePhase=true;movers\.forEach\(hero=>hero\.actions=CONFIG\.actionsPerRound\)/,'La morte dell’ultimo nemico non deve ricaricare le azioni di tutti gli Eroi');
