@@ -41,6 +41,18 @@ assert.match(board,/if\(g\.state!=='loot'\)g\.lootReturnState=g\.state/,'Una sec
 assert.match(board,/game\.benchmarkMode\|\|gameModalOpen\(\)/,'Il timer UI non deve interferire con il benchmark');
 assert.match(board,/game\?\.benchmarkMode\|\|!gameSfxEnabled\(\)/,'L’audio non deve consumare casualità durante il benchmark');
 assert.match(board,/game\.state==='loot'\)\{aiLootStep\(game\);acted=true\}/,'Il benchmark deve distribuire il loot senza attendere timer UI');
+assert.match(board,/role==='hunter'[\s\S]*reachable\('hunter_bow'\)[\s\S]*useHunterBow/,'L’IA Hunter deve poter usare l’arco base');
+assert.match(board,/card==='split_arrow'\)chosen=hunterMarkedEnemy\(g\)/,'L’IA deve usare Split Arrow soltanto sul bersaglio Braccato');
+assert.match(board,/const base=\{fireball:4,fire_blast:2,scorch:2,pyroblast:6\}/,'Fireball deve distinguere Fire sul bersaglio singolo con 5 danni usando lo staff base');
+assert.match(board,/const value=2\*\(h\.talents\?\.ignite\|\|0\)\+talentBoost\(h,'ignite','damage'\)/,'Ignite deve infliggere 2 danni ritardati per grado');
+assert.match(board,/h\.combustionCharges--.*power\+=2\+talentBoost\(h,'combustion','damage'\)/,'Combustion deve potenziare di 2 i prossimi colpi Fire');
+assert.match(board,/function warlockDotHit\([^\n]+if\(value&&enemy\.hp\)warlockImpProc\(g,h,enemy\)/,'L’Imp deve reagire anche ai danni periodici del Warlock');
+assert.match(board,/h\.impDamage\|\|1\)\+\(h\.talents\?\.master_demonologist\?2:0\)/,'Master Demonologist deve aggiungere 2 danni ai colpi dell’Imp');
+assert.match(board,/function dismissWarlockPet\([^\n]+h\.impCharges=0;h\.impDamage=1;for\(const hero of g\.party\)hero\.voidwalkerGuard=0/,'Imp e Voidwalker devono essere pet mutuamente esclusivi');
+assert.match(board,/summon_imp'\)\{dismissWarlockPet\(g,h\)/,'Evocare l’Imp deve congedare il Voidwalker');
+assert.match(board,/summon_voidwalker'\)\{dismissWarlockPet\(g,h\)/,'Evocare il Voidwalker deve congedare l’Imp');
+assert.match(board,/card==='summon_voidwalker'\)chosen=h\.impCharges\?null:/,'L’IA non deve congedare un Imp che ha ancora cariche');
+assert.match(board,/card==='summon_imp'\)chosen=h\.impCharges\|\|allies\.some\(ally=>ally\.voidwalkerGuard\)\?null:/,'L’IA non deve congedare un Voidwalker che sta ancora proteggendo');
 assert.match(board,/!taker\|\|!assignLoot\(g,loot\.uid,taker\.role\)\)leaveLoot/,'L’AI deve scartare un loot che non riesce ad assegnare');
 assert.match(board,/id:'hardcore'.*hpScale:2,damageScale:2,fungi:\{tick:2,boom:8\}/,'Hardcore deve mantenere HP doppi e danni ricalibrati');
 assert.match(board,/game\.enemyActionsPerTurn=2;game\.enemyBonusActivationsPerTurn=0;game\.enemyBonusActivationEvery=1;game\.enemyUniqueActions=true;game\.enemyDamageMultiplier=\.35;game\.enemyWoundCapPerRound=1/,'La campagna deve usare due Command diverse con danno e Ferite ricalibrati');
@@ -288,6 +300,19 @@ assert.doesNotMatch(board,/warrior:\{[^}]*vanguard:|healer:\{[^}]*renewed_hope:|
 assert.match(board,/classic_assault[^\n]+warrior:'protection',healer:'holy',rogue:'subtlety',mage:'fire'/,'Il benchmark Assalto classico deve conservare tank e guaritore');
 assert.match(board,/wild_assault[^\n]+paladin:'protection',shaman:'tidebinding',warlock:'demonology',hunter:'wildsnare'/,'Il benchmark Assalto selvaggio deve conservare tank e guaritore');
 assert.match(board,/roomClearTurnPending\)\{const hero=game\.party\.find[\s\S]*advanceHeroTurn\(game\)[\s\S]*else activateInitiativeSlot\(game\)/,'Il benchmark completo deve terminare i turni residui dopo aver raccolto i tesori');
+assert.match(board,/roomClearTurnPending&&aiControls\(g,g\.activeRole\)\)return\(\)=>aiChooseAndApply\(g\)/,'L IA deve poter usare le azioni residue dopo l ultimo nemico');
+assert.match(board,/roomClearTurnPending\)\{const hero=game\.party\.find[\s\S]*hero&&hero\.actions>0\)aiBenchmarkStep\(game\)/,'Il benchmark completo deve usare le azioni residue invece di azzerarle');
 assert.match(board,/card==='stillness'\)chosen=h\.stillnessArmed\?null:h;[\s\S]*card==='retreat_roll'\)chosen=reachable\('hunter_bow'\)\?null:h;[\s\S]*card==='predator_storm'\)chosen=hunterMarkedEnemy\(g\)\?h:null/,'L IA Hunter deve poter usare le carte personali invece di cercare un bersaglio nemico');
+assert.match(board,/paladin:\{[\s\S]*startingDeck:\['crusader_strike','holy_light','holy_light','flash_of_light','flash_of_light','righteous_defense','blessing_protection','consecration','cleanse','judgment'\]/,'Il mazzo iniziale ibrido del Paladino deve contenere quattro cure dirette senza duplicare attacco e provocazione');
+assert.match(board,/base_paladin_shield:\{[^}]*healingBonus:1[\s\S]*silver_shield:\{[^}]*healingBonus:2[\s\S]*gold_templar_shield:\{[^}]*healingBonus:3[\s\S]*mythic_templar_shield:\{[^}]*healingBonus:4/,'Gli scudi del Paladino devono scalare anche come focus di cura');
+assert.match(board,/function paladinHeal\([^\n]+h\.offhand\?\.healingBonus[\s\S]*source==='holy_light'[\s\S]*secondary[\s\S]*1\+\(h\.talents\?\.infusion_light\|\|0\)/,'Holy Light deve usare il focus dello scudo e distribuire la cura secondaria di Abundant Grace');
+assert.match(board,/card==='blessing_protection'[^\n]+heal\(g,'paladin',ally,2,card\)/,'Guardian Vow deve curare 2 oltre a fornire assorbimento fisico');
+assert.match(board,/holyPaladinWithTank=role==='paladin'[\s\S]*\['righteous_defense','avengers_shield','paladin_holy_shield'\]\.includes\(card\)[\s\S]*!holyPaladinWithTank&&enemies\.length/,'Con un Warrior Protection vivo il Paladino Holy non deve provocare né avanzare verso la mischia');
+assert.match(board,/card==='divine_favor'[\s\S]*directHealReady[\s\S]*missing>=3[\s\S]*card==='lay_on_hands'[\s\S]*Math\.max\(6,Math\.ceil\(ally\.maxHp\*\.35\)\)/,'L IA deve conservare Divine Favor e Lay on Hands per cure che ne sfruttano davvero il valore');
+const recoveryAiSource=board.match(/function aiRecoveryStep\([^\n]+/)?.[0]||'';
+assert.doesNotMatch(recoveryAiSource,/playPaladinCard|holy_light|flash_of_light|holy_shock|lay_on_hands/,'Il Paladino non deve usare abilita durante il turno di Recupero');
+assert.match(board,/play=function\(g,h,card,targetValue\)\{\s*if\(g\.playerBoardEnabled&&g\.state==='restoring'\)return false/,'Nessuna abilita deve essere utilizzabile durante il turno di Recupero');
+assert.match(board,/function startRecoveryTurn\(g\)\{let restored=0;g\.party\.forEach\(h=>\{if\(h\.hp>0\)\{const before=h\.hp;h\.hp=Math\.min\(h\.maxHp,h\.hp\+4\)/,'Il Campo deve curare automaticamente fino a 4 HP ogni Eroe vivo');
+assert.match(board,/Riposo già applicato: fino a \+4 HP per Eroe vivo · nessuna abilità/,'Il Recupero deve spiegare la cura passiva senza suggerire l uso di abilita');
 
 console.log('Balance regression checks passed.');

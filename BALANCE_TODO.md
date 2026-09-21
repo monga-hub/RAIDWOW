@@ -37,10 +37,55 @@ Obiettivo finale: una compagnia ben costruita deve completare Hardcore nel 55–
   - Wildsnare: 56,49 danni medi, 11,99 per round, 4,59 controlli e 4,60 round di gruppo.
   - La correzione consente all’IA di usare Stillness, Retreat Roll e Predator Storm. Il divario non dipendeva soltanto dall’IA: l’alta resa AOE di Wildsnare contro mob fragili è un problema reale da isolare sulle fasce di Vita.
 - [ ] Ritarare gli obiettivi a tempo per la regola delle 2 Command distinte, soprattutto Rituale e Rinforzi.
-- [ ] Misurare single target contro AOE su più fasce di Vita dei mob; provare l’aumento della Vita prima di potenziare le carte.
-- [ ] Portare Deadeye e Wildsnare alla stessa efficacia complessiva: Deadeye forte sul singolo bersaglio, Wildsnare su AOE e controllo.
-- [ ] Portare Fire e Frost alla stessa efficacia complessiva: Fire molto forte sul singolo bersaglio, senza imporlo come massimo DPS assoluto.
-- [ ] Aumentare danno o ritmo di Demonology mantenendo distinta la sua identità difensiva rispetto ad Affliction.
-- [ ] Verificare e, se necessario, potenziare Holy Paladin affinché possa sostenere da solo il gruppo fino alla fine di Hardcore.
-- [ ] Isolare Stormclaw e confrontare Paladin Protection con Warrior Protection.
-- [ ] Ripetere il percorso Normal → Heroic → Hardcore e validare il 55–60% di completamento Hardcore, poi confermare con playtest umano.
+- [x] Misurare single target contro AOE su più fasce di Vita dei mob; provare l’aumento della Vita prima di potenziare le carte.
+  - 1.152 scontri accoppiati con Warchief a 20, 28 e 36 HP; gli altri nemici, i party e i semi restano invariati.
+  - Sul boss Deadeye passa da 3,65 a 4,44 danni/round, Wildsnare da 9,25 a 9,28: anche con 36 HP il ramo AOE infligge più del doppio.
+  - Nel totale Deadeye resta circa 3,5 danni/round e Wildsnare circa 12; l’aumento HP aggiunge round e attivazioni nemiche senza migliorare stabilmente gli obiettivi.
+  - Verifica isolata sul vero boss finale: 300 scontri contro il solo Grum’Arat, senza evocazioni, con squadra e mazzi freschi. Wildsnare resta superiore in Normal (5,72 contro 3,76 DPR), Heroic (9,29 contro 4,78) e Hardcore (10,67 contro 7,35).
+  - Entrambi i rami vincono il 100% degli scontri, ma Wildsnare chiude prima e concede meno attivazioni al boss. Il vantaggio AOE non dipende quindi dalla presenza dei mob.
+  - Esito: nessun aumento permanente alla Vita. Il divario è interno a mazzo, formule o priorità dell’Hunter e va corretto nel punto successivo.
+- [x] Portare Deadeye e Wildsnare alla stessa efficacia complessiva: Deadeye forte sul singolo bersaglio, Wildsnare su AOE e controllo.
+  - Corretto il comportamento dell’IA: ora usa l’arco base e non tenta Split Arrow senza un bersaglio Braccato, evitando di perdere tutte le azioni residue.
+  - Sul solo Grum’Arat Deadeye raggiunge 5,43 / 11,35 / 14,14 DPR e Wildsnare 5,54 / 9,35 / 9,85 nelle tre difficoltà: quasi pari in Normal, poi Deadeye emerge con i talenti.
+  - Contro quattro nemici Wildsnare torna avanti: 6,05 / 15,23 / 18,29 DPR contro 5,55 / 10,81 / 14,01, aggiungendo anche 3,60 / 5,18 / 4,38 giocate di controllo.
+  - Nessun valore delle carte è stato modificato: il divario anomalo proveniva soprattutto da azioni perse dall’IA Deadeye.
+- [x] Portare Fire e Frost alla stessa efficacia complessiva: Fire molto forte sul singolo bersaglio, senza imporlo come massimo DPS assoluto.
+  - Sul vero Grum’Arat Fire era inizialmente avanti solo del 4–9% in Normal/Heroic e pari a Frost in Hardcore; Frost conservava invece un vantaggio dal 14% al 37% contro quattro nemici, oltre al controllo.
+  - Fireball passa da 4 a 5 danni con lo staff base, Ignite da 1 a 2 danni ritardati per grado e Combustion da +1 a +2 sui due colpi potenziati.
+  - La scelta è stata confrontata su 1.080 scontri; la verifica finale sul codice definitivo aggiunge 600 scontri accoppiati.
+  - Sul boss Fire supera Frost del 10% in Normal, 28% in Heroic e 15% in Hardcore. Contro l’orda Frost resta avanti del 10%, 8% e 17% e conserva molte più giocate di controllo.
+- [x] Aumentare danno o ritmo di Demonology mantenendo distinta la sua identità difensiva rispetto ad Affliction.
+  - In 900 scontri iniziali Demonology era vicino ad Affliction in Normal, ma restava sotto del 19–27% in Heroic e del 37–45% in Hardcore; preveniva 2–5 danni in più, senza compensare i round aggiuntivi.
+  - La causa erano le 5–6 cariche dell’Imp: il mazzo avanzato conteneva soltanto due magie dirette capaci di consumarle e gran parte del potenziale spariva a fine stanza.
+  - Ora l’Imp reagisce anche ai danni periodici del Warlock; Master Demonologist aggiunge +2 danni a ogni suo colpo, oltre alla carica già prevista.
+  - Nei 900 scontri finali Demonology pareggia Affliction in Normal; il divario scende al 9–13% in Heroic e al 20–26% in Hardcore, mantenendo 1,4–3,6 prevenzioni aggiuntive per scontro.
+  - L’identità è ora legata ai pet: Imp e Voidwalker sono mutuamente esclusivi. L’Imp è lo stile offensivo; il Voidwalker congeda l’Imp e trasferisce protezione all’alleato scelto. Fel Domination consente il cambio gratuito.
+  - L’IA conserva il pet finché possiede cariche o assorbimento, evitando cambi automatici che sprechino il suo effetto; il giocatore può invece sacrificarlo prima per cambiare tattica.
+  - Dopo la separazione degli stili, 900 nuovi scontri confermano la parità in Normal. In Heroic lo stile misto resta entro il 5–10% da Affliction; in Hardcore cede il 20–28% di danno e ottiene 1,5–3,5 prevenzioni di gruppo aggiuntive.
+- [x] Verificare e potenziare Holy Paladin affinché possa sostenere da solo il gruppo fino alla fine di Hardcore.
+  - Il mazzo iniziale ora è realmente ibrido: due Golden Mend e due Swift Mercy; attacco e provocazione restano presenti in singola copia.
+  - Gli scudi funzionano anche da focus sacro: +1/+2/+3/+4 cura da Base a Mythic. Guardian Vow cura 2 oltre all'assorbimento fisico.
+  - Abundant Grace 2/2 distribuisce 1 cura a un secondo Eroe ferito; Infusion of Light porta la cura secondaria a 2.
+  - L'IA Holy non provoca e non avanza in mischia quando un Warrior Protection è vivo; Divine Favor e Lay on Hands non vengono più sprecate. Nessuna abilità viene usata nel Recupero.
+  - In 1.440 scontri isolati il gruppo Paladino chiude Hardcore con 94,84% HP medio e 100% clear; cura meno del Priest (11,50 contro 14,18) ma previene molto di più (15,16 contro 10,45).
+  - In 60 spedizioni concatenate (30 per guaritore) il Paladino completa Normal al 100%, Heroic al 66,7% e l'intero percorso al 43,3%; una volta raggiunta Hardcore, la completa nel 65% dei casi. Il Priest di controllo completa l'intero percorso al 20% nello stesso campione.
+- [x] Analizzare le sconfitte del gruppo con Holy Paladin in Heroic: stanza, nemici, obiettivo, causa della sconfitta e risorse residue, per distinguere un problema di cure da danni, controllo o ritmo della spedizione.
+  - In 120 spedizioni, il gruppo supera Heroic nel 72% dei tentativi grezzi. Le sconfitte non dipendono da una singola stanza: i rischi maggiori sono High Stairs 6,9%, Eye Well 6,8% e Skull Sanctum 6,5% per ingresso.
+  - Il vero predittore è lo stato ereditato da Normal: sotto l'85% HP iniziale si perde nel 72% dei casi; con almeno il 95% HP soltanto nel 15,7%. Con 4+ Ferite iniziali si perde nel 69,2%, contro il 13,8% con 0–1.
+  - Nelle sconfitte il Rogue entra in Heroic al 51,28% HP medio e 1,67 Ferite; negli esiti positivi entra all'88,49% e 0,86. Paladino e Hunter iniziano invece sopra il 94% anche nei fallimenti.
+  - Il Paladino non è corto di cure: produce circa 30,5 cure per stanza nelle sconfitte e 29,4 nelle vittorie. Il collasso nasce dal tank che cade, seguito dal Paladino costretto a subire quasi il doppio dei danni; 27 sconfitte su 33 sono party wipe e 6 Mega Bomba.
+  - Corretto un difetto dell'automa: dopo l'ultimo nemico azzerava le azioni residue. Ora può curare e usare le azioni ancora disponibili prima della fine della stanza, senza riabilitare abilità nel Recupero.
+  - Con questa sola correzione Heroic sale al 78,6%; la conclusione dell'intero percorso resta al 45%, quindi il prossimo test deve concentrarsi sull'attrito cumulativo HP/Ferite e non su un ulteriore buff diretto al Paladino.
+- [x] Isolare Stormclaw e confrontare Paladin Protection con Warrior Protection.
+  - 1.440 scontri accoppiati: stesso Priest Holy, Stormclaw, Hunter Deadeye, nemici e semi; cambia soltanto il tank. Entrambe le compagnie ottengono il 100% di clear e nessuna morte nelle tre difficoltà.
+  - Gli obiettivi risultano sostanzialmente pari: Warrior 75,4% / 73,8% / 75,4%; Paladin 76,7% / 75,0% / 72,5% in Normal, Heroic e Hardcore.
+  - Il Warrior conserva più prevenzione in Normal e Heroic (3,36 contro 2,62; 5,68 contro 4,80), mentre in Hardcore i tank convergono (8,82 contro 8,66).
+  - Il Paladin infligge più danni in Normal/Heroic (13,61/15,65 contro 9,19/14,05); in Hardcore sono equivalenti (15,95 contro 16,55). La cura del tank Paladino incide solo in Normal (1,25 media) e scompare dai mazzi avanzati Protection.
+  - Stormclaw resta stabile: con Warrior produce 23,24 / 30,25 / 29,64 danni; con Paladin 21,07 / 29,30 / 28,77. Il divario avanzato è circa il 3% e non richiede correzioni.
+  - Le vere anomalie sono trasversali ai tank: Rituale e Rinforzi falliscono spesso pur con il 100% di vittorie, quindi dipendono dagli obiettivi a tempo già segnati sopra, non dalla classe tank.
+- [x] Ripetere il percorso Normal → Heroic → Hardcore e validare il 55–60% di completamento automatico.
+  - Con le sole azioni residue corrette il percorso completo resta al 45%; +2 HP passivi al Campo raggiunge il 48,3% su 120 spedizioni e non basta.
+  - Rimuovere una Ferita a ogni Campo è troppo forte: nel campione esplorativo porta il completamento al 75% e riduce eccessivamente l'attrito.
+  - La regola minima scelta è: entrando al Campo, ogni Eroe vivo recupera fino a 4 HP. Le Ferite restano persistenti e le abilità continuano a non essere utilizzabili nel Recupero.
+  - Conferma su 120 spedizioni: Normal 98,3%, Heroic 89,0%, Hardcore completata nel 65,7% dei tentativi che la raggiungono; percorso completo 57,5%.
+- [ ] Confermare il 55–60% con playtest umano, verificando che il riposo da 4 HP riduca la spirale negativa senza annullare il valore di consumabili, cure e protezioni.
