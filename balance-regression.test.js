@@ -214,6 +214,14 @@ assert.match(html,/\.setup-level-page\{display:flex!important[\s\S]*grid-templat
 assert.match(board,/\.setup-page\[hidden\]\{display:none\}/,'Compagnia e spedizione non devono occupare insieme lo stesso viewport');
 assert.match(board,/data-setup-party[\s\S]*data-setup-level hidden/,'Compagnia e spedizione devono vivere in due viste fisse');
 assert.match(board,/\.main-menu\{overflow:hidden\}/,'Anche la home deve essere una schermata fissa senza scorrimento');
+assert.match(html,/<meta name="viewport" content="width=1920,viewport-fit=cover">/,'Il viewport fisso deve mantenere il gioco in formato Wide su ogni orientamento');
+assert.doesNotMatch(html,/Ruota il dispositivo|si gioca in orizzontale|body>\*\{visibility:hidden!important\}/,'Il dispositivo verticale non deve nascondere il gioco dietro un avviso');
+assert.doesNotMatch(html,/\@media\(orientation:portrait\)/,'Le schermate principali non devono cambiare struttura quando il dispositivo è verticale');
+assert.doesNotMatch(board,/\@media\(orientation:portrait\)/,'Selezione eroi e Scuderia devono conservare il layout Wide in verticale');
+assert.match(board,/g\.gridTreasurePhase=true;g\.roomClearTurnPending=true;note\(g,'🎁 Combattimento concluso: completate i turni rimanenti/,'La fase tesoro deve conservare il turno e l’iniziativa correnti');
+assert.doesNotMatch(board,/g\.gridTreasurePhase=true;movers\.forEach\(hero=>hero\.actions=CONFIG\.actionsPerRound\)/,'La morte dell’ultimo nemico non deve ricaricare le azioni di tutti gli Eroi');
+assert.match(board,/tok==='overlord'\)\{if\(g\.roomClearTurnPending&&!aliveEnemies\(g\)\.length\)\{g\.initIndex\+\+;continue\}/,'L’Overlord senza nemici deve essere saltato durante i turni residui');
+assert.match(board,/if\(g\.roomClearTurnPending&&!aliveEnemies\(g\)\.length&&!g\.exploration\?\.activeAmbush&&room\?\.treasureResolved\)\{g\.roomClearTurnPending=false;checkVictory\(g\);return\}/,'La stanza deve chiudersi soltanto alla fine del giro dopo aver risolto i tesori');
 assert.match(board,/\.stable-overlay\{[^}]*overflow:hidden/,'La Scuderia deve restare dentro il viewport');
 assert.match(board,/data-stable-tab="hero"[\s\S]*data-stable-tab="equipment"[\s\S]*data-stable-tab="deck"/,'La scheda eroe deve usare sezioni invece dello scorrimento');
 assert.match(board,/stable-inventory-columns \.bag-slots\{[^}]*overflow:auto/,'Bag eroe e deposito devono scorrere soltanto dentro le rispettive aree');
@@ -250,5 +258,14 @@ const respec=new Function('TALENTS_BY_ROLE','talentCards',`${respecSource};retur
 assert.equal(respec.stableStartRespec(respecBuild),4);assert.deepEqual(respecBuild.talents,{root:0,cap:0});assert.deepEqual(respecBuild.collection,['base']);assert.deepEqual(respecBuild.deck,['base'],'Il respec deve togliere dal mazzo e dalla collezione le carte dei vecchi talenti');
 assert.equal(respec.stableInvestTalent(respecBuild,'cap',4),false,'Un talento di secondo livello non deve ignorare i requisiti del ramo');
 assert.equal(respec.stableInvestTalent(respecBuild,'root',4),true);assert.equal(respec.stableInvestTalent(respecBuild,'root',4),true);assert.equal(respec.stableInvestTalent(respecBuild,'root',4),true);assert.equal(respec.stableInvestTalent(respecBuild,'cap',4),true);assert.equal(respec.stableTalentPoints(respecBuild),4);assert.deepEqual(respecBuild.collection,['base','root_card','root_card','cap_card'],'La nuova distribuzione deve restituire soltanto le carte sbloccate dai nuovi talenti');
+
+const talentTreesLiteral=board.match(/const TALENT_TREES=(\{[\s\S]*?\n\});\nfor\(const\[role,tree\]/)?.[1];
+assert.ok(talentTreesLiteral,'Gli alberi dei talenti devono essere leggibili dal test');
+const talentTrees=new Function(`return ${talentTreesLiteral}`)(),expectedRows=[2,3,2,3,2,1];
+assert.equal(Object.keys(talentTrees).length,8,'Devono esistere alberi completi per tutte le otto classi');
+for(const[role,tree]of Object.entries(talentTrees)){assert.equal(tree.branches.length,2,`${role} deve avere due specializzazioni`);for(const branch of tree.branches){assert.equal(branch.nodes.length,13,`${role}/${branch.key} deve avere 13 talenti`);assert.deepEqual(Array.from({length:6},(_,index)=>branch.nodes.filter(([,row])=>row===index+1).length),expectedRows,`${role}/${branch.key} deve seguire 2–3–2–3–2–1`)}}
+assert.match(board,/function talentTierRequirement\(tier\)\{return Math\.max\(0,\(Number\(tier\)\|\|1\)-1\)\*3\}/,'Le sei righe devono aprirsi ogni tre punti nel ramo');
+assert.match(board,/function talentBoost\(h,card,effect\)[^\n]+talent\.boost\?\.\[effect\]\?\.includes\(card\)/,'I nuovi passivi devono modificare le abilità esistenti attraverso un unico calcolo condiviso');
+assert.doesNotMatch(board,/warrior:\{[^}]*vanguard:|healer:\{[^}]*renewed_hope:|hunter:\{[^}]*expose_prey:/,'I nuovi passivi non devono aggiungere carte ai mazzi');
 
 console.log('Balance regression checks passed.');
