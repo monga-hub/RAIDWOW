@@ -5,6 +5,7 @@ const board=fs.readFileSync('player-board.js','utf8');
 const bench=fs.readFileSync('dps-bench.js','utf8');
 const dungeon=fs.readFileSync('fixed-dungeon.js','utf8');
 const connected=fs.readFileSync('connected-rooms.js','utf8');
+const exploration=fs.readFileSync('exploration.js','utf8');
 const profile=fs.readFileSync('profile-storage.js','utf8');
 const html=fs.readFileSync('index.html','utf8');
 
@@ -14,6 +15,7 @@ assert.match(board,/piercing_shot'\)dealt=.*hunterMarked\?1:0/,'Piercing Shot de
 assert.match(board,/fang_command'\).*hunterMarked\?1\+/,'Fang Command deve ricevere +1 dal Braccato');
 assert.doesNotMatch(board,/startRecoveryTurn\([^)]*\).*stripWounds/s,'Il Recupero non deve cancellare le Ferite');
 assert.match(board,/warchief:.*special:.*longCast:true/,'La Cascata di Acido deve essere un Cast Lungo');
+assert.match(board,/goblin:.*tactic:\{pattern:'around',damage:2,damageType:'poison',wounds:1/,'La Tactic del Razziatore deve introdurre danno Poison nel nemico più comune');
 assert.match(board,/if\(e\.megaBombCasting&&\(e\.longCastReadyRound\|\|0\)<=g\.round\).*turn\.cards=\['special'\]/,'Il Cast Lungo deve completarsi dal turno successivo');
 assert.match(board,/type:'engineerBomb'.*megaBombCasting:true.*longCast:'mega_bomb'/,'La bomba deve essere interrompibile');
 assert.match(board,/g\.state==='playing'&&h\.consumableTurnUsed/,'I consumabili devono avere il limite per turno');
@@ -43,6 +45,22 @@ assert.match(board,/!taker\|\|!assignLoot\(g,loot\.uid,taker\.role\)\)leaveLoot/
 assert.match(board,/id:'hardcore'.*hpScale:2,damageScale:2,fungi:\{tick:2,boom:8\}/,'Hardcore deve mantenere HP doppi e danni ricalibrati');
 assert.match(board,/game\.enemyActionsPerTurn=2;game\.enemyBonusActivationsPerTurn=0;game\.enemyBonusActivationEvery=1;game\.enemyUniqueActions=true;game\.enemyDamageMultiplier=\.35;game\.enemyWoundCapPerRound=1/,'La campagna deve usare due Command diverse con danno e Ferite ricalibrati');
 assert.match(board,/game\.tutorial=true;game\.xpHalved=false;game\.enemyActionsPerTurn=1;game\.enemyBonusActivationsPerTurn=0;game\.enemyUniqueActions=false;game\.enemyDamageMultiplier=1;delete game\.enemyWoundCapPerRound/,'Il tutorial deve restare a una Command con danno pieno');
+const blockHelpers=['warriorShieldBlock','paladinShieldBlock','heroShieldBlock','heroRoundBlock'].map(name=>board.match(new RegExp(`function ${name}\\([^\\n]+`))?.[0]).join('\n');
+const {heroRoundBlock}=new Function(`${blockHelpers};return{heroRoundBlock}`)();
+assert.equal(heroRoundBlock({role:'warrior',offhand:{block:2},talents:{shield_wall:3}}),4,'Il Block automatico 5 deve ridursi a 4');
+assert.equal(heroRoundBlock({role:'paladin',offhand:{block:3},talents:{redoubt:2}}),4,'Il Block automatico del Paladino deve usare la stessa riduzione');
+const preventHeroDamageSource=board.match(/function preventHeroDamage\(target,power,physical=false\)\{const frost=[^\n]+/)?.[0]||'';
+const preventHeroDamage=new Function(`${preventHeroDamageSource};return preventHeroDamage`)();
+const physicalBlock={shield:4},poisonBlock={shield:4};
+assert.deepEqual(preventHeroDamage(physicalBlock,3,true).hit,0,'Il Block deve assorbire il danno fisico');
+assert.equal(physicalBlock.shield,1,'Il danno fisico deve consumare il Block punto per punto');
+assert.equal(preventHeroDamage(poisonBlock,3,false).hit,3,'Il danno non fisico deve ignorare il Block');
+assert.equal(poisonBlock.shield,4,'Il danno non fisico non deve consumare il Block');
+assert.match(board,/h\.shield=heroRoundBlock\(h\)/,'Il Block ridotto deve ricaricarsi automaticamente a inizio round');
+assert.doesNotMatch(preventHeroDamageSource,/heroShieldBlock/,'Lo scudo non deve più ridurre passivamente ogni singolo colpo');
+assert.match(exploration,/h\.shield=typeof heroRoundBlock==='function'\?heroRoundBlock\(h\):0/,'Anche le imboscate devono iniziare con il Block ricaricato');
+assert.match(board,/gridStatus\(actor\.shield,'st-guard'[^\n]+Block fisico/,'Il Block residuo deve essere visibile sulla carta dell’eroe');
+assert.doesNotMatch(board,/Block permanente/,'L’interfaccia non deve più descrivere il Block come permanente');
 assert.match(dungeon,/id:'deep-gate'[\s\S]*terrainLayout:\{rows:5,cols:5/,'L’Ala Profonda deve iniziare su una griglia 5×5');
 assert.match(dungeon,/id:'deep-gate'[\s\S]*name:'Le Porte di Radicava'[\s\S]*siege:true[\s\S]*wallHp:8,rounds:3[\s\S]*rewardWeapons:3/,'Radicava deve essere un assedio da tre ondate con cinque mura da 8 HP e tre ricompense Normal');
 assert.match(dungeon,/id:'deep-cistern'[\s\S]*name:'Il Ponte delle Cisterne'[\s\S]*wallHp:8,rounds:4[\s\S]*rewardTier:'GOLD'[\s\S]*terrainLayout:\{rows:5,cols:5/,'Il secondo fronte deve essere un assedio Heroic 5×5 da quattro ondate');
@@ -214,9 +232,9 @@ assert.match(html,/\.setup-level-page\{display:flex!important[\s\S]*grid-templat
 assert.match(board,/\.setup-page\[hidden\]\{display:none\}/,'Compagnia e spedizione non devono occupare insieme lo stesso viewport');
 assert.match(board,/data-setup-party[\s\S]*data-setup-level hidden/,'Compagnia e spedizione devono vivere in due viste fisse');
 assert.match(board,/\.main-menu\{overflow:hidden\}/,'Anche la home deve essere una schermata fissa senza scorrimento');
-assert.match(html,/<meta name="viewport" content="width=1920,viewport-fit=cover">/,'Il viewport fisso deve mantenere il gioco in formato Wide su ogni orientamento');
+assert.match(html,/<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">/,'Il viewport mobile deve mantenere testo e comandi a dimensione leggibile');
 assert.doesNotMatch(html,/Ruota il dispositivo|si gioca in orizzontale|body>\*\{visibility:hidden!important\}/,'Il dispositivo verticale non deve nascondere il gioco dietro un avviso');
-assert.doesNotMatch(html,/\@media\(orientation:portrait\)/,'Le schermate principali non devono cambiare struttura quando il dispositivo è verticale');
+assert.match(html,/\@media \(orientation:portrait\) and \(hover:none\) and \(pointer:coarse\)\{html\{[^}]*overflow:hidden[^}]*\}body\{[^}]*width:100vh[^}]*width:100dvh[^}]*height:100vw[^}]*height:100dvw[^}]*transform:rotate\(90deg\) translateY\(-100%\)/,'Il telefono verticale deve mostrare il canvas Wide ruotato, senza rimpicciolirlo');
 assert.doesNotMatch(board,/\@media\(orientation:portrait\)/,'Selezione eroi e Scuderia devono conservare il layout Wide in verticale');
 assert.match(board,/g\.gridTreasurePhase=true;g\.roomClearTurnPending=true;note\(g,'🎁 Combattimento concluso: completate i turni rimanenti/,'La fase tesoro deve conservare il turno e l’iniziativa correnti');
 assert.doesNotMatch(board,/g\.gridTreasurePhase=true;movers\.forEach\(hero=>hero\.actions=CONFIG\.actionsPerRound\)/,'La morte dell’ultimo nemico non deve ricaricare le azioni di tutti gli Eroi');
@@ -267,5 +285,9 @@ for(const[role,tree]of Object.entries(talentTrees)){assert.equal(tree.branches.l
 assert.match(board,/function talentTierRequirement\(tier\)\{return Math\.max\(0,\(Number\(tier\)\|\|1\)-1\)\*3\}/,'Le sei righe devono aprirsi ogni tre punti nel ramo');
 assert.match(board,/function talentBoost\(h,card,effect\)[^\n]+talent\.boost\?\.\[effect\]\?\.includes\(card\)/,'I nuovi passivi devono modificare le abilità esistenti attraverso un unico calcolo condiviso');
 assert.doesNotMatch(board,/warrior:\{[^}]*vanguard:|healer:\{[^}]*renewed_hope:|hunter:\{[^}]*expose_prey:/,'I nuovi passivi non devono aggiungere carte ai mazzi');
+assert.match(board,/classic_assault[^\n]+warrior:'protection',healer:'holy',rogue:'subtlety',mage:'fire'/,'Il benchmark Assalto classico deve conservare tank e guaritore');
+assert.match(board,/wild_assault[^\n]+paladin:'protection',shaman:'tidebinding',warlock:'demonology',hunter:'wildsnare'/,'Il benchmark Assalto selvaggio deve conservare tank e guaritore');
+assert.match(board,/roomClearTurnPending\)\{const hero=game\.party\.find[\s\S]*advanceHeroTurn\(game\)[\s\S]*else activateInitiativeSlot\(game\)/,'Il benchmark completo deve terminare i turni residui dopo aver raccolto i tesori');
+assert.match(board,/card==='stillness'\)chosen=h\.stillnessArmed\?null:h;[\s\S]*card==='retreat_roll'\)chosen=reachable\('hunter_bow'\)\?null:h;[\s\S]*card==='predator_storm'\)chosen=hunterMarkedEnemy\(g\)\?h:null/,'L IA Hunter deve poter usare le carte personali invece di cercare un bersaglio nemico');
 
 console.log('Balance regression checks passed.');

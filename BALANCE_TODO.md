@@ -26,3 +26,21 @@
   - Nessuno stallo: Normal 100% completato, Heroic 55,6%, Hardcore 40% tra i gruppi che vi sono arrivati.
   - Due sequenze su nove hanno completato tutte e tre le difficoltà; Equilibrata e Controllo una ciascuna, Assalto nessuna.
   - Corretti tre blocchi emersi dal percorso reale: ritorno nelle stanze visitate, gestione di forzieri multipli e posizionamento in griglia dei Girini evocati da Grum’Arat.
+
+## Prossimi passi — riequilibrio delle classi
+
+Obiettivo finale: una compagnia ben costruita deve completare Hardcore nel 55–60% delle prove. Le specializzazioni della stessa classe devono raggiungere efficacia complessiva comparabile con identità differenti, come Assassination e Subtlety del Rogue.
+
+- [x] Correggere l’uso automatico delle carte personali Hunter e ripetere il confronto isolato Deadeye/Wildsnare.
+  - 384 scontri accoppiati: stessa compagnia, 8 scenari, 3 difficoltà e 8 semi; cambiano soltanto Deadeye e Wildsnare.
+  - Deadeye: 27,22 danni medi, 4,14 per round, 0,06 controlli e 7,73 round di gruppo.
+  - Wildsnare: 56,49 danni medi, 11,99 per round, 4,59 controlli e 4,60 round di gruppo.
+  - La correzione consente all’IA di usare Stillness, Retreat Roll e Predator Storm. Il divario non dipendeva soltanto dall’IA: l’alta resa AOE di Wildsnare contro mob fragili è un problema reale da isolare sulle fasce di Vita.
+- [ ] Ritarare gli obiettivi a tempo per la regola delle 2 Command distinte, soprattutto Rituale e Rinforzi.
+- [ ] Misurare single target contro AOE su più fasce di Vita dei mob; provare l’aumento della Vita prima di potenziare le carte.
+- [ ] Portare Deadeye e Wildsnare alla stessa efficacia complessiva: Deadeye forte sul singolo bersaglio, Wildsnare su AOE e controllo.
+- [ ] Portare Fire e Frost alla stessa efficacia complessiva: Fire molto forte sul singolo bersaglio, senza imporlo come massimo DPS assoluto.
+- [ ] Aumentare danno o ritmo di Demonology mantenendo distinta la sua identità difensiva rispetto ad Affliction.
+- [ ] Verificare e, se necessario, potenziare Holy Paladin affinché possa sostenere da solo il gruppo fino alla fine di Hardcore.
+- [ ] Isolare Stormclaw e confrontare Paladin Protection con Warrior Protection.
+- [ ] Ripetere il percorso Normal → Heroic → Hardcore e validare il 55–60% di completamento Hardcore, poi confermare con playtest umano.
