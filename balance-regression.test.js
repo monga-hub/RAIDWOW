@@ -259,6 +259,9 @@ assert.match(board,/tok==='overlord'\)\{if\(g\.roomClearTurnPending&&!aliveEnemi
 assert.match(board,/if\(g\.roomClearTurnPending&&!aliveEnemies\(g\)\.length&&!g\.exploration\?\.activeAmbush&&room\?\.treasureResolved\)\{g\.roomClearTurnPending=false;checkVictory\(g\);return\}/,'La stanza deve chiudersi soltanto alla fine del giro dopo aver risolto i tesori');
 assert.match(board,/\.stable-overlay\{[^}]*overflow:hidden/,'La Scuderia deve restare dentro il viewport');
 assert.match(board,/data-stable-tab="hero"[\s\S]*data-stable-tab="equipment"[\s\S]*data-stable-tab="deck"/,'La scheda eroe deve usare sezioni invece dello scorrimento');
+assert.match(board,/function stableNewBuild\(role\)[\s\S]*?deck:\[\.\.\.deck\],collection:\[\.\.\.deck\][\s\S]*?return build/,'Un nuovo eroe deve avere subito una scheda base completa');
+assert.match(board,/draft=saved\?JSON\.parse\(JSON\.stringify\(saved\)\):stableNewBuild\(role\)/,'La Scuderia deve aprire tutti i pannelli anche per un eroe nuovo');
+assert.doesNotMatch(board,/if\(!draft\)\{content\.className='stable-new-view'/,'Un eroe nuovo non deve più fermarsi alla schermata vuota');
 assert.match(board,/stable-inventory-columns \.bag-slots\{[^}]*overflow:auto/,'Bag eroe e deposito devono scorrere soltanto dentro le rispettive aree');
 assert.match(board,/stable-inventory-columns \.hero-bag-slot\{[^}]*overflow:hidden/,'I comandi della Bag devono restare dentro la scheda dell oggetto');
 assert.match(board,/stable-tab-panel \.deck-card-grid\{overflow:auto/,'Il mazzo deve restare consultabile nello stesso pannello');
