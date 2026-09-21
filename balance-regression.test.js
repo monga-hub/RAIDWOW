@@ -248,10 +248,12 @@ assert.match(board,/hero-pick-copy[\s\S]*<small>\$\{specialization\}<\/small><st
 assert.match(board,/\.main-menu\{overflow:hidden\}/,'Anche la home deve essere una schermata fissa senza scorrimento');
 assert.match(html,/<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">/,'Il viewport mobile deve mantenere testo e comandi a dimensione leggibile');
 assert.doesNotMatch(html,/Ruota il dispositivo|si gioca in orizzontale|body>\*\{visibility:hidden!important\}/,'Il dispositivo verticale non deve nascondere il gioco dietro un avviso');
-assert.match(html,/window===top[^\n]+wide\.html[^\n]+location\.replace\(shell\)/,'Il telefono verticale deve aprire il contenitore Wide prima di renderizzare il gioco');
+assert.match(html,/window===top[^\n]+\(hover:none\) and \(pointer:coarse\)[^\n]+wide\.html[^\n]+location\.replace\(shell\)/,'Il telefono deve aprire il contenitore Wide prima di renderizzare il gioco');
 assert.doesNotMatch(html,/body\{[^}]*transform:rotate\(90deg\) translateY\(-100%\)/,'La pagina di gioco non deve essere ruotata conservando i breakpoint Portrait');
 assert.match(wide,/iframe\{[^}]*width:100dvh[^}]*height:100dvw[^}]*transform:rotate\(90deg\) translateY\(-100%\)/,'Il contenitore deve dare al gioco una vera viewport Wide ruotata');
+assert.match(wide,/@media\(orientation:landscape\)\{iframe\{[^}]*width:100dvw[^}]*height:100dvh[^}]*transform:none/,'In orizzontale il contenitore deve mantenere la stessa pagina senza rotazione');
 assert.match(wide,/searchParams\.set\('wide','1'\)/,'Il gioco incorporato non deve riaprire ricorsivamente il contenitore Wide');
+assert.doesNotMatch(wide,/location\.replace|addEventListener\('change'/,'Girare il telefono non deve ricaricare o sostituire la pagina');
 assert.doesNotMatch(board,/\@media\(orientation:portrait\)/,'Selezione eroi e Scuderia devono conservare il layout Wide in verticale');
 assert.match(board,/max-width:1100px\) and \(max-height:600px\)[\s\S]*real-combat-shell\{grid-template-columns:clamp\(220px,28vw,280px\) minmax\(0,1fr\)/,'Il combattimento Wide su telefono deve usare due colonne compatte senza una sidebar fantasma');
 assert.match(board,/max-width:1100px\) and \(max-height:600px\)[\s\S]*real-grid-cells\{grid-template-columns:repeat\(var\(--grid-cols,6\),minmax\(0,1fr\)\)/,'La griglia del combattimento deve usare tutto lo spazio Wide disponibile');
