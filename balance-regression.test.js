@@ -240,10 +240,11 @@ assert.match(board,/data-menu-profile[\s\S]*PROFILO COMPAGNIA/,'La home deve mos
 assert.match(board,/data-stable-company-save[\s\S]*profile\.company=name;[\s\S]*RaidProfile\?\.write\(localStorage,profile\)/,'La Scuderia deve permettere di salvare il nome della compagnia');
 assert.match(board,/new MutationObserver\(\(\)=>\{if\(!menu\.hidden\)syncProfile\(\)\}\)/,'Il riepilogo deve aggiornarsi quando si torna alla home');
 assert.match(board,/\.hero-select-setup\{overflow:hidden/,'La selezione della spedizione non deve scorrere come una pagina HTML');
-assert.match(board,/setSetupHeading=level=>[\s\S]*Scegli la spedizione[\s\S]*setSetupHeading\(true\)/,'La seconda pagina deve mostrare il titolo della spedizione');
-assert.match(html,/\.setup-level-page\{display:flex!important[\s\S]*grid-template-columns:repeat\(3/,'Le sei spedizioni devono occupare una griglia centrale 3×2');
-assert.match(board,/\.setup-page\[hidden\]\{display:none\}/,'Compagnia e spedizione non devono occupare insieme lo stesso viewport');
-assert.match(board,/data-setup-party[\s\S]*data-setup-level hidden/,'Compagnia e spedizione devono vivere in due viste fisse');
+assert.match(board,/\.setup-combined-page\{grid-template-rows:[^}]+\}[\s\S]*\.hero-select-panel \.level-grid\{grid-template-columns:repeat\(3/,'Compagnia e sei spedizioni devono condividere una vista ordinata con griglia 3×2');
+assert.match(board,/data-setup-combined[\s\S]*hero-pick-grid[\s\S]*setup-expedition-grid/,'Gli eroi leggibili devono precedere le spedizioni nella stessa schermata');
+assert.doesNotMatch(board,/Scegli spedizione →|← Compagnia/,'I pulsanti di navigazione fra compagnia e spedizione non devono più esistere');
+assert.match(board,/setup-expedition-grid\.locked[\s\S]*pointer-events:none[\s\S]*expeditionGrid\.classList\.toggle\('locked',!ready\)/,'Le spedizioni devono restare inattive finché non sono scelti quattro eroi');
+assert.match(board,/hero-pick-copy[\s\S]*<small>\$\{specialization\}<\/small><strong>\$\{name\}<\/strong>/,'Ogni carta eroe deve mostrare specializzazione e nome');
 assert.match(board,/\.main-menu\{overflow:hidden\}/,'Anche la home deve essere una schermata fissa senza scorrimento');
 assert.match(html,/<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">/,'Il viewport mobile deve mantenere testo e comandi a dimensione leggibile');
 assert.doesNotMatch(html,/Ruota il dispositivo|si gioca in orizzontale|body>\*\{visibility:hidden!important\}/,'Il dispositivo verticale non deve nascondere il gioco dietro un avviso');
