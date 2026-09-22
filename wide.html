@@ -5,23 +5,14 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#020403">
   <title>Le Paludi della Luna Avvelenata</title>
-  <style>
-    *{box-sizing:border-box}
-    html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#020403}
-    iframe{position:fixed;border:0;transform-origin:top left}
-  </style>
 </head>
 <body>
-  <iframe id="game" title="Le Paludi della Luna Avvelenata" allow="autoplay; fullscreen"></iframe>
   <script>
-    const frame=document.getElementById('game'),wideWidth=1920,wideHeight=Math.round(wideWidth*Math.min(screen.width,screen.height)/Math.max(screen.width,screen.height));
-    function fitWide(){const portrait=innerHeight>innerWidth,scale=Math.min((portrait?innerHeight:innerWidth)/wideWidth,(portrait?innerWidth:innerHeight)/wideHeight),visualWidth=(portrait?wideHeight:wideWidth)*scale,visualHeight=(portrait?wideWidth:wideHeight)*scale;frame.style.width=`${wideWidth}px`;frame.style.height=`${wideHeight}px`;frame.style.left=`${(innerWidth-visualWidth)/2}px`;frame.style.top=`${(innerHeight-visualHeight)/2}px`;frame.style.transform=portrait?`rotate(90deg) scale(${scale}) translateY(-100%)`:`scale(${scale})`}
-    fitWide();addEventListener('resize',fitWide,{passive:true});
     const gameUrl=new URL('index.html',location.href);
     gameUrl.search=location.search;
-    gameUrl.searchParams.set('wide','1');
+    gameUrl.searchParams.delete('wide');
     gameUrl.hash=location.hash;
-    frame.src=gameUrl;
+    location.replace(gameUrl);
   </script>
 </body>
 </html>
