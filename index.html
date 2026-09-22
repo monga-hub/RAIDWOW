@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="RAIDWOW">
-<meta name="raidwow-version" content="305">
+<meta name="raidwow-version" content="306">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" type="image/png" sizes="192x192" href="assets/app-icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
@@ -236,8 +236,17 @@
   @media(max-width:1050px) and (orientation:portrait){#enemies .room-targets:has(>.friendly-pick)>.friendly-toggle{grid-column:1/-1;min-height:84px}}
   .hero-column .turn-ctrl.flip{min-height:66px}
 </style>
+<style>
+  .portrait-lock{display:none}
+  @media (orientation:portrait) and (hover:none) and (pointer:coarse){
+    html:not(.portrait-play),html:not(.portrait-play) body{overflow:hidden;background:#020403}
+    html:not(.portrait-play) .portrait-lock{position:fixed;z-index:2147483647;inset:0;display:grid;place-items:center;padding:110px;background:linear-gradient(#02050470,#020504b8),url('assets/optimized/compagnia.webp') center/cover no-repeat}
+    .portrait-lock-card{position:relative;width:min(1250px,88vw);padding:78px 86px;border:4px solid #d8ba61;border-radius:34px;background:linear-gradient(145deg,#07100de8,#15251fe8);box-shadow:0 28px 90px #000d,inset 0 0 0 2px #fff2a51f;color:#f5e7b1;text-align:center;text-shadow:0 3px 9px #000}
+    .portrait-lock-kicker{display:block;color:#d8ba61;font-size:25px;font-weight:1000;letter-spacing:.2em}.portrait-lock-icon{margin:22px 0 4px;font-size:112px;line-height:1}.portrait-lock h1{margin:0;color:#ffe58d;font:800 clamp(68px,5vw,100px)/1.05 Georgia,serif}.portrait-lock p{max-width:24em;margin:30px auto 40px;color:#e8e4d4;font-size:38px;line-height:1.35}.portrait-lock button{min-width:620px;margin:0;padding:27px 42px;border:3px solid #f2d478;border-radius:18px;background:linear-gradient(180deg,#efd06d,#c79f3f);color:#1b1609;font-size:32px;font-weight:1000}.portrait-lock small{display:block;margin-top:26px;color:#c9c7b9;font-size:24px}
+  }
+</style>
 </head>
-<body><script>const phoneWide=matchMedia('(hover:none) and (pointer:coarse)');function fitPhoneWide(){const portrait=innerHeight>innerWidth,body=document.body,root=document.documentElement,props=['position','top','left','width','height','overflow','transform','transform-origin'];if(!phoneWide.matches||!portrait){root.style.removeProperty('overflow');props.forEach(prop=>body.style.removeProperty(prop));return}const wideWidth=1920,wideHeight=Math.round(wideWidth*innerWidth/innerHeight),scale=innerHeight/wideWidth;root.style.overflow='hidden';Object.assign(body.style,{position:'fixed',top:'0',left:'0',width:`${wideWidth}px`,height:`${wideHeight}px`,overflow:'auto',transform:`rotate(90deg) scale(${scale}) translateY(-100%)`,transformOrigin:'top left'})}fitPhoneWide();addEventListener('resize',fitPhoneWide,{passive:true});</script><main>
+<body><section class="portrait-lock" role="dialog" aria-labelledby="portraitLockTitle"><div class="portrait-lock-card"><span class="portrait-lock-kicker">RAIDWOW</span><div class="portrait-lock-icon" aria-hidden="true">↻</div><h1 id="portraitLockTitle">Ruota il telefono</h1><p>Per la visuale completa, usa il telefono in orizzontale.</p><button type="button" data-portrait-play>Gioca in verticale</button><small>Puoi cambiare orientamento in qualsiasi momento.</small></div></section><script>const phoneWide=matchMedia('(hover:none) and (pointer:coarse)');let portraitPlay=false;function fitPhoneWide(){const portrait=innerHeight>innerWidth,body=document.body,root=document.documentElement,play=phoneWide.matches&&portrait&&portraitPlay,props=['position','top','left','width','height','overflow','transform','transform-origin'];root.classList.toggle('portrait-play',play);if(!play){root.style.removeProperty('overflow');props.forEach(prop=>body.style.removeProperty(prop));return}const wideWidth=1920,wideHeight=Math.round(wideWidth*innerWidth/innerHeight),scale=innerHeight/wideWidth;root.style.overflow='hidden';Object.assign(body.style,{position:'fixed',top:'0',left:'0',width:`${wideWidth}px`,height:`${wideHeight}px`,overflow:'auto',transform:`rotate(90deg) scale(${scale}) translateY(-100%)`,transformOrigin:'top left'})}document.querySelector('[data-portrait-play]').onclick=()=>{portraitPlay=true;fitPhoneWide()};fitPhoneWide();addEventListener('resize',fitPhoneWide,{passive:true});</script><main>
   <h1>Le Paludi della Luna Avvelenata</h1>
   <p>Nuova modalità <strong>Player Board bifronte</strong>, isolata dalla baseline party-v0.6.</p>
   <div class="card" id="boardSetup" data-active="false"><span class="mode-pill">SETUP / TEST UI</span><h2>Scegli il lato delle plance</h2><p>La specializzazione è bloccata quando la campagna comincia. I lati retro restano configurabili e marcati TBD.</p><div class="setup-row"><label>Warrior<select id="warriorSide"><option value="front">Fronte · Guardian / Tank</option><option value="back">Retro · Warrior DPS / TBD</option></select></label><label>Priest<select id="healerSide"><option value="front">Fronte · Priest / Healer</option><option value="back">Retro · TBD</option></select></label><button id="startBoard">Avvia con Player Board</button><button id="startLegacy" class="secondary">Avvia baseline legacy</button><button id="boardSmoke" class="secondary">Smoke / audit board</button></div></div>

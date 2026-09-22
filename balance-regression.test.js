@@ -247,8 +247,9 @@ assert.match(board,/setup-expedition-grid\.locked[\s\S]*pointer-events:none[\s\S
 assert.match(board,/hero-pick-copy[\s\S]*<small>\$\{specialization\}<\/small><strong>\$\{name\}<\/strong>/,'Ogni carta eroe deve mostrare specializzazione e nome');
 assert.match(board,/\.main-menu\{overflow:hidden\}/,'Anche la home deve essere una schermata fissa senza scorrimento');
 assert.match(html,/<meta name="viewport" content="width=1920,viewport-fit=cover">/,'Il gioco deve conservare il viewport Wide originale senza ricomporre carte e comandi');
-assert.doesNotMatch(html,/Ruota il dispositivo|si gioca in orizzontale|body>\*\{visibility:hidden!important\}/,'Il dispositivo verticale non deve nascondere il gioco dietro un avviso');
-assert.match(html,/function fitPhoneWide\(\)[^\n]+wideWidth=1920,wideHeight=Math\.round\(wideWidth\*innerWidth\/innerHeight\),scale=innerHeight\/wideWidth[^\n]+rotate\(90deg\) scale\(\$\{scale\}\) translateY\(-100%\)/,'Portrait deve ruotare direttamente la tela storica da 1920 px');
+assert.match(html,/portrait-lock[\s\S]*compagnia\.webp[\s\S]*Ruota il telefono[\s\S]*data-portrait-play>Gioca in verticale/,'Il portrait deve mostrare la Compagnia, l’invito a ruotare e l’alternativa giocabile');
+assert.match(html,/portraitPlay=false[^\n]+play=phoneWide\.matches&&portrait&&portraitPlay[^\n]+wideWidth=1920[^\n]+rotate\(90deg\) scale\(\$\{scale\}\) translateY\(-100%\)/,'Il portrait deve ruotare la tela storica soltanto dopo la scelta del giocatore');
+assert.match(html,/data-portrait-play[^\n]+portraitPlay=true;fitPhoneWide\(\)/,'Il pulsante deve permettere di giocare in verticale nella sessione corrente');
 assert.match(html,/fitPhoneWide\(\);addEventListener\('resize',fitPhoneWide,\{passive:true\}\)/,'Girare il telefono deve aggiornare la stessa pagina senza ricaricarla');
 assert.doesNotMatch(html,/wide\.html|location\.replace|iframe/,'Il gioco principale non deve più passare attraverso un iframe mobile');
 assert.match(wide,/searchParams\.delete\('wide'\)[\s\S]*location\.replace\(gameUrl\)/,'I vecchi indirizzi Wide devono tornare una volta sola al gioco principale');
