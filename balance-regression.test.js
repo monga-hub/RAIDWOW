@@ -256,6 +256,9 @@ assert.match(wide,/searchParams\.set\('wide','1'\)/,'Il gioco incorporato non de
 assert.doesNotMatch(wide,/location\.replace|addEventListener\('change'/,'Girare il telefono non deve ricaricare o sostituire la pagina');
 assert.doesNotMatch(board,/\@media\(orientation:portrait\)/,'Selezione eroi e Scuderia devono conservare il layout Wide in verticale');
 assert.match(board,/min-width:1101px\)[\s\S]*real-combat-shell\{grid-template-columns:minmax\(330px,390px\) minmax\(0,1fr\) minmax\(240px,320px\)/,'Il combattimento deve conservare le tre colonne della vecchia versione Wide');
+assert.match(board,/orientation:landscape\)[\s\S]*max-height:1100px\)[\s\S]*real-combat-shell\{grid-template-columns:minmax\(430px,500px\) minmax\(0,1fr\) minmax\(180px,225px\)/,'Su telefono il combattimento deve conservare le proporzioni storiche tra abilità, griglia e target');
+assert.match(board,/real-combat-left \.hand\{flex:1 1 auto;grid-template-rows:repeat\(3,minmax\(84px,1fr\)\)/,'Le abilità devono restare ordinate in tre righe dentro il pannello storico');
+assert.doesNotMatch(board,/max-width:1100px\) and \(max-height:600px\)[\s\S]*real-combat-shell/,'Il telefono non deve sostituire il layout storico con una variante compatta');
 assert.match(board,/g\.gridTreasurePhase=true;g\.roomClearTurnPending=true;note\(g,'🎁 Combattimento concluso: completate i turni rimanenti/,'La fase tesoro deve conservare il turno e l’iniziativa correnti');
 assert.doesNotMatch(board,/g\.gridTreasurePhase=true;movers\.forEach\(hero=>hero\.actions=CONFIG\.actionsPerRound\)/,'La morte dell’ultimo nemico non deve ricaricare le azioni di tutti gli Eroi');
 assert.match(board,/tok==='overlord'\)\{if\(g\.roomClearTurnPending&&!aliveEnemies\(g\)\.length\)\{g\.initIndex\+\+;continue\}/,'L’Overlord senza nemici deve essere saltato durante i turni residui');
