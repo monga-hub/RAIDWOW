@@ -8,18 +8,20 @@
   <style>
     *{box-sizing:border-box}
     html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#020403}
-    iframe{position:fixed;top:0;left:0;width:100vh;width:100dvh;height:100vw;height:100dvw;border:0;transform:rotate(90deg) translateY(-100%);transform-origin:top left}
-    @media(orientation:landscape){iframe{width:100vw;width:100dvw;height:100vh;height:100dvh;transform:none}}
+    iframe{position:fixed;border:0;transform-origin:top left}
   </style>
 </head>
 <body>
   <iframe id="game" title="Le Paludi della Luna Avvelenata" allow="autoplay; fullscreen"></iframe>
   <script>
+    const frame=document.getElementById('game'),wideWidth=Math.max(screen.width,screen.height),wideHeight=Math.min(screen.width,screen.height);
+    function fitWide(){const portrait=innerHeight>innerWidth,scale=Math.min((portrait?innerHeight:innerWidth)/wideWidth,(portrait?innerWidth:innerHeight)/wideHeight),visualWidth=(portrait?wideHeight:wideWidth)*scale,visualHeight=(portrait?wideWidth:wideHeight)*scale;frame.style.width=`${wideWidth}px`;frame.style.height=`${wideHeight}px`;frame.style.left=`${(innerWidth-visualWidth)/2}px`;frame.style.top=`${(innerHeight-visualHeight)/2}px`;frame.style.transform=portrait?`rotate(90deg) scale(${scale}) translateY(-100%)`:`scale(${scale})`}
+    fitWide();addEventListener('resize',fitWide,{passive:true});
     const gameUrl=new URL('index.html',location.href);
     gameUrl.search=location.search;
     gameUrl.searchParams.set('wide','1');
     gameUrl.hash=location.hash;
-    document.getElementById('game').src=gameUrl;
+    frame.src=gameUrl;
   </script>
 </body>
 </html>
