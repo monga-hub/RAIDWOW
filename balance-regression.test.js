@@ -255,7 +255,8 @@ assert.match(wide,/@media\(orientation:landscape\)\{iframe\{[^}]*width:100dvw[^}
 assert.match(wide,/searchParams\.set\('wide','1'\)/,'Il gioco incorporato non deve riaprire ricorsivamente il contenitore Wide');
 assert.doesNotMatch(wide,/location\.replace|addEventListener\('change'/,'Girare il telefono non deve ricaricare o sostituire la pagina');
 assert.doesNotMatch(board,/\@media\(orientation:portrait\)/,'Selezione eroi e Scuderia devono conservare il layout Wide in verticale');
-assert.match(board,/max-width:1100px\) and \(max-height:600px\)[\s\S]*real-combat-shell\{grid-template-columns:clamp\(220px,28vw,280px\) minmax\(0,1fr\)/,'Il combattimento Wide su telefono deve usare due colonne compatte senza una sidebar fantasma');
+assert.match(board,/max-width:1100px\) and \(max-height:600px\)[\s\S]*real-combat-shell\{grid-template-columns:clamp\(180px,24vw,220px\) minmax\(0,1fr\) clamp\(110px,17vw,145px\)/,'Il combattimento Wide su telefono deve riservare spazio compatto a comandi, griglia e pannelli destri');
+assert.match(board,/max-width:1100px\) and \(max-height:600px\)[\s\S]*real-combat-right\{display:grid;grid-template-rows:105px minmax\(0,1fr\)/,'Mappa della stanza e target devono restare visibili a destra nel combattimento mobile');
 assert.match(board,/max-width:1100px\) and \(max-height:600px\)[\s\S]*real-grid-cells\{grid-template-columns:repeat\(var\(--grid-cols,6\),minmax\(0,1fr\)\)/,'La griglia del combattimento deve usare tutto lo spazio Wide disponibile');
 assert.match(board,/g\.gridTreasurePhase=true;g\.roomClearTurnPending=true;note\(g,'🎁 Combattimento concluso: completate i turni rimanenti/,'La fase tesoro deve conservare il turno e l’iniziativa correnti');
 assert.doesNotMatch(board,/g\.gridTreasurePhase=true;movers\.forEach\(hero=>hero\.actions=CONFIG\.actionsPerRound\)/,'La morte dell’ultimo nemico non deve ricaricare le azioni di tutti gli Eroi');
