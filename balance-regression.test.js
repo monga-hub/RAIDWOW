@@ -9,9 +9,17 @@ const exploration=fs.readFileSync('exploration.js','utf8');
 const profile=fs.readFileSync('profile-storage.js','utf8');
 const html=fs.readFileSync('index.html','utf8');
 const wide=fs.readFileSync('wide.html','utf8');
+const abilityNames={};
+for(const statement of board.match(/Object\.assign\(NAMES,\{[^\n]+\}\);/g)||[])new Function('NAMES',statement)(abilityNames);
+const actionIconBody=board.match(/const ACTION_ICON_FILES=\{([\s\S]*?)\n\};/)?.[1]||'';
+const actionIds=[...actionIconBody.matchAll(/(?:^|,)\s*([a-z][a-z0-9_]*)\s*:/g)].map(match=>match[1]).filter(id=>id!=='dagger');
+const specialAbilityNames={sword:'Heroic Strike',critical:'Critico',frost_armor:'Ice Barrier',power_word_shield:'Power Word: Shield',shadow_word_pain:'Shadow Word: Pain',avengers_shield:"Avenger's Shield",paladin_holy_shield:'Holy Shield',divine_strike:'Colpo Divino',blessing_protection:'Blessing of Protection',blessing_sanctuary:'Blessing of Sanctuary',hammer_justice:'Hammer of Justice',curse_agony:'Curse of Agony',curse_exhaustion:'Curse of Exhaustion'};
+for(const id of actionIds){const expected=specialAbilityNames[id]||id.split('_').map((word,index)=>index&&['of','on'].includes(word)?word:word[0].toUpperCase()+word.slice(1)).join(' ');assert.equal(abilityNames[id],expected,`Il database deve mostrare ${id} con il nome canonico ${expected}`)}
+assert.equal(abilityNames.critical,'Critico','Anche Critico deve usare il nome canonico del database');
+assert.match(board,/replaceAll\(alias,codeName\)/,'I vecchi alias devono essere convertiti verso il nome canonico, non viceversa');
 
-assert.match(board,/warlockShadowPower\(h,3,card\)/,'Void Needle deve partire da 3');
-assert.match(board,/corruption'\)\{dealt=warlockDotHit/,'Rot Seed deve colpire subito');
+assert.match(board,/warlockShadowPower\(h,3,card\)/,'Shadow Bolt deve partire da 3');
+assert.match(board,/corruption'\)\{dealt=warlockDotHit/,'Corruption deve colpire subito');
 assert.match(board,/piercing_shot'\)dealt=.*hunterMarked\?1:0/,'Piercing Shot deve ricevere +1 dal Braccato');
 assert.match(board,/fang_command'\).*hunterMarked\?1\+/,'Fang Command deve ricevere +1 dal Braccato');
 assert.doesNotMatch(board,/startRecoveryTurn\([^)]*\).*stripWounds/s,'Il Recupero non deve cancellare le Ferite');
@@ -20,7 +28,8 @@ assert.match(board,/goblin:.*tactic:\{pattern:'around',damage:2,damageType:'pois
 assert.match(board,/if\(e\.megaBombCasting&&\(e\.longCastReadyRound\|\|0\)<=g\.round\).*turn\.cards=\['special'\]/,'Il Cast Lungo deve completarsi dal turno successivo');
 assert.match(board,/type:'engineerBomb'.*megaBombCasting:true.*longCast:'mega_bomb'/,'La bomba deve essere interrompibile');
 assert.match(board,/g\.state==='playing'&&h\.consumableTurnUsed/,'I consumabili devono avere il limite per turno');
-assert.match(bench,/warlock:\[\['shadow_bolt','Void Needle',3\]/,'Il benchmark deve usare Void Needle da 3');
+assert.match(bench,/const cardName=id=>GAME_DATA\.cardNames\[id\]/,'Il benchmark deve leggere i nomi delle abilità dal database del gioco');
+assert.match(bench,/warlock:\[\['shadow_bolt',cardName\('shadow_bolt'\),3\]/,'Il benchmark deve usare Shadow Bolt da 3 tramite il database dei nomi');
 assert.match(bench,/shadow_mastery'\)\*ticks/,'Il benchmark deve applicare Shadow Mastery a ogni tick dei DoT');
 assert.match(board,/function overlordEnemyActivationIds\(g\)/,'Il benchmark deve poter variare il numero di attivazioni nemiche');
 assert.match(board,/!repeatedOverlordAction\(g\)&&tickWarlockEnemyEffects/,'I DoT devono scattare una volta per turno nemico, non per azione');
@@ -118,7 +127,7 @@ assert.match(board,/function resolveSiegeWallPressure\(g,objective,attackers\)[\
 assert.match(board,/wallBreachedRound\[index\].*<g\.round\)escaped\.push\(enemy\)[\s\S]*defeatCause='city_breached'/,'La sconfitta deve avvenire soltanto se un nemico attraversa una breccia dal turno successivo');
 assert.match(board,/function siegeWallCards\(g,objective\)[\s\S]*BRECCIA[\s\S]*siege-breach-damage/,'I cinque segmenti devono mostrare HP, danno e breccia direttamente sulla griglia');
 assert.match(html,/real-grid-cells\.siege-grid\{grid-template-columns:minmax\(42px,.5fr\) repeat\(var\(--grid-cols\),minmax\(92px,1fr\)\) minmax\(42px,.5fr\)/,'L’Assedio deve usare mezza colonna mura, cinque colonne di campo e mezza colonna ingressi');
-assert.match(board,/gridStatus\(actor\.paladinProtection,'st-holy','pal-winged-guard'/,'Guardian Vow deve apparire negli stati della carta e del target ingrandito');
+assert.match(board,/gridStatus\(actor\.paladinProtection,'st-holy','pal-winged-guard'/,'Blessing of Protection deve apparire negli stati della carta e del target ingrandito');
 assert.match(board,/objective\.siege\?objective\.wave>=objective\.rounds&&!aliveEnemies\(g\)\.length:g\.round>=objective\.rounds/,'L’Assedio deve terminare solo dopo l’ultima ondata e con la griglia ripulita');
 assert.match(board,/function siegeWaveReady\(g,objective,enemyCount=aliveFighters\(g\)\.length\)[^\n]+enemyCount===0[^\n]+g\.round>=\(objective\.nextWaveRound\?\?g\.round\)&&enemyCount<6/,'Le ondate devono anticipare a campo vuoto e ritardare con almeno sei nemici');
 const siegeWaveReadySource=board.match(/function siegeWaveReady\([^\n]+/)?.[0];
@@ -321,7 +330,7 @@ assert.match(board,/card==='stillness'\)chosen=h\.stillnessArmed\?null:h;[\s\S]*
 assert.match(board,/paladin:\{[\s\S]*startingDeck:\['crusader_strike','holy_light','holy_light','flash_of_light','flash_of_light','righteous_defense','blessing_protection','consecration','cleanse','judgment'\]/,'Il mazzo iniziale ibrido del Paladino deve contenere quattro cure dirette senza duplicare attacco e provocazione');
 assert.match(board,/base_paladin_shield:\{[^}]*healingBonus:1[\s\S]*silver_shield:\{[^}]*healingBonus:2[\s\S]*gold_templar_shield:\{[^}]*healingBonus:3[\s\S]*mythic_templar_shield:\{[^}]*healingBonus:4/,'Gli scudi del Paladino devono scalare anche come focus di cura');
 assert.match(board,/function paladinHeal\([^\n]+h\.offhand\?\.healingBonus[\s\S]*source==='holy_light'[\s\S]*secondary[\s\S]*1\+\(h\.talents\?\.infusion_light\|\|0\)/,'Holy Light deve usare il focus dello scudo e distribuire la cura secondaria di Abundant Grace');
-assert.match(board,/card==='blessing_protection'[^\n]+heal\(g,'paladin',ally,2,card\)/,'Guardian Vow deve curare 2 oltre a fornire assorbimento fisico');
+assert.match(board,/card==='blessing_protection'[^\n]+heal\(g,'paladin',ally,2,card\)/,'Blessing of Protection deve curare 2 oltre a fornire assorbimento fisico');
 assert.match(board,/holyPaladinWithTank=role==='paladin'[\s\S]*\['righteous_defense','avengers_shield','paladin_holy_shield'\]\.includes\(card\)[\s\S]*!holyPaladinWithTank&&enemies\.length/,'Con un Warrior Protection vivo il Paladino Holy non deve provocare né avanzare verso la mischia');
 assert.match(board,/card==='divine_favor'[\s\S]*directHealReady[\s\S]*missing>=3[\s\S]*card==='lay_on_hands'[\s\S]*Math\.max\(6,Math\.ceil\(ally\.maxHp\*\.35\)\)/,'L IA deve conservare Divine Favor e Lay on Hands per cure che ne sfruttano davvero il valore');
 const recoveryAiSource=board.match(/function aiRecoveryStep\([^\n]+/)?.[0]||'';
