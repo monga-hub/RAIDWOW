@@ -250,7 +250,7 @@ assert.match(html,/<meta name="viewport" content="width=1920,viewport-fit=cover"
 assert.doesNotMatch(html,/Ruota il dispositivo|si gioca in orizzontale|body>\*\{visibility:hidden!important\}/,'Il dispositivo verticale non deve nascondere il gioco dietro un avviso');
 assert.match(html,/window===top[^\n]+\(hover:none\) and \(pointer:coarse\)[^\n]+wide\.html[^\n]+location\.replace\(shell\)/,'Il telefono deve aprire il contenitore Wide prima di renderizzare il gioco');
 assert.doesNotMatch(html,/body\{[^}]*transform:rotate\(90deg\) translateY\(-100%\)/,'La pagina di gioco non deve essere ruotata conservando i breakpoint Portrait');
-assert.match(wide,/wideWidth=Math\.max\(screen\.width,screen\.height\),wideHeight=Math\.min\(screen\.width,screen\.height\)/,'Il contenitore deve usare la stessa viewport Wide logica in entrambe le orientazioni');
+assert.match(wide,/wideWidth=1920,wideHeight=Math\.round\(wideWidth\*Math\.min\(screen\.width,screen\.height\)\/Math\.max\(screen\.width,screen\.height\)\)/,'Il contenitore deve ricreare la tela Wide storica da 1920 px in entrambe le orientazioni');
 assert.match(wide,/function fitWide\(\)[^\n]+frame\.style\.width=`\$\{wideWidth\}px`[^\n]+portrait\?`rotate\(90deg\) scale\(\$\{scale\}\) translateY\(-100%\)`:`scale\(\$\{scale\}\)`/,'Portrait e Landscape devono ridimensionare la stessa superficie senza ricomporre il layout');
 assert.match(wide,/searchParams\.set\('wide','1'\)/,'Il gioco incorporato non deve riaprire ricorsivamente il contenitore Wide');
 assert.doesNotMatch(wide,/location\.replace|addEventListener\('change'/,'Girare il telefono non deve ricaricare o sostituire la pagina');
