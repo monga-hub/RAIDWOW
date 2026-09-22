@@ -246,7 +246,7 @@ assert.doesNotMatch(board,/Scegli spedizione →|← Compagnia/,'I pulsanti di n
 assert.match(board,/setup-expedition-grid\.locked[\s\S]*pointer-events:none[\s\S]*expeditionGrid\.classList\.toggle\('locked',!ready\)/,'Le spedizioni devono restare inattive finché non sono scelti quattro eroi');
 assert.match(board,/hero-pick-copy[\s\S]*<small>\$\{specialization\}<\/small><strong>\$\{name\}<\/strong>/,'Ogni carta eroe deve mostrare specializzazione e nome');
 assert.match(board,/\.main-menu\{overflow:hidden\}/,'Anche la home deve essere una schermata fissa senza scorrimento');
-assert.match(html,/<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">/,'Il viewport mobile deve mantenere testo e comandi a dimensione leggibile');
+assert.match(html,/<meta name="viewport" content="width=1920,viewport-fit=cover">/,'Il gioco deve conservare il viewport Wide originale senza ricomporre carte e comandi');
 assert.doesNotMatch(html,/Ruota il dispositivo|si gioca in orizzontale|body>\*\{visibility:hidden!important\}/,'Il dispositivo verticale non deve nascondere il gioco dietro un avviso');
 assert.match(html,/window===top[^\n]+\(hover:none\) and \(pointer:coarse\)[^\n]+wide\.html[^\n]+location\.replace\(shell\)/,'Il telefono deve aprire il contenitore Wide prima di renderizzare il gioco');
 assert.doesNotMatch(html,/body\{[^}]*transform:rotate\(90deg\) translateY\(-100%\)/,'La pagina di gioco non deve essere ruotata conservando i breakpoint Portrait');
@@ -255,9 +255,7 @@ assert.match(wide,/function fitWide\(\)[^\n]+frame\.style\.width=`\$\{wideWidth\
 assert.match(wide,/searchParams\.set\('wide','1'\)/,'Il gioco incorporato non deve riaprire ricorsivamente il contenitore Wide');
 assert.doesNotMatch(wide,/location\.replace|addEventListener\('change'/,'Girare il telefono non deve ricaricare o sostituire la pagina');
 assert.doesNotMatch(board,/\@media\(orientation:portrait\)/,'Selezione eroi e Scuderia devono conservare il layout Wide in verticale');
-assert.match(board,/max-width:1100px\) and \(max-height:600px\)[\s\S]*real-combat-shell\{grid-template-columns:clamp\(180px,24vw,220px\) minmax\(0,1fr\) clamp\(110px,17vw,145px\)/,'Il combattimento Wide su telefono deve riservare spazio compatto a comandi, griglia e pannelli destri');
-assert.match(board,/max-width:1100px\) and \(max-height:600px\)[\s\S]*real-combat-right\{display:grid;grid-template-rows:105px minmax\(0,1fr\)/,'Mappa della stanza e target devono restare visibili a destra nel combattimento mobile');
-assert.match(board,/max-width:1100px\) and \(max-height:600px\)[\s\S]*real-grid-cells\{grid-template-columns:repeat\(var\(--grid-cols,6\),minmax\(0,1fr\)\)/,'La griglia del combattimento deve usare tutto lo spazio Wide disponibile');
+assert.match(board,/min-width:1101px\)[\s\S]*real-combat-shell\{grid-template-columns:minmax\(330px,390px\) minmax\(0,1fr\) minmax\(240px,320px\)/,'Il combattimento deve conservare le tre colonne della vecchia versione Wide');
 assert.match(board,/g\.gridTreasurePhase=true;g\.roomClearTurnPending=true;note\(g,'🎁 Combattimento concluso: completate i turni rimanenti/,'La fase tesoro deve conservare il turno e l’iniziativa correnti');
 assert.doesNotMatch(board,/g\.gridTreasurePhase=true;movers\.forEach\(hero=>hero\.actions=CONFIG\.actionsPerRound\)/,'La morte dell’ultimo nemico non deve ricaricare le azioni di tutti gli Eroi');
 assert.match(board,/tok==='overlord'\)\{if\(g\.roomClearTurnPending&&!aliveEnemies\(g\)\.length\)\{g\.initIndex\+\+;continue\}/,'L’Overlord senza nemici deve essere saltato durante i turni residui');
